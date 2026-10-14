@@ -127,7 +127,19 @@ function isConnectFailure(error: unknown): boolean {
 }
 
 export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): Promise<ChatJsonResult<z.infer<S>>> {
-  const spec = MODELS[opts.model];
+  // A healthy model chosen by the NVIDIA monitor can be addressed directly by ID.
+  // Dynamic routing only accepts compatible text model IDs on our NVIDIA endpoint.
+  const dynamicId = opts.model.startsWith("nvidia:") ? opts.model.slice(7) : "";
+  const dynamicAllowed = /^[a-z0-9._-]+\/[a-z0-9._-]+$/i.test(dynamicId)
+    && /gpt-oss|nemotron|glm-|gemma-|llama-|deepseek|mistral|qwen|kimi|granite/i.test(dynamicId)
+    && !/embed|rerank|retriev|audio|speech|video|image|diffusion|safety|guard|moderation|ocr|vlm|vision|detector|coder|codegemma|codellama|reward/i.test(dynamicId);
+  const spec: ModelSpec | undefined = MODELS[opts.model] ?? (dynamicAllowed ? {
+    key: opts.model, service: "nvidia", model: dynamicId, baseUrlEnv: "NVIDIA_BASE_URL",
+    apiKeyEnv: "NVIDIA_API_KEY", jsonMode: false,
+    extra: dynamicId.startsWith("nvidia/nemotron-3.5-lightning")
+      ? { chat_template_kwargs: { enable_thinking: false } }
+      : dynamicId.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : undefined,
+  } : undefined);
   if (!spec) throw new Error(`Unknown model ${opts.model}`);
   if (!config.modelCallsEnabled) throw new Error("Model calls are disabled (MODEL_CALLS_ENABLED=false)");
   const baseUrl = credential("models", spec.baseUrlEnv);

@@ -7,6 +7,7 @@ import { DEFAULTS } from "@aihot/site/models";
 import { sql } from "../db.ts";
 import { serverModules } from "../modules.ts";
 import { MODELS } from "../providers/llm.ts";
+import { availableModel } from "../providers/nvidia-pool.ts";
 
 export interface Capability {
   /** The step's name on the admin page, with an explanation in full-width brackets if it needs one; alerts use the name alone. */
@@ -83,6 +84,8 @@ export async function modelFor(capability: CapabilityKey | (string & {})): Promi
   const c = capabilities()[capability];
   if (!c) throw new Error(`unknown model step: ${capability}`);
   const chosen = (await overrides())[capability] ?? process.env[c.env] ?? c.default;
+  if (process.env.NVIDIA_MODEL_POOL_ENABLED === "true" && MODELS[chosen]?.service === "nvidia")
+    return availableModel(chosen);
   return MODELS[chosen] ? chosen : c.default;
 }
 
