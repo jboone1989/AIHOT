@@ -9,9 +9,15 @@ import { publicMatchCondition, searchTerms, withSearchCapacity } from "./pool.ts
 import { sharedSearch } from "../lib/cache.ts";
 import { v1Payload, type V1ItemPayload } from "./publish.ts";
 
+export const ITEM_WINDOWS = ["24h", "7d", "30d", "90d", "365d"] as const;
+export type ItemWindow = typeof ITEM_WINDOWS[number];
+const WINDOW_DAYS: Record<ItemWindow, number> = { "24h": 1, "7d": 7, "30d": 30, "90d": 90, "365d": 365 };
+export function requiresSearchQuery(window: ItemWindow): boolean { return WINDOW_DAYS[window] > 7; }
+export function itemWindowStart(window: ItemWindow, now: Date): Date { return new Date(now.getTime() - WINDOW_DAYS[window] * 86_400_000); }
+
 export interface V1ItemsQuery {
   mode: "selected" | "all";
-  window: "24h" | "7d";
+  window: ItemWindow;
   by: "timeline" | "published";
   category: PublicApiCategoryKey | null;
   q: string | null;
@@ -41,8 +47,8 @@ export const v1Items = sharedSearch(
 );
 
 async function queryItems(query: V1ItemsQuery, now: Date): Promise<V1ItemsResult> {
-  const windowMs = query.window === "24h" ? 86400000 : 7 * 86400000;
-  const windowStart = new Date(now.getTime() - windowMs);
+  if (requiresSearchQuery(query.window) && !query.q?.trim()) throw new Error("extended windows require a query");
+  const windowStart = itemWindowStart(query.window, now);
   const binding = queryBinding({ m: query.mode, w: query.window, b: query.by, c: query.category, q: query.q });
   // by=timeline is the site's own order: a selected item at its reading-group anchor, anything else at its timeline time.
   const sortCol = query.by === "published" ? sql`coalesce(p.published_at, p.discovered_at)` : query.mode === "selected" ? sql`p.sort_at` : sql`p.timeline_at`;

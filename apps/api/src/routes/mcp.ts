@@ -82,7 +82,7 @@ const LATEST_INPUT = z.strictObject({
 });
 const SEARCH_INPUT = z.strictObject({
   q: z.string().min(2).max(200).describe("Search query, 2 to 200 characters."),
-  window: z.enum(["24h", "7d"]).default("7d").describe("Search window. Defaults to the latest 7 days."),
+  window: z.enum(["24h", "7d", "30d", "90d", "365d"]).default("7d").describe("Search window. Defaults to 7 days; longer windows search the retained public archive."),
   category,
   limit: z.number().int().min(1).max(30).default(10).describe("Maximum number of results, from 1 to 30."),
 });
@@ -144,7 +144,7 @@ function registerTools(server: McpServer, say: typeof ok) {
   server.registerTool(
     T.search,
     {
-      description: `Search ${SITE.name}'s latest 7 days by a 2–200 character topic, company, model, product, or person. It searches editorial picks first and automatically expands to all public items only when picks have no result.`,
+      description: `Search ${SITE.name}'s public archive from 24 hours to 365 days by a 2–200 character topic, company, model, product, or person. It searches editorial picks first and automatically expands to all public items only when picks have no result.`,
       inputSchema: SEARCH_INPUT,
       annotations: ANNOTATIONS,
     },

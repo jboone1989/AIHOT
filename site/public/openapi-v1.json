@@ -3,7 +3,7 @@
   "info": {
     "title": "{{siteName}} Public API",
     "version": "{{version}}",
-    "description": "Anonymous, read-only API for clients and Agents. No API key is required.\n\nPicking an endpoint: answer a person's question inside an AI agent -> read /api/v1/agent, which lists Markdown addresses made for agents. Show recent or today's items -> /api/v1/items. Show what is trending right now -> /api/v1/hot-topics. Show the daily digest -> /api/v1/dailies/latest; the weekly and monthly reports -> /api/v1/weeklies/latest and /api/v1/monthlies/latest. Keep a complete local copy of the selected set -> /api/v1/selected/snapshot once, then /api/v1/selected/changes forever.\n\nHow often to poll: use each response's Cache-Control s-maxage as the minimum interval, and always send If-None-Match: an unchanged resource answers 304 with an empty body. On 429 or 503, honour Retry-After. There is no push channel (no SSE, webhooks or streaming): poll on an interval.\n\nKeep responses small: send Accept-Encoding: gzip or br (curl --compressed). To follow new items, page back only until you reach an id you already have instead of re-reading the whole 7-day window on every poll; to keep every selected item, read /api/v1/selected/snapshot once and then only /api/v1/selected/changes.\n\nReport dates, weeks and months identify fixed editions, but corrections and withdrawn citations can change their public content. Revalidate retained copies with If-None-Match after Cache-Control expires; do not treat a dated report as immutable.\n\nTitles and summaries are generated from third-party sources; the original is always linked in links.original.",
+    "description": "Anonymous, read-only API for clients and Agents. No API key is required.\n\nPicking an endpoint: answer a person's question inside an AI agent -> read /api/v1/agent, which lists Markdown addresses made for agents. Show recent or today's items -> /api/v1/items. Show what is trending right now -> /api/v1/hot-topics. Show the daily digest -> /api/v1/dailies/latest; the weekly and monthly reports -> /api/v1/weeklies/latest and /api/v1/monthlies/latest. Keep a complete local copy of the selected set -> /api/v1/selected/snapshot once, then /api/v1/selected/changes forever.\n\nHow often to poll: use each response's Cache-Control s-maxage as the minimum interval, and always send If-None-Match: an unchanged resource answers 304 with an empty body. On 429 or 503, honour Retry-After. There is no push channel (no SSE, webhooks or streaming): poll on an interval.\n\nKeep responses small: send Accept-Encoding: gzip or br (curl --compressed). To follow new items, page back only until you reach an id you already have instead of re-reading the whole 7-day window on every poll; to keep every selected item, read /api/v1/selected/snapshot once and then only /api/v1/selected/changes.\n\nReport dates, weeks and months identify fixed editions, but corrections and withdrawn citations can change their public content. Revalidate retained copies with If-None-Match after Cache-Control expires; do not treat a dated report as immutable.\n\nTitles and summaries are generated from third-party sources; the original is always linked in links.original.\\n\\nHistorical research: /api/v1/items?q=subject&window=90d and /api/v1/agent/search?q=subject&window=365d search existing public archives across sources; original publisher URLs accompany each item. This is not a whole-web search or an automated causal explanation.",
     "termsOfService": "{{siteUrl}}/terms"
   },
   "servers": [
@@ -19,8 +19,8 @@
     "/api/v1/items": {
       "get": {
         "operationId": "items",
-        "summary": "List recent public AI items",
-        "description": "Start here for feeds, widgets and 'what is new' views. Covers the last 7 days only. Send If-None-Match and you get a 304 with an empty body whenever nothing changed. To follow new items, page back with cursor only until you reach an id you already have. Do not use this to maintain a complete local copy of the selected set: it is windowed, so anything older than 7 days silently falls out. Use /api/v1/selected/snapshot plus /api/v1/selected/changes for that.",
+        "summary": "List recent public items and search archived publications",
+        "description": "List recent public news (24h/7d) or search retained public publications with q over 30d, 90d or 365d. Extended windows require q and apply the same public visibility rules as recent results; they do not reveal withdrawn/private material. Results include original source URLs. Search the already collected corpus, not the entire web; a missing result does not prove that an event did not happen. Use /api/v1/selected/snapshot + /api/v1/selected/changes for maintaining the selected set, not rolling-window browsing.",
         "parameters": [
           {
             "$ref": "#/components/parameters/ActorUserAgent"
@@ -58,10 +58,14 @@
               "type": "string",
               "enum": [
                 "24h",
-                "7d"
+                "7d",
+                "30d",
+                "90d",
+                "365d"
               ],
               "default": "7d"
-            }
+            },
+            "description": "24h and 7d are normal browsing windows. 30d, 90d and 365d require a nonempty q (2–200 Unicode code points)."
           },
           {
             "name": "by",
@@ -102,7 +106,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Opaque, query-bound keyset cursor for the rolling window. It carries no issue time and does not expire on a timer, but the window keeps moving: once the cursor's own anchor has dropped out of the requested 24h or 7d window it is rejected with invalid_cursor, so restart the query from the first page instead of persisting a cursor across days. Older rows may also naturally leave the window between requests. Use selected snapshot + changes for an exact mirror."
+            "description": "Opaque, query-bound keyset cursor for the rolling window. It carries no issue time and does not expire on a timer, but the window keeps moving: once the cursor's own anchor has dropped out of the requested requested rolling window it is rejected with invalid_cursor, so restart the query from the first page instead of persisting a cursor across days. Older rows may also naturally leave the window between requests. Use selected snapshot + changes for an exact mirror."
           }
         ],
         "responses": {
@@ -2710,7 +2714,7 @@
       "get": {
         "operationId": "agentSearch",
         "summary": "Search as an agent answer",
-        "description": "Searches the editorial picks first and, only when they have nothing, every public item, and says which. Defaults to the latest 7 days.",
+        "description": "Search the site's publicly retained articles. Defaults to 7d; can search 30d, 90d or 365d for research using a specific query. Editorial picks are searched first; if none, returns other public items. Each result includes publisher attribution and original link. These are research leads, not verified causal conclusions.",
         "parameters": [
           {
             "$ref": "#/components/parameters/ActorUserAgent"
@@ -2735,10 +2739,14 @@
               "type": "string",
               "enum": [
                 "24h",
-                "7d"
+                "7d",
+                "30d",
+                "90d",
+                "365d"
               ],
               "default": "7d"
-            }
+            },
+            "description": "Period covered by the search query; longer windows return older public source material only if it was collected."
           },
           {
             "name": "category",

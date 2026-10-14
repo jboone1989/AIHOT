@@ -5,7 +5,7 @@ import { PUBLIC_API_CATEGORY_KEYS, type PublicApiCategoryKey } from "@aihot/cont
 import { config } from "@aihot/backend/config";
 import { InvalidCursorError } from "@aihot/backend/lib/cursor";
 import { SearchBusyError } from "@aihot/backend/publication/pool";
-import { selectedChanges, selectedSnapshot, SnapshotRequiredError, v1Items } from "@aihot/backend/publication/v1";
+import { ITEM_WINDOWS, requiresSearchQuery, selectedChanges, selectedSnapshot, SnapshotRequiredError, v1Items } from "@aihot/backend/publication/v1";
 import { resolveStory, v1HotTopics, v1Story } from "@aihot/backend/publication/stories";
 import { isPeriodKey, v1Dailies, v1Daily, v1Period, v1Periods } from "@aihot/backend/publication/reports";
 import { isValidDate } from "@aihot/contracts/time";
@@ -87,7 +87,7 @@ export function registerV1(app: FastifyInstance) {
   app.get("/api/v1/items", publicHandler(async (req, reply) => {
     const q = strictQuery(req, V1_OPERATIONS.items.queryKeys);
     const mode = enumParam(q.mode, "mode", ["selected", "all"] as const, "selected");
-    const window = enumParam(q.window, "window", ["24h", "7d"] as const, "7d");
+    const window = enumParam(q.window, "window", ITEM_WINDOWS, "7d");
     const by = enumParam(q.by, "by", ["timeline", "published"] as const, "timeline");
     const category = q.category === undefined ? null : enumParam<PublicApiCategoryKey>(q.category, "category", PUBLIC_API_CATEGORY_KEYS, PUBLIC_API_CATEGORY_KEYS[0]);
     let search: string | null = null;
@@ -96,6 +96,7 @@ export function registerV1(app: FastifyInstance) {
       const len = [...search].length;
       if (len < 2 || len > 200) throw new QueryError("q must contain 2 to 200 characters.");
     }
+    if (requiresSearchQuery(window) && !search) throw new QueryError("window=30d/90d/365d requires q (a specific subject).");
     const limit = intParam(q.limit, "limit", 1, 100, 50);
     if (q.cursor !== undefined && q.cursor.length === 0) throw new InvalidCursorError("empty cursor");
     const body = await v1Items({ mode, window, by, category, q: search, limit, cursor: q.cursor ?? null });
