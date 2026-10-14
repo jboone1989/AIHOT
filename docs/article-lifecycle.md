@@ -18,7 +18,7 @@
 
 ## 实施与资源边界
 
-- 代码：`packages/backend/src/operations/news-compaction.ts`；迁移：`database/migrations/0086_article_compaction.sql`。已有每日定时清理任务复用此过程。
+- 代码：`packages/backend/src/operations/news-compaction.ts`；迁移：`database/migrations/0086_article_compaction.sql` 与 `database/migrations/0087_article_compaction_index.sql`。已有每日定时清理任务复用此过程。
 - 每次最多 2000 条，分 200 条/事务处理；不批量删除整篇文章及事件关系。
 - 保留结构化分析历史和模型调用凭据的元数据，以便核账与修正判断。**本次没有清理模型 receipts 的请求/响应大字段**，后续依据真实数据库大小再单独处理，不能声称已实现数据库所有部分的完全瘦身。
 - PostgreSQL 更新并不会立刻缩小数据库文件体积：需要自动 VACUUM 回收页供再次使用，磁盘用量须根据实际数据库表和索引统计监控。
