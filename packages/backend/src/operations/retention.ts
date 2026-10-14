@@ -6,6 +6,7 @@ import { config } from "../config.ts";
 import { sql } from "../db.ts";
 import { screenshotsForwarded } from "./feedback.ts";
 import { serverModules } from "../modules.ts";
+import { compactOrdinaryNews } from "./news-compaction.ts";
 
 /** Removes files under `dir` last written more than `maxAgeMs` ago. */
 async function removeOlderThan(dir: string, maxAgeMs: number, now: number): Promise<number> {
@@ -31,6 +32,7 @@ async function removeOlderThan(dir: string, maxAgeMs: number, now: number): Prom
 
 export async function dailyRetention(now = new Date()) {
   // The modules' periods first (their aggregates before their deletions, as the engine's).
+  const articleCompaction = await compactOrdinaryNews(now);
   const modules: Record<string, unknown> = {};
   for (const m of serverModules()) if (m.retention) Object.assign(modules, await m.retention(now));
   const leases = await sql`DELETE FROM delivery_leases WHERE expires_at < ${now}`;
@@ -44,6 +46,7 @@ export async function dailyRetention(now = new Date()) {
   // Derived caches (proxied images, share cards and posters) are rebuilt on demand.
   const prunedCache = (await removeOlderThan(path.join(config.dataDir, "imgcache"), monthMs, now.getTime())) + (await removeOlderThan(path.join(config.dataDir, "ogcache"), monthMs, now.getTime()));
   return {
+    articleCompaction,
     ...modules,
     deletedLeases: leases.count,
     deletedJobRuns: runs.count,

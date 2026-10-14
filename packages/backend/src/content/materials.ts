@@ -178,8 +178,8 @@ export async function upsertMaterial(m: MaterialInput, db: Db = sql): Promise<Ma
 }
 
 async function lockMaterial(db: Db, identityKey: string) {
-  const [existing] = await db<{ id: string; source_id: string; revision: number; content_hash: string | null; backfill: boolean; published_at: Date | null; title: string; body_text: string | null; excerpt: string | null; participation_mode: string }[]>`
-    SELECT a.id, a.source_id, a.revision, a.content_hash, a.backfill, a.published_at, a.title, a.body_text, a.excerpt, s.participation_mode
+  const [existing] = await db<{ id: string; source_id: string; revision: number; content_hash: string | null; backfill: boolean; published_at: Date | null; title: string; body_text: string | null; excerpt: string | null; compacted_at: Date | null; participation_mode: string }[]>`
+    SELECT a.id, a.source_id, a.revision, a.content_hash, a.backfill, a.published_at, a.title, a.body_text, a.excerpt, a.compacted_at, s.participation_mode
     FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.identity_key = ${identityKey} FOR UPDATE OF a`;
   return existing;
 }
@@ -224,6 +224,8 @@ async function upsertIn(db: Db, m: MaterialInput): Promise<MaterialResult> {
   await db`INSERT INTO article_discoveries (article_id, source_id, via, discovered_at)
            VALUES (${existing!.id}, ${m.sourceId}, ${m.via}, ${discoveredAt}) ON CONFLICT DO NOTHING`;
   const unchanged: MaterialResult = { articleId: existing!.id, created: false, revised: false, backfill: existing!.backfill };
+  // The index is deliberately stable: later listings cannot refill archived bodies or start model work.
+  if (existing!.compacted_at) return unchanged;
   // Configuration may have gained a verified publisher since this same discovery channel last
   // saw the URL. Reconcile before accepting any of that channel's material changes.
   if (await reconcileMaterialSource(db, existing!.id, { sourceId: m.sourceId, author: m.author })) {
