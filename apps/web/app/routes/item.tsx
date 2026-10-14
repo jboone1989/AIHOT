@@ -520,6 +520,17 @@ function ItemView({ item }: { item: SiteItemDetail }) {
           </div>
           {!isX && <h1 data-page-title="" className="text-[26px] font-bold leading-[1.38] tracking-[-0.01em] text-ink lg:text-[32px] lg:leading-[1.34] xl:text-[36px] xl:leading-[1.3]">{item.title}</h1>}
           {!isX && item.originalTitle && <p className="mt-2.5 text-[14px] leading-relaxed text-ink-4">{item.originalTitle}</p>}
+          {/* The source is a first-class citation, visible before the AI's interpretation on every screen. */}
+          {/^(https?:)\/\//i.test(item.links.original) && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-[13px] text-ink-3">
+              <span>原始来源：{item.source.name}</span>
+              <a href={item.links.original} target="_blank" rel="noopener noreferrer"
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-control border border-line-strong px-3 font-semibold text-accent hover:border-accent hover:bg-bg-sunk">
+                {isX ? "查看原帖" : "阅读原始报道"} <IconExternal size={14} />
+              </a>
+            </div>
+          )}
+
 
           {item.summary && (!isX || item.summary.replace(/\s+/g, " ").trim() !== item.title) && (
             <section className={isX ? "mt-4" : "mt-7 xl:mt-8"}>

@@ -12,6 +12,7 @@ import { ScoreLabel } from "../../components/ui/Score";
 import { beijingTime } from "@aihot/contracts/time";
 import { MediaThumbs, SourceLine, StarButton } from "./parts";
 import { GroupButton, GroupSources } from "./ReadingGroup";
+import { IconExternal } from "../../components/icons";
 import { QuotedLine } from "../item/QuotedPost";
 import { rememberPreview } from "../item/preview";
 
@@ -34,6 +35,8 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
     onOpen?.(item.id);
   };
   const showSources = !!group && (group.additionalSourceCount > 0 || group.reportCount > 1);
+  // Only genuine source URLs, not the AIHot detail URL or untrusted schemes.
+  const originalUrl = item.links?.original && /^https?:\/\//i.test(item.links.original) ? item.links.original : null;
   const tags = showTags ? item.tags.slice(0, 3) : [];
 
   return (
@@ -76,8 +79,19 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
               {item.title}
             </IntentLink>
           </h3>
-          {item.summary && <p className="mt-1 line-clamp-2 text-[14.5px] leading-[1.7] text-ink-3 lg:mt-2 lg:line-clamp-3 lg:text-[15px] lg:leading-[1.75]">{item.summary}</p>}
+          {item.summary && <p className="mt-1 line-clamp-4 text-[14.5px] leading-[1.7] text-ink-3 lg:mt-2 lg:line-clamp-5 lg:text-[15px] lg:leading-[1.75]">{item.summary}</p>}
         </>
+      )}
+
+      {originalUrl && (
+        <div className="relative z-10 mt-2 flex items-center gap-2 text-[12.5px] leading-relaxed">
+          <a href={originalUrl} target="_blank" rel="noopener noreferrer"
+            aria-label={`阅读${item.source.name}原始报道（新标签页）`}
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-control border border-line-strong bg-surface px-2.5 font-medium text-accent transition-colors hover:border-accent hover:bg-bg-sunk">
+            {isX ? "查看原帖" : "阅读原文"} <IconExternal size={13} />
+          </a>
+          {!isX && <span className="truncate text-ink-4">来源：{item.source.name}</span>}
+        </div>
       )}
 
       {isX && item.x!.media.length > 0 && <MediaThumbs media={item.x!.media} className="mt-2.5" />}
@@ -114,7 +128,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
 
       {item.reason && (
         <div className="mt-1 lg:mt-3 lg:border-t lg:border-line-soft lg:pt-3">
-          <p className="line-clamp-1 text-[13px] leading-[1.65] text-note lg:line-clamp-none lg:leading-[1.75]">{`${ITEM_COPY.reasonLabel}：`}{item.reason}</p>
+          <p className="line-clamp-2 text-[13px] leading-[1.65] text-note lg:line-clamp-none lg:leading-[1.75]">{`${ITEM_COPY.reasonLabel}：`}{item.reason}</p>
         </div>
       )}
 
