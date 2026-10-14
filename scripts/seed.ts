@@ -37,4 +37,9 @@ for (const s of sources) {
   added += inserted.length;
 }
 console.log(`sources: ${added} added, ${sources.length - added} already there`);
+// NVIDIA Developer Program endpoint: default conservative request budget, not a money limit.
+// An administrator can adjust this; setup never overwrites an existing setting.
+await sql`INSERT INTO budgets (service, per_minute, per_hour, per_day, note)
+  VALUES ('nvidia', 16, 480, 3000, 'NVIDIA Developer Program prototype tier: requests, no paid fallback')
+  ON CONFLICT (service) DO NOTHING`;
 await closeDb();

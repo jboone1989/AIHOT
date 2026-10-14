@@ -19,6 +19,28 @@ export interface ModelPreset {
 
 /** 具名的模型示例（每个要配自己的密钥）。用不上可以删掉。 */
 export const PRESETS: Record<string, ModelPreset> = {
+  // NVIDIA Developer Program free prototype endpoints. Credentials are deployment-local,
+  // never copied into the repository or sent via the model tool output.
+  // JSON is requested in the prompt and validated after generation: the NIM Chat API
+  // does not promise that every hosted model supports response_format=json_object.
+  "nvidia-gpt-oss-20b": {
+    service: "nvidia", model: "openai/gpt-oss-20b",
+    baseUrlEnv: "NVIDIA_BASE_URL", apiKeyEnv: "NVIDIA_API_KEY",
+    extra: { reasoning_effort: "low" }, jsonMode: false,
+  },
+  // Verified against NVIDIA's live Developer endpoint; specialized on light-weight news work.
+  "nvidia-nemotron-lightning": {
+    service: "nvidia", model: "nvidia/nemotron-3.5-lightning-30b-a3b",
+    baseUrlEnv: "NVIDIA_BASE_URL", apiKeyEnv: "NVIDIA_API_KEY",
+    extra: { chat_template_kwargs: { enable_thinking: false } },
+    jsonMode: false,
+  },
+  "nvidia-glm-5.3-flash": {
+    service: "nvidia", model: "z-ai/glm-5.3-flash",
+    baseUrlEnv: "NVIDIA_BASE_URL", apiKeyEnv: "NVIDIA_API_KEY",
+    extra: { reasoning_effort: "low" }, jsonMode: false,
+    vision: true,
+  },
   // GLM 5.3 Flash always reasons; the lowest effort keeps short structured tasks fast.
   "glm-5.3-flash": {
     service: "zhipu", model: "glm-5.3-flash", baseUrlEnv: "ZHIPU_BASE_URL", apiKeyEnv: "ZHIPU_API_KEY",
