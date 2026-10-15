@@ -17,6 +17,7 @@ import { releaseReceipt } from "@aihot/backend/operations/recover";
 import { replaceContactQr, setTargetEnabled, settingsOverview, updateBudget } from "@aihot/backend/admin/settings";
 import { createSource, fetchNow, listSources, previewSource, previewStoredSource, sourceDetail, updateSource } from "@aihot/backend/admin/sources";
 import { sendProblem } from "../http/respond.ts";
+import { analyticsOverview } from "@aihot/backend/admin/analytics";
 import { adminHandler } from "./admin-auth.ts";
 
 // What every admin route reads its request with (the modules' admin routes too).
@@ -35,6 +36,7 @@ function decodeImage(dataUrl: unknown): Buffer {
 }
 
 export function registerAdmin(app: FastifyInstance) {
+  app.get("/api/admin/analytics", adminHandler(async () => analyticsOverview()));
   // Sources
   app.get("/api/admin/sources", adminHandler(async (req) => {
     const f = q(req);

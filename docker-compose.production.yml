@@ -62,6 +62,10 @@ services:
       SITE_URL: ${SITE_URL:-https://www.livingruntime.com}
       ADSENSE_VERIFICATION_ENABLED: ${ADSENSE_VERIFICATION_ENABLED:-false}
       ADSENSE_PUBLISHER_ID: ${ADSENSE_PUBLISHER_ID:-}
+      CLOUDFLARE_WEB_ANALYTICS_TOKEN: ${CLOUDFLARE_WEB_ANALYTICS_TOKEN:-}
+      POSTHOG_PROJECT_TOKEN: ${POSTHOG_PROJECT_TOKEN:-}
+      POSTHOG_REGION: ${POSTHOG_REGION:-us}
+      GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
