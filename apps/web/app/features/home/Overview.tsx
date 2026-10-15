@@ -170,8 +170,8 @@ export function MarketCard() {
   const [rows, setRows] = useState<Spot[] | null>(null);
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all(ASSETS.map((a) => fetch(`/api/market/spot?asset=${a}`, { signal: controller.signal }).then((r) => (r.ok ? (r.json() as Promise<Spot>) : null)).catch(() => null)))
-      .then((all) => setRows(all.filter((r): r is Spot => !!r && r.observations.length > 0)))
+    Promise.all(ASSETS.map((a) => fetch(`/api/market/spot?asset=${a}`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(8_000)]) }).then((r) => (r.ok ? (r.json() as Promise<Spot>) : null)).catch(() => null)))
+      .then((all) => setRows(all.filter((r): r is Spot => !!r && Array.isArray(r.observations) && r.observations.length > 0)))
       .catch(() => {});
     return () => controller.abort();
   }, []);
