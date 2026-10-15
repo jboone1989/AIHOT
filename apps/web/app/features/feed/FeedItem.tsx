@@ -104,7 +104,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
 
       {originalUrl && (
         <div className="relative z-10 mt-2 flex items-center gap-2 text-[12.5px] leading-relaxed">
-          <a href={originalUrl} target="_blank" rel="noopener noreferrer"
+          <a href={originalUrl} target="_blank" rel="noopener noreferrer" data-analytics-event="source_open"
             aria-label={language==="en"? "Read original publisher report":`阅读${item.source.name}原始报道（新标签页）`}
             className="inline-flex min-h-8 items-center gap-1.5 rounded-control border border-line-strong bg-surface px-2.5 font-medium text-accent transition-colors hover:border-accent hover:bg-bg-sunk">
             {language==="en"?(isX?"View original post":"Read source"):(isX ? "查看原帖" : "阅读原文")} <IconExternal size={13} />
