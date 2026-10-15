@@ -7,6 +7,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { EDITION_TIMES, SITE } from "@aihot/site";
 import { CONTACT_ALIASES, PUBLIC_INTERFACE_VERSION } from "@aihot/contracts/http-policy";
 import { PUBLIC_API_CATEGORY_KEYS } from "@aihot/contracts/taxonomy";
+import { adsenseTxt, adsenseVerificationId } from "@aihot/contracts/adsense";
 import { REPO_ROOT, config } from "@aihot/backend/config";
 import { applyPublicHeaders, sendTextWithEtag } from "../http/respond.ts";
 import { loadSitemap } from "@aihot/backend/publication/sitemap";
@@ -107,6 +108,13 @@ export async function sendFile(req: FastifyRequest, reply: FastifyReply, file: s
 }
 
 export function registerStatic(app: FastifyInstance) {
+  // Ownership check only; this does not enable ad serving or tracking.
+  app.get("/ads.txt", (_req, reply) => {
+    const id = adsenseVerificationId(process.env);
+    if (!id) return reply.code(404).header("Cache-Control", "no-store").type("text/plain; charset=utf-8").send("Not found");
+    return reply.header("Cache-Control", "public, max-age=300, must-revalidate").type("text/plain; charset=utf-8").send(adsenseTxt(id));
+  });
+
   app.get("/sitemap.xml", async (req, reply) => {
     try {
       const { xml, expiresAt } = await loadSitemap();
