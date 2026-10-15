@@ -100,14 +100,14 @@ export function KnowledgeCanvas({ edges, activeId, compact = false, selectedNode
           const focus = related.has(node.key), dim = activeId && !focus;
           const r = i === 0 ? 30 : node.degree > 2 ? 21 : 16;
           return (
-            <a key={node.key} href={`/knowledge/entity/${encodeURIComponent(node.key)}`} onClick={onSelectNode ? (event) => { event.preventDefault(); onSelectNode(node.key); } : undefined} aria-current={selectedNodeKey === node.key ? "true" : undefined} aria-label={`${lang==="en"?englishEntity(node.name,node.key):node.name} · ${t("查看实体关系","Explore entity")}`}
+            <Link key={node.key} to={`/knowledge/entity/${encodeURIComponent(node.key)}`} onClick={onSelectNode ? (event) => { event.preventDefault(); onSelectNode(node.key); } : undefined} aria-current={selectedNodeKey === node.key ? "true" : undefined} aria-label={`${lang==="en"?englishEntity(node.name,node.key):node.name} · ${t("查看实体关系","Explore entity")}`}
               className={`lr-g-node ${i === 0 ? "is-hub" : ""} ${focus ? "is-focus" : ""} ${dim ? "is-dim" : ""}`}>
               <circle cx={pt.x} cy={pt.y} r={r + 8} className="lr-g-halo" />
               <circle cx={pt.x} cy={pt.y} r={r} className="lr-g-dot" />
               {i === 0 && <circle cx={pt.x} cy={pt.y} r="6" className="lr-g-core" />}
               <text x={pt.x} y={pt.y + r + 19} textAnchor="middle" className="lr-g-label" fontSize={i === 0 ? 15 : 12.5}
                 fontWeight={i === 0 ? 700 : 500}>{shortName(lang==="en"?englishEntity(node.name,node.key):node.name)}</text>
-            </a>
+            </Link>
           );
         })}
       </svg>
