@@ -1,3 +1,23 @@
+# EventGraph
+
+**面向多个 AI Agent 的公共事件知识基础设施。**
+
+EventGraph 将来自不同来源的新闻、公告和研究组织为带有来源、时间与关系的事件知识，向人类读者和独立 Agent 提供网站、RSS、API 与 MCP 接口。
+
+当前阶段基于 [AIHOT](https://github.com/KKKKhazix/AIHOT) 开源框架开发，保留新闻采集、去重、事件聚合与 PostgreSQL 业务数据；Graphiti + Neo4j 是规划中的长期实体关系与时序知识层。**尚未部署或验证的能力不应视为已上线。**
+
+上游项目称作 **AIHOT**，本项目称作 **EventGraph**；**Ferro** 是独立 Agent，不是平台本身。
+
+> 迁移说明：当前 Docker Compose 项目和 PostgreSQL 数据身份仍保持 `aihot`，以保留现有数据卷；请勿仅为了品牌更名重建数据库。对外 MCP 工具前缀也继续兼容已有客户端。
+
+原始仓库：[jboone1989/AIHOT](https://github.com/jboone1989/AIHOT)。GitHub 仓库更名后应更新本链接。
+
+## 上游框架文档（AIHOT）
+
+以下保留原作者的框架说明、许可证及上游链接，供维护与同步使用。
+
+---
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.png">
