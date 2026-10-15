@@ -11,6 +11,7 @@ import { ActiveFilters, CategoryTabs, FeedBar, SearchField } from "../features/f
 import { IconArrowRight } from "../components/icons";
 import type { KnowledgeGraph, KnowledgeStats } from "../components/KnowledgeNetwork";
 import { useText } from "../components/LanguageSwitch";
+import { SITE } from "@aihot/site";
 import { AgentCard, DailyCard, LeadStory, MarketCard, PulseStrip, Trending } from "../features/home/Overview";
 
 const EMPTY_GRAPH: KnowledgeGraph = { entities: 0, edges: [], status: "unavailable" };
@@ -45,7 +46,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
   const path = listPath("/", loaderData ? filterParams(loaderData.filters) : {});
   const titles = loaderData?.data.cards.map(c => c.item.title) ?? [];
   return pageMeta({
-    title: "事件观察 · LivingRuntime",
+    title: `事件观察 · ${SITE.name}`,
     description: "实时追踪 AI、加密与金融事件，沿报道时间线深入长期知识关系与原始证据。",
     path, noindex: hasFeedFilters(loaderData?.filters),
     jsonLd: path === "/" ? [...siteLd(), itemListLd("/", "事件观察", titles)] : undefined,
