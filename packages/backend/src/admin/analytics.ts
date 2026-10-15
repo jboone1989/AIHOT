@@ -2,7 +2,7 @@
 import { sql } from "../db.ts";
 
 export async function analyticsOverview() {
-  const [totals, daily, events, content, languages, referrers, performance] = await Promise.all([
+  const [totals, daily, events, content, languages, referrers, performance, effective] = await Promise.all([
     sql`SELECT
       COUNT(*) FILTER (WHERE event_name='page_view')::int AS page_views,
       COUNT(DISTINCT session_id) FILTER (WHERE event_name='page_view')::int AS sessions,
@@ -37,10 +37,18 @@ export async function analyticsOverview() {
       ROUND((PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY duration_ms))::numeric)::int AS p75_ms
       FROM product_analytics_events WHERE occurred_at >= NOW() - INTERVAL '30 days'
         AND event_name='navigation_complete' AND duration_ms IS NOT NULL`,
+    sql`SELECT COUNT(*)::int AS sessions FROM (
+      SELECT session_id FROM product_analytics_events
+      WHERE occurred_at >= NOW() - INTERVAL '7 days'
+      GROUP BY session_id
+      HAVING BOOL_OR(event_name = 'story_open')
+        AND BOOL_OR(event_name IN ('graph_node_select', 'source_open'))
+    ) AS qualified`,
   ]);
   return {
     periodDays: 30, asOf: new Date().toISOString(),
     totals: totals[0] ?? {},
+    weeklyEffectiveExplorers: Number(effective[0]?.sessions ?? 0),
     daily, events, content, languages, referrers,
     performance: performance[0] ?? { samples: 0, mean_ms: null, p75_ms: null },
     providers: {
