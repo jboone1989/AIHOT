@@ -20,5 +20,8 @@ export function analysisStep(body: string): AnalysisStep {
   return step;
 }
 
-/** Both score calls at the T1 threshold: material from a T1 source is selected, with this mean score. */
-export const SELECTING_SCORE = tierThreshold("T1")!;
+/**
+ * Both score calls at the T1_5 threshold: material from a T1_5 source is selected, with this mean score, and
+ * so is material from a T1 source (this site's T1 threshold is lower: Ferro's own work).
+ */
+export const SELECTING_SCORE = tierThreshold("T1_5")!;

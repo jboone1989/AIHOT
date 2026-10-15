@@ -36,3 +36,29 @@ export function sourceInitial(name: string): string {
   const s = name.replace(/^[^\p{L}\p{N}]+/u, "");
   return (s[0] ?? "A").toUpperCase();
 }
+
+/** Display locale is passed explicitly so server and client never share language state. */
+export type DisplayLanguage = "zh" | "en";
+export function localizedMonthDay(date: string, language: DisplayLanguage) {
+  return language === "zh" ? monthDay(date) : new Intl.DateTimeFormat("en-US", {month:"short",day:"numeric",timeZone:"Asia/Shanghai"}).format(new Date(date+"T12:00:00+08:00"));
+}
+export function localizedWeekday(date: string, language: DisplayLanguage) {
+  return language === "zh" ? beijingWeekday(date) : new Intl.DateTimeFormat("en-US", {weekday:"long",timeZone:"Asia/Shanghai"}).format(new Date(date+"T12:00:00+08:00"));
+}
+export function localizedMonthDayTime(iso: string, language: DisplayLanguage) {
+  return language === "zh" ? monthDayTime(iso) : new Intl.DateTimeFormat("en-US", {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23",timeZone:"Asia/Shanghai"}).format(new Date(iso));
+}
+export function localizedDateTime(iso: string, language: DisplayLanguage) {
+  return language === "zh" ? fullDateTime(iso) : new Intl.DateTimeFormat("en-US", {year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23",timeZone:"Asia/Shanghai"}).format(new Date(iso));
+}
+export function localizedRelativeTime(iso: string, language: DisplayLanguage, now = Date.now()) {
+  if (language === "zh") return relativeTime(iso, now);
+  const seconds=Math.max(0,Math.round((now-Date.parse(iso))/1000));
+  if(seconds<60)return "Just now";
+  const minutes=Math.round(seconds/60);
+  if(minutes<60)return minutes+"m ago";
+  const hours=Math.round(minutes/60);
+  if(hours<24)return hours+"h ago";
+  const days=Math.round(hours/24);
+  return days<30?days+"d ago":localizedDateTime(iso,language).split(",").slice(0,2).join(",");
+}

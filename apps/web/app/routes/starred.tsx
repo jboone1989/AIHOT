@@ -10,6 +10,8 @@ import { fullDateTime } from "../lib/format";
 import { IconBookmark, IconDownload, IconClose } from "../components/icons";
 import { readSnapshot, restoreAnchor, useSaveOnLeave } from "../lib/restore";
 import { PhoneBar } from "../components/shell/PhoneBar";
+import { useUiLanguage } from "../components/LanguageSwitch";
+import { EnglishStarred } from "../components/EnglishUtility";
 import type { Screen } from "../components/shell/screens";
 import { webModules } from "../site-modules";
 
@@ -33,6 +35,7 @@ function reportText(r: ImportReport): string {
 }
 
 export default function StarredPage() {
+  const language=useUiLanguage();
   const starred = useStarred();
   const [mounted, setMounted] = useState(false);
   const [availability, setAvailability] = useState<Record<string, ItemAvailability>>({});
@@ -97,6 +100,7 @@ export default function StarredPage() {
     );
 
   const action = "text-[12.5px] text-ink-3 transition-colors hover:text-accent";
+  if(language==="en") return <EnglishStarred starred={starred}/>;
   return (
     <div className="pb-12">
       <PhoneBar back={{ to: "/more", label: "我的" }} title="收藏" />

@@ -58,9 +58,11 @@ export interface ItemSummary {
 
 /** The fields rendered by a site feed card; full original text lives in the item detail. */
 export interface FeedItemSummary extends Pick<ItemSummary, "id" | "title" | "summary" | "reason" | "source" | "publishedAt" | "timelineAt" | "category" | "tags" | "score" | "selected" | "channel"> {
+  /** Original publisher title when present, for the English/original reading mode. */
+  originalTitle?: string | null;
   /** Present on fresh responses; optional for cached feed snapshots created before source links were displayed. */
   links?: ItemSummary["links"];
-  x: (Pick<XPostView, "authorName" | "handle" | "avatarUrl" | "avatarSrcSet" | "media"> & {
+  x: (Pick<XPostView, "authorName" | "handle" | "avatarUrl" | "avatarSrcSet" | "media" | "text"> & {
     quoted: Omit<NonNullable<XPostView["quoted"]>, "url"> | null;
   }) | null;
   /**
@@ -184,6 +186,8 @@ export interface HotParticipant {
 
 
 export interface HotEntryView {
+  /** Original English reporting title for reader language switching. */
+  englishTitle?: string | null;
   rank: number;
   story: StoryRef;
   heat: number;
@@ -217,7 +221,10 @@ export interface HeatPoint {
 }
 
 export interface StoryReportView {
+  originalTitle?: string | null;
   id: string;
+  /** Direct original source URL for evidence review; old saved fixtures may omit it. */
+  originalUrl?: string;
   title: string;
   summary: string | null;
   source: SourceRef & { firstParty: boolean };
@@ -234,6 +241,7 @@ export interface StoryFactView {
 }
 
 export interface StoryDetail {
+  englishTitle?: string | null;
   publicId: string;
   title: string;
   status: "active" | "watching" | "settled";
@@ -271,6 +279,7 @@ export interface StoryDetail {
 export type ReportKind = "daily" | "weekly" | "monthly";
 
 export interface ReportCitation {
+  originalTitle?: string | null;
   itemId: string | null;
   title: string;
   summary: string | null;

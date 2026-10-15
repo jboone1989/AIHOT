@@ -10,6 +10,13 @@ import { Sheet } from "../../components/ui/Sheet";
 import { Wordmark } from "@aihot/site/brand/Logo.tsx";
 import { BarButton, PhoneBar } from "../../components/shell/PhoneBar";
 import { openSearch } from "../search/SearchOverlay";
+import { useUiLanguage, useText, type UiLanguage } from "../../components/LanguageSwitch";
+
+export function categoryName(key: CategoryKey,lang:UiLanguage):string {
+  const english: Partial<Record<CategoryKey,string>>={ai:"AI",crypto:"Crypto",finance:"Finance",world:"World Events",research:"Research"};
+  return lang==="en" ? (english[key]??key) : CATEGORY_LABELS[key];
+}
+
 
 /** Same page with some query parameters changed (paging state dropped). */
 function hrefWith(base: string, params: URLSearchParams, patch: Record<string, string | null>) {
@@ -29,11 +36,11 @@ function hrefWith(base: string, params: URLSearchParams, patch: Record<string, s
  * 一手 clears the category and picking a category clears 一手. Older 资讯 / X links still filter; the
  * choice then shows as none.
  */
-function filterOptions(base: string, params: URLSearchParams, noneLabel: string) {
+function filterOptions(base: string, params: URLSearchParams, noneLabel: string, lang: UiLanguage) {
   return [
     { key: "all", label: noneLabel, to: hrefWith(base, params, { category: null, channel: null }) },
-    { key: "firstParty", label: CHANNEL_LABELS.firstParty, to: hrefWith(base, params, { category: null, channel: "firstParty" }) },
-    ...CATEGORY_KEYS.map((k) => ({ key: k, label: CATEGORY_LABELS[k], to: hrefWith(base, params, { category: k, channel: null }) })),
+    { key: "firstParty", label: lang==="en"?"Official":"一手", to: hrefWith(base, params, { category: null, channel: "firstParty" }) },
+    ...CATEGORY_KEYS.map((k) => ({ key: k, label: categoryName(k,lang), to: hrefWith(base, params, { category: k, channel: null }) })),
   ];
 }
 
@@ -44,7 +51,8 @@ function filterKey(category: CategoryKey | null, channel: ChannelKey): string {
 /** Desktop: the filter as a row of tabs beside the search field. */
 export function CategoryTabs({ base, category, channel = "all", layoutId, className = "" }: { base: string; category: CategoryKey | null; channel?: ChannelKey; layoutId: string; className?: string }) {
   const [params] = useSearchParams();
-  return <PillTabs items={filterOptions(base, params, "全部").map(o => ({ ...o, prefetch: 'intent' as const }))} active={filterKey(category, channel)} layoutId={layoutId} label="筛选" className={className} />;
+  const lang=useUiLanguage();
+  return <PillTabs items={filterOptions(base, params, lang==="en"?"All":"全部", lang).map(o => ({ ...o, prefetch: 'intent' as const }))} active={filterKey(category, channel)} layoutId={layoutId} label={lang==="en"?"Filter":"筛选"} className={className} />;
 }
 
 /**
@@ -52,15 +60,17 @@ export function CategoryTabs({ base, category, channel = "all", layoutId, classN
  * buttons for the filter sheet and search.
  */
 export function FeedBar({ base, category, channel }: { base: "/" | "/all"; category: CategoryKey | null; channel: ChannelKey }) {
+  const lang=useUiLanguage();
   const [params] = useSearchParams();
   const [sheet, setSheet] = useState(false);
+  const t=useText();
   const scope = (to: string) => hrefWith(to, params, { q: null, tab: null, search: null });
   const filtered = filterKey(category, channel) !== "all";
   return (
     <>
       <PhoneBar
         leading={
-          <Link to="/" aria-label={`${SITE.name} 首页`} className="flex h-11 items-center pl-2.5 pr-2 text-ink">
+          <Link to="/" aria-label={lang==="en"?`${SITE.name} home`:`${SITE.name} 首页`} className="flex h-11 items-center pl-2.5 pr-2 text-ink">
             <Wordmark size={17} />
           </Link>
         }
@@ -68,17 +78,17 @@ export function FeedBar({ base, category, channel }: { base: "/" | "/all"; categ
           <PillTabs
             size="sm"
             layoutId="feed-scope"
-            label="看精选或全部"
+            label={t("看精选或全部","Featured or all")}
             active={base === "/" ? "featured" : "all"}
             items={[
-              { key: "featured", label: "精选", to: scope("/"), resetScroll: true, prefetch: 'intent' },
-              { key: "all", label: "全部", to: scope("/all"), resetScroll: true, prefetch: 'intent' },
+              { key: "featured", label: t("精选","Featured"), to: scope("/"), resetScroll: true, prefetch: 'intent' },
+              { key: "all", label: t("全部","All"), to: scope("/all"), resetScroll: true, prefetch: 'intent' },
             ]}
           />
         }
         actions={
           <>
-            <BarButton label={filtered ? "筛选（已选）" : "筛选"} on={filtered} onClick={() => setSheet(true)}>
+            <BarButton label={filtered ? t("筛选（已选）","Filter active") : t("筛选","Filter")} on={filtered} onClick={() => setSheet(true)}>
               <IconFilter size={21} />
               {filtered && <span aria-hidden="true" className="absolute right-[9px] top-[9px] size-[7px] rounded-full bg-accent ring-2 ring-bg" />}
             </BarButton>
@@ -94,10 +104,12 @@ export function FeedBar({ base, category, channel }: { base: "/" | "/all"; categ
 /** Phones: the filter as a sheet of options, the one in use ticked; choosing one applies it. */
 function FilterSheet({ open, onClose, base, active }: { open: boolean; onClose: () => void; base: string; active: string }) {
   const [params] = useSearchParams();
+  const lang=useUiLanguage();
+  const t=useText();
   return (
-    <Sheet open={open} onClose={onClose} title="筛选">
+    <Sheet open={open} onClose={onClose} title={t("筛选","Filter")}>
       <ul className="mx-4 divide-y divide-line-soft">
-        {filterOptions(base, params, "不限").map((o) => {
+        {filterOptions(base, params, t("不限","Any"), lang).map((o) => {
           const on = o.key === active;
           return (
             <li key={o.key}>
@@ -121,19 +133,21 @@ function FilterSheet({ open, onClose, base, active }: { open: boolean; onClose: 
 /** Phones: the filter and tag in use as chips under the bar; each one clears itself when tapped. */
 export function ActiveFilters({ base, category, channel, tag }: { base: string; category: CategoryKey | null; channel: ChannelKey; tag: string | null }) {
   const [params] = useSearchParams();
-  const label = channel === "firstParty" ? CHANNEL_LABELS.firstParty : category ? CATEGORY_LABELS[category] : null;
+  const lang=useUiLanguage();
+  const t=useText();
+  const label = channel === "firstParty" ? t("一手","Official") : category ? categoryName(category,lang) : null;
   if (!label && !tag) return null;
   const chip = "inline-flex min-h-11 max-w-full items-center gap-1 rounded-full bg-accent-soft pl-3 pr-2 text-[13px] font-medium text-accent transition-opacity active:opacity-60";
   return (
     <div className="flex flex-wrap gap-2 pb-3 pt-1 lg:hidden">
       {label && (
-        <Link to={hrefWith(base, params, { category: null, channel: null })} aria-label={`取消筛选：${label}`} className={chip}>
-          只看{label}
+        <Link to={hrefWith(base, params, { category: null, channel: null })} aria-label={t(`取消筛选：${label}`,`Remove filter: ${label}`)} className={chip}>
+          {t("只看","Only ")}{label}
           <IconClose size={14} strokeWidth={2} />
         </Link>
       )}
       {tag && (
-        <Link to={hrefWith(base, params, { tag: null })} aria-label={`取消标签：${tag}`} className={chip}>
+        <Link to={hrefWith(base, params, { tag: null })} aria-label={t(`取消标签：${tag}`,`Remove tag: ${tag}`)} className={chip}>
           <span className="truncate">#{tag}</span>
           <IconClose size={14} strokeWidth={2} className="shrink-0" />
         </Link>
@@ -144,8 +158,9 @@ export function ActiveFilters({ base, category, channel, tag }: { base: string; 
 
 /** Phones: the magnifier in a bar; the search opens over the page with the keyboard up. */
 function SearchButton() {
+  const t=useText();
   return (
-    <BarButton label="搜索" onClick={(event) => openSearch("", event.currentTarget)}>
+    <BarButton label={t("搜索","Search")} onClick={(event) => openSearch("", event.currentTarget)}>
       <IconSearch size={21} />
     </BarButton>
   );
@@ -167,6 +182,7 @@ function useSlashFocus(ref: React.RefObject<HTMLInputElement | null>) {
 /** Desktop search field (GET /all?q=…): at the end of the filter row as the same grey track, at the height of md tabs, with a "/" hint. */
 export function SearchField({ defaultValue = "", keep = {} }: { defaultValue?: string; keep?: Record<string, string | null> }) {
   const [value, setValue] = useState(defaultValue);
+  const t=useText();
   const navigation = useNavigation();
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => setValue(defaultValue), [defaultValue]);
@@ -178,7 +194,7 @@ export function SearchField({ defaultValue = "", keep = {} }: { defaultValue?: s
     <Form method="get" action="/all" role="search" className="group relative w-full shrink-0 lg:w-60">
       {hidden}
       <label htmlFor="site-search" className="sr-only">
-        搜索标题、摘要与正文
+        {t("搜索标题、摘要与正文","Search titles, summaries and article text")}
       </label>
       <IconSearch size={16} className={`pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${searching ? "text-accent" : "text-ink-4 group-focus-within:text-ink-3"}`} />
       <input
@@ -187,7 +203,7 @@ export function SearchField({ defaultValue = "", keep = {} }: { defaultValue?: s
         name="q"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="搜索标题、摘要…"
+        placeholder={t("搜索标题、摘要…","Search titles and summaries…")}
         maxLength={200}
         autoComplete="off"
         className="h-[42px] w-full rounded-full bg-bg-sunk pl-10 pr-10 text-[14px] text-ink outline-none ring-1 ring-inset ring-line-soft transition-[background-color,box-shadow] placeholder:text-ink-4 hover:ring-line-strong focus:bg-surface focus:shadow-[0_0_0_3px_var(--accent-soft)] focus:ring-accent dark:bg-bg-muted/60 dark:focus:bg-surface"
@@ -195,7 +211,7 @@ export function SearchField({ defaultValue = "", keep = {} }: { defaultValue?: s
       {value ? (
         <button
           type="button"
-          aria-label="清空"
+          aria-label={t("清空","Clear")}
           onClick={() => {
             setValue("");
             inputRef.current?.focus();

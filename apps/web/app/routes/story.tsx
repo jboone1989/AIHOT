@@ -10,6 +10,8 @@ import { breadcrumbLd, pageMeta, storyLd, titled } from "../lib/seo";
 import { beijingDate, beijingTime } from "@aihot/contracts/time";
 import { monthDay, monthDayTime, relativeTime } from "../lib/format";
 import { HeatChart } from "../features/story/HeatChart";
+import { KnowledgeExplorer, type KnowledgeGraph } from "../components/KnowledgeNetwork";
+import { EnglishStory } from "../components/EnglishStory";
 import { sessionCache } from "../lib/session-cache";
 import { isReload } from "../lib/restore";
 import { Badge, SelectedBadge } from "../components/ui/Badge";
@@ -18,6 +20,7 @@ import { Select } from "../components/ui/Controls";
 import { IconArrowLeft, IconChevronRight, IconClock, IconDoc, IconUsers } from "../components/icons";
 import { PhoneBar } from "../components/shell/PhoneBar";
 import { inNav } from "../components/shell/nav";
+import { useText, useUiLanguage } from "../components/LanguageSwitch";
 import type { Screen } from "../components/shell/screens";
 
 export const handle: Screen = { home: inNav("/hot") ? "hot" : "featured" };
@@ -26,7 +29,8 @@ export const { clientLoader, shouldRevalidate } = pageReuse<typeof loader>();
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const story = await loadOr404<StoryDetail>(`/api/site/stories/${encodeURIComponent(params.publicId)}`, { signal: request.signal, merged: (id) => `/story/${id}` });
-  return cachedPage(300, { story });
+  const graph = await loadOr404<KnowledgeGraph>(`/api/site/knowledge/stories/${encodeURIComponent(params.publicId)}`, { signal: request.signal });
+  return cachedPage(120, { story, graph });
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -182,7 +186,9 @@ type Order = "desc" | "asc";
 const viewCache = sessionCache<{ savedAt: number; filter: Filter; order: Order }>("aihot:story-view:", 30 * 60 * 1000);
 
 export default function StoryPage() {
-  const { story } = useLoaderData<typeof loader>();
+  const { story, graph } = useLoaderData<typeof loader>();
+  const t=useText();
+  const uiLang=useUiLanguage();
   const entry = useLocation().key;
   const [filter, setFilter] = useState<Filter>(() => viewCache.peek(entry)?.filter ?? "all");
   const [order, setOrder] = useState<Order>(() => viewCache.peek(entry)?.order ?? "desc");
@@ -236,6 +242,8 @@ export default function StoryPage() {
     goSection("reports");
   };
 
+  if (uiLang === "en") return <EnglishStory story={story} graph={graph} />;
+
   return (
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-10">
       <PhoneBar back={inNav("/hot") ? { to: "/hot", label: "热点" } : { to: "/", label: "精选" }} title={story.title} />
@@ -244,23 +252,23 @@ export default function StoryPage() {
           <IconArrowLeft size={15} /> {inNav("/hot") ? "热点榜" : "精选"}
         </Link>
         <span className="h-3 w-px bg-line-strong" aria-hidden="true" />
-        <span>事件详情</span>
+        <span>{t("事件详情","Event detail")}</span>
       </nav>
 
       <header className="max-w-[960px] pt-3 lg:pt-0">
         <div className="flex items-center gap-2 text-[12px] text-ink-4">
-          热点事件
+          EVENT / {t("热点事件","TOPIC")}
           <Badge tone={status.tone}>{status.label}</Badge>
         </div>
         <h1 data-page-title="" className="mt-2.5 text-[27px] font-bold leading-[1.5] tracking-[-0.01em] text-ink lg:mt-3 lg:text-[36px] lg:font-[730]">{story.title}</h1>
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[12.5px] text-ink-3">
           <span className="inline-flex items-center gap-1.5">
             <IconDoc size={15} className="text-ink-4" />
-            <b className="num font-semibold text-ink">{story.reportCount}</b> 篇报道
+            <b className="num font-semibold text-ink">{story.reportCount}</b> {t("篇报道","reports")}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <IconUsers size={15} className="text-ink-4" />
-            <b className="num font-semibold text-ink">{story.sourceCount}</b> 个报道来源
+            <b className="num font-semibold text-ink">{story.sourceCount}</b> {t("个报道来源","sources")}
           </span>
           {story.latestAt && (
             <span className="inline-flex items-center gap-1.5" suppressHydrationWarning>
@@ -318,6 +326,45 @@ export default function StoryPage() {
                 )}
               </div>
             )}
+          </Panel>
+
+          <Panel title={t("从事件走进知识网络","From Event to Knowledge")} sub={t("事件树追踪进展，知识图谱记录实体之间有证据的关系。","The event tree follows developments; the knowledge graph retains sourced relationships.")} className="order-2">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-panel border border-line-soft bg-bg-sunk/50 px-4 py-3">
+              <div><span className="lr-eyebrow">GRAPH LAYER / {t("关系层","RELATIONSHIPS")}</span><div className="mt-1 text-[13px] text-ink-2">{graph.entities} {t("个关联实体","entities")} · {graph.edges.length} {t("条关系事实","relations")}</div></div>
+              <Link to="/knowledge" className="lr-inline-link">{t("打开完整知识网络","Explore full graph")} <IconChevronRight size={15}/></Link>
+            </div>
+            <div className="lr-story-knowledge"><KnowledgeExplorer graph={graph} compact /></div>
+          </Panel>
+
+          {/* Evidence is grouped by provenance, never synthesized into invented consensus. */}
+          <Panel title="证据与独立视角" sub="同一事件，把当事方声明和第三方报道分开查看；标题与摘要均来自各自报道。" className="order-2">
+            <div className="grid gap-4 md:grid-cols-2">
+              {([
+                { key: "official", label: "一手资料", rows: story.timeline.filter(r => r.source.firstParty) },
+                { key: "independent", label: "第三方报道", rows: story.timeline.filter(r => !r.source.firstParty) },
+              ] as const).map(group => (
+                <div key={group.key} className="rounded-panel border border-line-soft bg-bg-sunk/40 p-4">
+                  <h3 className="text-[13px] font-semibold text-ink">{group.label} · {group.rows.length} 篇</h3>
+                  {group.rows.length ? (
+                    <ul className="mt-2 divide-y divide-line-soft">
+                      {group.rows.slice(0, 4).map(report => (
+                        <li key={report.id} className="py-3">
+                          <div className="text-[11.5px] text-ink-4">{report.source.name} · {monthDayTime(report.publishedAt)}</div>
+                          <Link to={`/items/${report.id}`} className="mt-1 block text-[13.5px] font-semibold leading-[1.55] text-ink hover:text-accent">{report.title}</Link>
+                          {report.summary && <p className="mt-1 line-clamp-3 text-[12.5px] leading-[1.7] text-ink-3">{report.summary}</p>}
+                          {report.originalUrl && /^https?:\/\//i.test(report.originalUrl) &&
+                            <a href={report.originalUrl} target="_blank" rel="noopener noreferrer"
+                              className="mt-2 inline-block text-[12.5px] font-medium text-accent hover:underline">核对原始报道 ↗</a>}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <p className="mt-3 text-[12.5px] leading-[1.7] text-ink-4">目前尚未收录这一类可核实资料，不能把单方说法当作多方证据。</p>}
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-[12px] leading-[1.6] text-ink-4">
+              不同报道并不自动代表观点冲突；阅读原文核对事实、条件和发布日期。后续来源加入后此处会自动更新。
+            </p>
           </Panel>
 
           {story.developments.length > 1 && (

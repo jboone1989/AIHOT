@@ -19,6 +19,8 @@ import { StoryFollowups } from "../features/item/StoryFollowups";
 import { MediaGallery } from "../features/item/MediaGallery";
 import { QuotedPost } from "../features/item/QuotedPost";
 import { ArticleBody } from "../features/item/ArticleBody";
+import { EnglishItem } from "../components/EnglishItem";
+import { useUiLanguage, useText } from "../components/LanguageSwitch";
 import { ActionsSheet, ReaderToolbar, type ActionRow } from "../features/item/ReaderTools";
 import { OutlineSheet, scrollToAnchor } from "../components/ui/OutlineSheet";
 import { takePreview } from "../features/item/preview";
@@ -303,6 +305,9 @@ function ItemGone() {
 
 function ItemView({ item }: { item: SiteItemDetail }) {
   const navigate = useNavigate();
+  const preference = useUiLanguage();
+  const t=useText();
+  const displayTitle = preference==="en" && item.originalTitle ? item.originalTitle : item.title;
   const hasTranslation = item.hasTranslation;
   const lang = item.bodyLanguage;
   const [posterRequested, setPosterRequested] = useState(false);
@@ -340,7 +345,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
   };
 
   const bodyHtml = lang === "zh" ? (item.body?.zh ?? item.body?.original) : (item.body?.original ?? item.body?.zh);
-  const bodyLabel = !item.body ? null : lang === "zh" && item.body.zhKind === "translation" ? "正文 · AI 翻译" : lang === "original" && hasTranslation ? "正文 · 原文" : "正文";
+  const bodyLabel = !item.body ? null : lang === "zh" && item.body.zhKind === "translation" ? t("正文 · AI 翻译","Body · AI translation") : lang === "original" && hasTranslation ? t("正文 · 原文","Original article") : t("正文","Article");
   const isX = item.channel === "x" && !!item.x;
   // Without a reliable date from the original, the time shown is when it was collected, labelled as such.
   const shownAt = item.publishedAt ?? item.discoveredAt;
@@ -464,6 +469,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
     </>
   );
 
+  if (preference === "en") return <EnglishItem item={item} />;
   return (
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-8">
       {item.body && <ReadingProgress />}
@@ -471,7 +477,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
       {/* Phones: back to where the reader came from, the title once it has scrolled away, more actions. */}
       <PhoneBar
         back={{ to: item.selected ? "/" : "/all", label: item.selected ? "精选" : "全部" }}
-        title={isX ? item.x!.authorName : item.title}
+        title={isX ? item.x!.authorName : displayTitle}
         actions={
           <BarButton label="更多操作" onClick={() => setActionsOpen(true)}>
             <IconMore size={22} />
@@ -518,28 +524,28 @@ function ItemView({ item }: { item: SiteItemDetail }) {
               </span>
             )}
           </div>
-          {!isX && <h1 data-page-title="" className="text-[26px] font-bold leading-[1.38] tracking-[-0.01em] text-ink lg:text-[32px] lg:leading-[1.34] xl:text-[36px] xl:leading-[1.3]">{item.title}</h1>}
-          {!isX && item.originalTitle && <p className="mt-2.5 text-[14px] leading-relaxed text-ink-4">{item.originalTitle}</p>}
+          {!isX && <h1 data-page-title="" className="text-[26px] font-bold leading-[1.38] tracking-[-0.01em] text-ink lg:text-[32px] lg:leading-[1.34] xl:text-[36px] xl:leading-[1.3]">{displayTitle}</h1>}
+          {!isX && item.originalTitle && preference==="zh" && <p className="mt-2.5 text-[14px] leading-relaxed text-ink-4">{item.originalTitle}</p>}
           {/* The source is a first-class citation, visible before the AI's interpretation on every screen. */}
           {/^(https?:)\/\//i.test(item.links.original) && (
             <div className="mt-4 flex flex-wrap items-center gap-2 text-[13px] text-ink-3">
-              <span>原始来源：{item.source.name}</span>
+              <span>{t("原始来源：","Original source: ")}{item.source.name}</span>
               <a href={item.links.original} target="_blank" rel="noopener noreferrer"
                 className="inline-flex min-h-10 items-center gap-1.5 rounded-control border border-line-strong px-3 font-semibold text-accent hover:border-accent hover:bg-bg-sunk">
-                {isX ? "查看原帖" : "阅读原始报道"} <IconExternal size={14} />
+                {isX ? t("查看原帖","View post") : t("阅读原始报道","Read original")} <IconExternal size={14} />
               </a>
             </div>
           )}
 
 
-          {item.summary && (!isX || item.summary.replace(/\s+/g, " ").trim() !== item.title) && (
+          {preference==="zh" && item.summary && (!isX || item.summary.replace(/\s+/g, " ").trim() !== item.title) && (
             <section className={isX ? "mt-4" : "mt-7 xl:mt-8"}>
               <div className="mb-2 text-[12px] font-semibold text-accent">{summaryOnly ? "摘要" : "AI 导读"}</div>
               <p className="text-[18px] leading-[1.7] text-ink xl:text-[20px] xl:leading-[1.7]">{item.summary}</p>
             </section>
           )}
 
-          {item.reason && !summaryOnly && (
+          {preference==="zh" && item.reason && !summaryOnly && (
             <section className="mt-6 border-t border-line pt-4 lg:hidden">
               <div className="mb-1 text-[12px] font-semibold text-ink-3">{ITEM_COPY.reasonLabel}</div>
               <p className="text-[15px] leading-[1.75] text-ink-2">{item.reason}</p>
@@ -572,11 +578,11 @@ function ItemView({ item }: { item: SiteItemDetail }) {
                   <PillTabs
                     size="xs"
                     layoutId="item-body-lang"
-                    label="正文语言"
+                    label={t("正文语言","Article language")}
                     active={lang}
                     items={[
                       { key: "zh", label: "中文", prefetch: "intent", replace: true, to: `/items/${item.id}` },
-                      { key: "original", label: "原文", prefetch: "intent", replace: true, to: `/items/${item.id}/original` },
+                      { key: "original", label: t("原文","Original"), prefetch: "intent", replace: true, to: `/items/${item.id}/original` },
                     ]}
                   />
                 )}
@@ -592,7 +598,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
           {isX && item.x!.quoted?.text && <QuotedPost quoted={item.x!.quoted} original={lang === "original"} />}
 
           <p className="mt-8 text-[13px] text-ink-4">
-            来源：
+            {t("来源：","Source: ")}
             <a href={item.links.original} target="_blank" rel="noopener noreferrer" className="text-ink-3 hover:text-accent">
               {isX ? item.x!.authorName : item.source.name}
             </a>

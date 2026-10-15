@@ -14,6 +14,8 @@ import { AGENT_PARTS, GUIDE_CLIENTS, TAG } from "../features/agent/module-parts"
 import { ApiPanel, McpPanel, mcpToolCount, RssPanel } from "../features/agent/panels";
 import type { AgentTrack } from "../modules";
 import { PhoneBar } from "../components/shell/PhoneBar";
+import { useUiLanguage } from "../components/LanguageSwitch";
+import { EnglishAgent } from "../components/EnglishUtility";
 import type { Screen } from "../components/shell/screens";
 
 export const handle: Screen = { tab: "me", name: "Agent 接入" };
@@ -87,6 +89,7 @@ export function meta({ location }: Route.MetaArgs) {
 }
 
 export default function AgentPage() {
+  const language=useUiLanguage();
   const { healthy, base, now } = useLoaderData<typeof loader>();
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -120,6 +123,7 @@ export default function AgentPage() {
   };
   const track = TRACKS.find((t) => t.key === tab);
 
+  if(language==="en") return <EnglishAgent base={base} healthy={healthy}/>;
   const chip = "inline-flex h-7 items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 text-[12px] text-ink-3";
   const aside = (
     <>

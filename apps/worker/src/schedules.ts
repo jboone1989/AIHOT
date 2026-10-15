@@ -5,6 +5,7 @@ import { ensureQueue, recordRun } from "@aihot/backend/jobs/queue";
 import { responder, serverModules, type Scheduled } from "@aihot/backend/modules";
 import { sweepUnprocessed } from "@aihot/backend/jobs/content";
 import { probeNvidiaPool } from "@aihot/backend/providers/nvidia-pool";
+import { ingestGraphitiOnce } from "@aihot/backend/knowledge/graphiti";
 import { translatePending } from "@aihot/backend/editorial/translate";
 import { adaptIntervals, scheduleDueSources } from "@aihot/backend/sources/collect";
 import { scheduleMpReconcile } from "@aihot/backend/sources/mp";
@@ -24,6 +25,9 @@ import { sourceHealthWeekly } from "@aihot/backend/operations/reports";
 const collecting = process.env.COLLECT_ENABLED === "true";
 
 const ENGINE_SCHEDULES: Scheduled[] = [
+  ...(process.env.GRAPHITI_INGEST_ENABLED === "true" ? [
+    {name:"knowledge.graphiti.ingest",cron:"*/5 * * * *",run:ingestGraphitiOnce},
+  ] : []),
   ...(process.env.NVIDIA_MODEL_POOL_ENABLED === "true" ? [
     { name: "models.nvidia.probe", cron: "*/5 * * * *", run: probeNvidiaPool },
   ] : []),

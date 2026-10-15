@@ -8,6 +8,8 @@ import { archiveLd, pageMeta } from "../lib/seo";
 import { beijingDate } from "@aihot/contracts/time";
 import { weekdayShort } from "../lib/format";
 import { ReportLayout } from "../features/report/ReportLayout";
+import { useUiLanguage } from "../components/LanguageSwitch";
+import { EnglishArchive } from "../components/EnglishPages";
 import { archiveGroups, ENTRIES_UNIT } from "../features/report/format";
 import { Rows, SectionPage } from "../features/report/ReportPaper";
 import { Nameplate } from "../features/report/Nameplate";
@@ -28,8 +30,10 @@ export function meta({ loaderData }: { loaderData?: { index: ReportIndexEntry[] 
 }
 
 export default function DailyArchive() {
+  const language=useUiLanguage();
   const { index, today } = useLoaderData<typeof loader>();
   const months = archiveGroups("daily", index);
+  if(language==="en") return <EnglishArchive index={index}/>;
   return (
     <ReportLayout kind="daily" index={index} current={null} today={today} back={{ to: "/daily", label: "日报" }} title="日报合订本">
       <div className="@container">

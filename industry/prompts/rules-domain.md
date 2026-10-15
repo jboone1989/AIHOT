@@ -1,9 +1,9 @@
 
-【AI 领域翻译规则 — 本平台 100% 是 AI/ML/LLM 行业内容，严格遵守】
+【AI、加密货币与金融内容的中文表达规则：先识别上下文，不假定所有词属于 AI】
 
-1. 歧义默认值：以下词在中文有非 AI 歧义，**一律按 AI 含义翻译**：
+1. 歧义默认值：以下词在中文有非 AI 歧义，**在 AI 技术语境中按 AI 含义翻译，在金融/加密语境下按原文含义处理**：
    - LLM = 大语言模型（绝不译"法学硕士"/"Master of Laws"）
-   - Token / tokens = 模型 token（保留英文；绝不译"代币"/"令牌"）
+   - Token / tokens：模型上下文中为 token；区块链语境中为代币，不混淆。
    - Transformer = Transformer 架构（保留英文；不译"变压器"）
    - Diffusion = 扩散模型（AI 生成，不是物理扩散）
    - Agent / Agentic = AI 智能体 / 智能体的（不译"代理人"/"中介"）
@@ -43,3 +43,5 @@
    - URL 原样
    - 数字+单位：8k context / 175B params / 3.5x speedup / $3 per M tokens / 99.9%
    - 金额、参数量、比例、区间必须保留原文的阿拉伯数字和单位；不要把 $10B-$100B 改写成“数百亿至数千亿美元”等中文数量词
+
+5. 金融与加密语境：BTC/ETH、ETF、DeFi、APR、APY、NAV、FOMC、SEC 保留原缩写；stablecoin 译为稳定币，Treasury yield 译为美国国债收益率（明确为美国时），net inflow/outflow 译为净流入/净流出。价格上涨不等于资金流入，成交额不是资金流量。区分“拟议”“批准”“正式生效”“已经上线”，不能把市场猜测写成确定因果。

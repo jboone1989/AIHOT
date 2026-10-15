@@ -55,6 +55,7 @@ interface ReportRow extends RepresentativeIdentity {
   timeline_at: Date;
   id: string;
   title: string;
+  original_title: string | null;
   summary: string | null;
   url: string;
   selected: boolean;
@@ -73,7 +74,7 @@ interface ReportRow extends RepresentativeIdentity {
  */
 async function storyReports(storyId: number, now: Date): Promise<ReportRow[]> {
   return sql<ReportRow[]>`
-    SELECT DISTINCT ON (p.article_id) p.article_id AS id, p.title, p.summary, p.url, p.selected,
+    SELECT DISTINCT ON (p.article_id) p.article_id AS id, p.title, p.original_title, p.summary, p.url, p.selected,
       coalesce(p.published_at, p.discovered_at) AS at, s.id AS source_id, s.name AS source_name,
       (s.tier = 'T1') AS first_party, f.id AS fact_id,
       CASE WHEN ${compositeCondition()} THEN 'mention' ELSE fa.role END AS role, p.body_mode, p.score, p.timeline_at, ${REPRESENTATIVE_COLUMNS}
@@ -87,7 +88,9 @@ function reportView(r: ReportRow): StoryReportView {
   return {
     id: r.id,
     title: r.title,
+    originalTitle: r.original_title,
     summary: r.summary,
+    originalUrl: r.url,
     source: { name: publicSourceName(r.source_name), firstParty: r.first_party },
     publishedAt: r.at.toISOString(),
     selected: r.selected,
@@ -171,6 +174,7 @@ export async function loadStoryDetail(storyId: number, now = new Date()): Promis
   return {
     publicId: s.public_id,
     title: s.title,
+    englishTitle: reports.find(r => r.original_title && !/[\u3400-\u9fff]/.test(r.original_title))?.original_title ?? null,
     status: storyStatusFor(latestAt, now.getTime()),
     reportCount: reports.length,
     sourceCount: new Set(reports.map((r) => r.source_id)).size,
@@ -244,6 +248,11 @@ export async function loadHot(): Promise<HotResponse> {
   const ranking = await latestHotRanking();
   if (!ranking) return { computedAt: null, windowHours: 48, entries: [] };
   const at = new Date(ranking.computedAt);
+  const idsForEnglish = ranking.entries.map(e => e.representativeItemId).filter((id): id is string => Boolean(id));
+  const englishRows = idsForEnglish.length ? await sql<{id:string;original_title:string|null}[]>`
+    SELECT article_id AS id, original_title FROM publications WHERE article_id IN ${sql(idsForEnglish)}
+  ` : [];
+  const englishByArticle = new Map(englishRows.filter(r => r.original_title && !/[\u3400-\u9fff]/.test(r.original_title)).map(r => [r.id,r.original_title]));
   const [sparks, covers, extras] = await Promise.all([
     sparklines(
       ranking.entries.map((e) => e.storyId),
@@ -264,6 +273,7 @@ export async function loadHot(): Promise<HotResponse> {
       return {
         rank: e.rank,
         story: { publicId: e.storyPublicId, title: e.title },
+        englishTitle: englishByArticle.get(e.representativeItemId ?? "") ?? null,
         heat: e.heat,
         trend: e.trend,
         trendPct: e.trendPct,

@@ -12,7 +12,8 @@ import { pageMeta } from "../lib/seo";
 import { setFontPreference, useFontPreference, useStarred } from "../lib/local-state";
 import { Select } from "../components/ui/Controls";
 import { ThemeSwitch } from "../components/shell/ThemeSwitch";
-import { IconBookmark, IconChevronRight, IconGrid, IconHeart, IconMessage, IconMoon, IconPlug, IconSparkles } from "../components/icons";
+import { LanguageSwitch, useUiLanguage } from "../components/LanguageSwitch";
+import { IconNetwork, IconBookmark, IconChevronRight, IconGrid, IconHeart, IconMessage, IconMoon, IconPlug, IconSparkles } from "../components/icons";
 
 export const handle: Screen = { tab: "me", name: "我的" };
 
@@ -36,6 +37,8 @@ const agentWays = () => [...webModules().flatMap((m) => m.agentWays ?? []), "MCP
 /** The modules' tools first, then the engine's. */
 const tools = (): Row[] => [
   ...webModules().flatMap((m) => m.tools ?? []),
+  { to: "/knowledge", label: "知识网络", icon: <IconNetwork size={20} />, detail: "实体 · 关系 · 来源" },
+  { to: "/daily", label: "日报与回顾", icon: <IconGrid size={20} /> },
   ...(inNav("/topics") ? [{ to: "/topics", label: "主题", icon: <IconGrid size={20} /> }] : []),
   { to: "/agent", label: "Agent 接入", icon: <IconPlug size={20} />, detail: agentWays().slice(0, 3).join(" · ") },
 ];
@@ -50,13 +53,14 @@ function Group({ title, children }: { title?: string; children: ReactNode }) {
 }
 
 function RowLink({ row, dot = false }: { row: Row; dot?: boolean }) {
+  const lang=useUiLanguage();
   return (
     <li>
       <Link viewTransition to={row.to} className="flex min-h-[52px] items-center gap-3 px-4 text-[16px] font-medium text-ink transition-colors active:bg-bg-sunk lg:hover:bg-bg-sunk">
         <span className="text-ink-3">{row.icon}</span>
         <span className="flex flex-1 items-center gap-2">
           {row.label}
-          {dot && <span className="size-[7px] rounded-full bg-hot" aria-label="有新的更新" />}
+          {dot && <span className="size-[7px] rounded-full bg-hot" aria-label={lang==="en"?"New updates":"有新的更新"} />}
         </span>
         {row.detail && <span className="text-[14px] font-normal text-ink-4">{row.detail}</span>}
         <IconChevronRight size={16} className="text-ink-4" />
@@ -70,21 +74,56 @@ export default function MorePage() {
   const changelogDot = useChangelogDot(root?.changelogVersion ?? null);
   const starred = useStarred();
   const font = useFontPreference();
+  const language = useUiLanguage();
   // The count is this browser's: shown once the page runs here, never in the shared server copy.
   const [here, setHere] = useState(false);
   useEffect(() => setHere(true), []);
+  if (language === "en") return (
+    <div className="mx-auto max-w-[var(--page-max-reading)] pb-8">
+      <PhoneBar title="More" large />
+      <h1 className="hidden pb-4 pt-1 text-[22px] font-bold text-ink lg:block">Settings & tools</h1>
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-4 2xl:grid-cols-3">
+        <Group title="PREFERENCES">
+          <li className="flex min-h-[56px] items-center justify-between gap-3 px-4 text-[15px] text-ink">
+            <span>Language</span><LanguageSwitch compact />
+          </li>
+          <li className="flex min-h-[56px] items-center justify-between gap-3 px-4 text-[15px] text-ink"><span>Appearance</span><ThemeSwitch className="w-[126px]" /></li>
+          <li className="flex min-h-[56px] items-center justify-between gap-3 px-4 text-[15px] text-ink">
+            <span>Font</span><Select aria-label="Font" value={font ?? "system"} onChange={e=>setFontPreference(e.target.value==="browser"?"browser":null)}>
+              <option value="system">Default</option><option value="browser">Browser font</option>
+            </Select>
+          </li>
+        </Group>
+        <Group title="RESEARCH">
+          <RowLink row={{to:"/knowledge",label:"Knowledge Graph",icon:<IconNetwork size={20}/>,detail:"Entities · Facts"}} />
+          <RowLink row={{to:"/hot",label:"Event Timeline",icon:<IconGrid size={20}/>}} />
+          <RowLink row={{to:"/starred",label:"Saved reports",icon:<IconBookmark size={20}/>,detail:here&&starred.length?String(starred.length):undefined}} />
+          <RowLink row={{to:"/daily",label:"Daily report (Chinese edition)",icon:<IconGrid size={20}/>}} />
+        </Group>
+        <Group title="LIVINGRUNTIME">
+          <RowLink row={{to:"/about",label:"About",icon:<IconHeart size={20}/>}} />
+          <RowLink row={{to:"/feedback",label:"Feedback",icon:<IconMessage size={20}/>}} />
+          <RowLink row={{to:"/changelog",label:"Updates",icon:<IconSparkles size={20}/>}} dot={changelogDot}/>
+        </Group>
+      </div>
+      <div className="mt-6 flex justify-center gap-5 text-[12px] text-ink-4">
+        <Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><a href="/feed.xml">RSS</a>
+      </div>
+    </div>
+  );
   return (
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-8">
-      <PhoneBar title="我的" large />
-      <h1 className="hidden pb-4 pt-1 text-[22px] font-bold text-ink lg:block">我的</h1>
+      <PhoneBar title={"我的"} large />
+      <h1 className="hidden pb-4 pt-1 text-[22px] font-bold text-ink lg:block">{"我的"}</h1>
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-4 2xl:grid-cols-3">
         <Group>
+          <li className="flex min-h-[56px] items-center justify-between gap-3 px-4 text-[16px] text-ink"><span>{"语言"}</span><LanguageSwitch compact /></li>
           <RowLink row={{ to: "/starred", label: "收藏", icon: <IconBookmark size={20} />, detail: here && starred.length > 0 ? <span className="num">{starred.length}</span> : undefined }} />
           <li className="flex min-h-[56px] items-center gap-3 px-4 text-[16px] font-medium text-ink">
             <span className="text-ink-3">
               <IconMoon size={20} />
             </span>
-            <span className="flex-1">外观</span>
+            <span className="flex-1">{"外观"}</span>
             <ThemeSwitch className="w-[126px]" />
           </li>
           <li className="flex min-h-[56px] items-center gap-3 px-4 text-[16px] font-medium text-ink">
@@ -96,12 +135,12 @@ export default function MorePage() {
             </Select>
           </li>
         </Group>
-        <Group title="工具与入口">
+        <Group title={"工具与入口"}>
           {tools().map((r) => (
             <RowLink key={r.to} row={r} />
           ))}
         </Group>
-        <Group title="关于">
+        <Group title={"关于"}>
           <RowLink row={{ to: "/about", label: `关于 ${SITE.name}`, icon: <IconHeart size={20} /> }} />
           <RowLink row={{ to: "/changelog", label: "更新日志", icon: <IconSparkles size={20} /> }} dot={changelogDot} />
           <RowLink row={{ to: "/feedback", label: "意见反馈", icon: <IconMessage size={20} /> }} />

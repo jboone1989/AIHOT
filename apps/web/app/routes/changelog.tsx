@@ -11,6 +11,8 @@ import { AsideCard, ReadingLayout } from "../components/ui/Page";
 import { IconChevronRight } from "../components/icons";
 import { Inline, dateHeading } from "../features/changelog/text";
 import { PhoneBar } from "../components/shell/PhoneBar";
+import { useUiLanguage } from "../components/LanguageSwitch";
+import { EnglishUpdates } from "../components/EnglishPages";
 import type { Screen } from "../components/shell/screens";
 
 export const handle: Screen = { tab: "me", name: "更新日志" };
@@ -126,6 +128,7 @@ function FeatureDay({ date, releases, Drawing }: { date: string; releases: Relea
 }
 
 export default function ChangelogPage() {
+  const language=useUiLanguage();
   const data = useLoaderData<typeof loader>();
   useEffect(() => setChangelogSeen(data.latestVersion), [data.latestVersion]);
   const [kind, setKind] = useState<Release["kind"] | null>(null);
@@ -179,6 +182,7 @@ export default function ChangelogPage() {
     </>
   );
 
+  if(language==="en") return <EnglishUpdates releases={data.releases}/>;
   return (
     <>
     <PhoneBar back={{ to: "/more", label: "我的" }} title="更新日志" />

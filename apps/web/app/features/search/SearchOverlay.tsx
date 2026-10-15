@@ -8,6 +8,8 @@ import { IconClose, IconSearch } from "../../components/icons";
 import { inNav } from "../../components/shell/nav";
 import { addRecentSearch, clearRecentSearches, useRecentSearches } from "../../lib/local-state";
 import { useModal } from "../../components/ui/modal";
+import { useText, useUiLanguage } from "../../components/LanguageSwitch";
+import { enTopic } from "../../components/EnglishPages";
 
 // One overlay for the whole site, opened from any bar.
 let overlay: HTMLDivElement | null = null;
@@ -50,6 +52,8 @@ function loadSuggestions() {
 const RANK_COLOR = ["text-rank-1", "text-rank-2", "text-rank-3"];
 
 export function SearchOverlay() {
+  const t=useText();
+  const lang=useUiLanguage();
   const shown = useSyncExternalStore(subscribe, () => open, () => false);
   const panel = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -109,7 +113,7 @@ export function SearchOverlay() {
       ref={panel}
       role="dialog"
       aria-modal="true"
-      aria-label="搜索"
+      aria-label={t("搜索","Search")}
       tabIndex={-1}
       inert={!shown}
       className={`fixed inset-0 z-[75] flex flex-col bg-bg pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] transition-[opacity,transform] duration-200 ease-[var(--ease-out-quart)] lg:hidden ${shown ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-1 opacity-0"}`}
@@ -129,7 +133,7 @@ export function SearchOverlay() {
         className="flex h-14 shrink-0 items-center gap-1 pl-4 pr-1 pt-[env(safe-area-inset-top)]"
       >
         <label className="relative flex-1">
-          <span className="sr-only">搜索标题、摘要和正文</span>
+          <span className="sr-only">{t("搜索标题、摘要和正文","Search titles and article text")}</span>
           <IconSearch size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-4" />
           <input
             ref={input}
@@ -137,7 +141,7 @@ export function SearchOverlay() {
             type="search"
             onInput={(e) => setHasText(!!e.currentTarget.value)}
             tabIndex={shown ? 0 : -1}
-            placeholder="搜索标题、摘要和正文"
+            placeholder={t("搜索标题、摘要和正文","Search articles and sources")}
             maxLength={200}
             autoComplete="off"
             enterKeyHint="search"
@@ -146,7 +150,7 @@ export function SearchOverlay() {
           {hasText && (
             <button
               type="button"
-              aria-label="清空"
+              aria-label={t("清空","Clear")}
               tabIndex={shown ? 0 : -1}
               onClick={() => {
                 if (input.current) input.current.value = "";
@@ -160,7 +164,7 @@ export function SearchOverlay() {
           )}
         </label>
         <button type="button" tabIndex={shown ? 0 : -1} onClick={close} className="h-11 shrink-0 px-3 text-[16px] text-accent">
-          取消
+          {t("取消","Cancel")}
         </button>
       </Form>
 
@@ -169,9 +173,9 @@ export function SearchOverlay() {
           {recent.length > 0 && (
             <section className="pt-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-[13px] font-semibold text-ink-3">最近搜索</h2>
+                <h2 className="text-[13px] font-semibold text-ink-3">{t("最近搜索","Recent searches")}</h2>
                 <button type="button" onClick={clearRecentSearches} className="-mr-2 h-11 px-2 text-[13px] text-ink-4">
-                  清除
+                  {t("清除","Clear") }
                 </button>
               </div>
               <div className="mt-1.5 flex flex-wrap gap-2">
@@ -186,23 +190,23 @@ export function SearchOverlay() {
 
           {companies.length > 0 && (
             <section className="pt-6">
-              <h2 className="text-[13px] font-semibold text-ink-3">按主题找</h2>
+              <h2 className="text-[13px] font-semibold text-ink-3">{t("按主题找","Browse topics")}</h2>
               <div className="mt-2.5 flex flex-wrap gap-2">
                 {companies.map((t) => (
                   <Link viewTransition key={t.slug} to={`/topics/${t.slug}`} className={`${chip} bg-bg-sunk text-ink-2 ring-1 ring-inset ring-line-soft active:bg-bg-muted dark:bg-bg-muted/60`}>
-                    <span className="truncate">{t.name}</span>
+                    <span className="truncate">{lang==="en"?enTopic(t):t.name}</span>
                   </Link>
                 ))}
                 {inNav("/topics") && (
                   <Link viewTransition to="/topics" className={`${chip} gap-0.5 font-medium text-accent`}>
-                    全部 {more!.topics.length} 个主题
+                    {lang==="en"?"All":"全部"} {more!.topics.length} {t("个主题","topics")}
                   </Link>
                 )}
               </div>
             </section>
           )}
 
-          {(more?.hot.length ?? 0) > 0 && (
+          {lang==="zh" && (more?.hot.length ?? 0) > 0 && (
             <section className="pt-6">
               <h2 className="text-[13px] font-semibold text-ink-3">正在热议</h2>
               <ol className="mt-1 divide-y divide-line-soft">

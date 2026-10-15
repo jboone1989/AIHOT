@@ -10,6 +10,8 @@ import { IconChevronRight } from "../components/icons";
 import { IntentLink } from "../components/ui/IntentLink";
 import { BrandMark } from "../components/BrandMark";
 import { PhoneBar } from "../components/shell/PhoneBar";
+import { useUiLanguage } from "../components/LanguageSwitch";
+import { EnglishTopics } from "../components/EnglishPages";
 import { inNav } from "../components/shell/nav";
 import type { Screen } from "../components/shell/screens";
 
@@ -97,7 +99,9 @@ function TopicCard({ t }: { t: TopicSummary }) {
 }
 
 export default function TopicsPage() {
+  const language=useUiLanguage();
   const { groups, topics } = useLoaderData<typeof loader>();
+  if(language==="en") return <EnglishTopics groups={groups} topics={topics}/>;
   return (
     <div className="pb-10">
       <PhoneBar back={{ to: "/more", label: "我的" }} title="主题" />

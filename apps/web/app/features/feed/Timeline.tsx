@@ -11,11 +11,12 @@ import { IconChevronDown } from "../../components/icons";
 import { RingMark } from "@aihot/site/brand/Logo.tsx";
 import { EmptyState } from "../../components/ui/Page";
 import { beijingDate, beijingTime, beijingWeekday } from "@aihot/contracts/time";
-import { monthDay, weekdayShort } from "../../lib/format";
+import { monthDay, weekdayShort, localizedMonthDay, localizedWeekday } from "../../lib/format";
 import { isHydrated } from "../../lib/hydration";
 import { markRead, useReadSet } from "../../lib/local-state";
 import { filterParams, listPath } from "../../lib/seo";
 import { isReload, readSnapshot, restoreAnchor, saveSnapshot, useSaveOnLeave } from "../../lib/restore";
+import { useText, useUiLanguage } from "../../components/LanguageSwitch";
 
 const AUTO_BATCHES = 3;
 
@@ -36,19 +37,21 @@ function fromResponse(r: TimelineResponse, unreadOnly = false): ListState {
 
 /** Sticky day header under the phone bar: a quiet row on desktop, a grey full-width bar on phones. */
 export function DayHeader({ day, today, count, collapsed, onToggle, aside }: { day: string; today: string; count: number | null; collapsed?: boolean; onToggle?: () => void; aside?: React.ReactNode }) {
-  const date = monthDay(day);
-  const weekday = beijingWeekday(day);
-  const short = weekdayShort(day);
+  const lang=useUiLanguage();
+  const t=useText();
+  const date=localizedMonthDay(day,lang);
+  const weekday=localizedWeekday(day,lang);
+  const short = lang==="en"?weekday.slice(0,3):weekdayShort(day);
   const phoneRow = (
     <>
-      <span className="text-[14px] font-bold text-ink">{day === today ? "今天" : date}</span>
+      <span className="text-[14px] font-bold text-ink">{day === today ? t("今天","Today") : date}</span>
       {day === today && <span className="text-[12.5px] text-ink-4">{date}</span>}
       <span className="text-[12.5px] text-ink-4">{short}</span>
       <span className="ml-auto flex items-center gap-1 text-[12.5px] text-ink-4">
         {aside}
         {count !== null && (
           <span>
-            <span className="num">{count}</span> 条
+            <span className="num">{count}</span> {t("条","items")}
           </span>
         )}
         {onToggle && <IconChevronDown size={15} className={`transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`} />}
@@ -59,7 +62,7 @@ export function DayHeader({ day, today, count, collapsed, onToggle, aside }: { d
     <div className="bleed sticky top-[var(--bar-h)] z-20 bg-daybar lg:mx-0 lg:bg-bg lg:px-0">
       {/* Phones: a full-width day bar; on the timeline the whole bar folds the day. */}
       {onToggle ? (
-        <button type="button" onClick={onToggle} aria-expanded={!collapsed} aria-label={`${collapsed ? "展开" : "收起"}${date}`} className="flex h-11 w-full items-center gap-2 text-left lg:hidden">
+        <button type="button" onClick={onToggle} aria-expanded={!collapsed} aria-label={`${collapsed ? t("展开","Expand") : t("收起","Collapse")} ${date}`} className="flex h-11 w-full items-center gap-2 text-left lg:hidden">
           {phoneRow}
         </button>
       ) : (
@@ -79,7 +82,7 @@ export function DayHeader({ day, today, count, collapsed, onToggle, aside }: { d
             type="button"
             onClick={onToggle}
             aria-expanded={!collapsed}
-            aria-label={collapsed ? `展开${date}` : `收起${date}`}
+            aria-label={collapsed ? `${t("展开","Expand")} ${date}` : `${t("收起","Collapse")} ${date}`}
             className="grid size-6 place-items-center justify-self-center rounded-full text-ink-4 transition-colors hover:bg-bg-sunk hover:text-ink"
           >
             <IconChevronDown size={14} className={`transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`} />
@@ -90,7 +93,7 @@ export function DayHeader({ day, today, count, collapsed, onToggle, aside }: { d
           {count !== null && (
             <>
               {" · "}
-              <span className="num">{count}</span> 条
+              <span className="num">{count}</span> {t("条","items")}
             </>
           )}
         </span>
@@ -127,6 +130,7 @@ export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey }
 }
 
 export function Timeline({ initial, filters }: { initial: TimelineResponse; filters: TimelineFilters }) {
+  const t=useText();
   const location = useLocation();
   const navigation = useNavigation();
   const readSet = useReadSet();
@@ -303,7 +307,7 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
     <div className="relative">
       <div className="mb-2 flex justify-end">
         <ToggleChip on={unreadOnly} onToggle={() => setState((s) => ({ ...s, unreadOnly: !s.unreadOnly }))}>
-          只看未读
+          {t("只看未读","Unread only")}
         </ToggleChip>
       </div>
 
@@ -311,12 +315,12 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
         <div className="lg:card">
           {unreadOnly ? (
             state.nextCursor ? (
-              <EmptyState title="这批精选都读过了">继续往下看，可以找到更早的未读精选。</EmptyState>
+              <EmptyState title={t("这批精选都读过了","All caught up")}>{t("继续往下看，可以找到更早的未读精选。","Continue for older unread reports.")}</EmptyState>
             ) : (
-              <EmptyState title="没有未读的精选内容">关掉「只看未读」可以看到全部内容。</EmptyState>
+              <EmptyState title={t("没有未读的精选内容","No unread reports")}>{t("关掉「只看未读」可以看到全部内容。","Turn off the unread filter to see everything.")}</EmptyState>
             )
           ) : (
-            <EmptyState title="这个筛选下还没有精选内容">换个类别看看，或者去全部动态里找找。</EmptyState>
+            <EmptyState title={t("这个筛选下还没有精选内容","No reports for this filter")}>{t("换个类别看看，或者去全部动态里找找。","Choose another category or explore all news.")}</EmptyState>
           )}
         </div>
       )}
@@ -353,24 +357,25 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
 
 /** The foot of a paged list: loading, retry, "加载更多" after a few automatic pages, or the end. */
 function FeedEnd({ loading, error, hasMore, manual, empty, onMore }: { loading: boolean; error: boolean; hasMore: boolean; manual: boolean; empty: boolean; onMore: () => void }) {
+  const t=useText();
   return (
     <div className="flex justify-center py-6">
       {loading ? (
         <span className="inline-flex items-center gap-2 text-[12.5px] text-ink-4">
-          <RingMark className="size-4 text-accent" spinning /> 正在加载
+          <RingMark className="size-4 text-accent" spinning /> {t("正在加载","Loading")}
         </span>
       ) : error ? (
         <button type="button" onClick={onMore} className="h-9 rounded-full border border-hot/30 px-4 text-[13px] text-hot hover:bg-hot-soft">
-          加载失败，点此重试
+          {t("加载失败，点此重试","Failed to load · Retry")}
         </button>
       ) : hasMore ? (
         manual && (
           <button type="button" onClick={onMore} className="h-9 rounded-full border border-line-strong bg-surface px-5 text-[13px] font-medium text-ink-2 transition-colors hover:border-ink-4 hover:text-ink">
-            加载更多
+            {t("加载更多","Load more")}
           </button>
         )
       ) : (
-        !empty && <span className="text-[12px] text-ink-4">已经到底了</span>
+        !empty && <span className="text-[12px] text-ink-4">{t("已经到底了","End of feed")}</span>
       )}
     </div>
   );

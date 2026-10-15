@@ -30,6 +30,7 @@ interface Route {
   /** Not an editorial source: no analysis; the post goes straight to event grouping as discussion evidence. */
   signal: boolean;
   historical: boolean;
+  tier: string;
 }
 
 /**
@@ -39,8 +40,8 @@ interface Route {
  * history adds no heat).
  */
 async function route(articleId: string, db: Db): Promise<Route | null> {
-  const [row] = await db<{ body_status: string; participation_mode: string; kind: string; config: Record<string, unknown>; url: string; bare: boolean; backfill: boolean; published_at: Date | null; discovered_at: Date }[]>`
-    SELECT a.body_status, s.participation_mode, s.kind, s.config, a.url, (coalesce(a.body_text, '') = '' AND a.x_post IS NULL) AS bare,
+  const [row] = await db<{ body_status: string; participation_mode: string; tier: string; kind: string; config: Record<string, unknown>; url: string; bare: boolean; backfill: boolean; published_at: Date | null; discovered_at: Date }[]>`
+    SELECT a.body_status, s.participation_mode, s.tier, s.kind, s.config, a.url, (coalesce(a.body_text, '') = '' AND a.x_post IS NULL) AS bare,
            a.backfill, a.published_at, a.discovered_at
     FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.id = ${articleId}`;
   if (!row) return null;
@@ -50,7 +51,7 @@ async function route(articleId: string, db: Db): Promise<Route | null> {
   const wantsBody = row.config.fetchPublicContent === true || !!row.config.detail || row.kind === "web_list";
   const needsPage = !signal && pageFetchable(row.url, row.kind) && (wantsBody || row.bare);
   const needsXArticle = row.kind === "x_search" && (!signal || (row.participation_mode === "hot_signal" && !historical));
-  return { step: pending && (needsPage || needsXArticle) ? "extract" : "analyze", signal, historical };
+  return { step: pending && (needsPage || needsXArticle) ? "extract" : "analyze", signal, historical, tier: row.tier };
 }
 
 /**
@@ -58,7 +59,7 @@ async function route(articleId: string, db: Db): Promise<Route | null> {
  * first import or a backfill never holds up today's news; discussion evidence waits behind reports
  * in the serial grouping queue, history behind both.
  */
-const PRIORITY = { live: 0, liveSignal: -1, history: -2 } as const;
+const PRIORITY = { liveOfficial: 2, live: 0, liveSignal: -1, history: -2 } as const;
 
 /**
  * The one way to hand an article to processing. `attemptTag` makes an explicit re-evaluation a new
@@ -70,19 +71,20 @@ export async function queueProcessing(articleId: string, opts: { step?: Step; at
   const r = await route(articleId, db);
   if (!r) return null;
   const step = opts.step ?? r.step;
+  const priority = r.historical ? PRIORITY.history : r.tier === "T1" && !r.signal ? PRIORITY.liveOfficial : PRIORITY.live;
   const [queued] = await db<{ processing_attempt_tag: string | null }[]>`
     UPDATE articles SET processing_queued_at = now(), processing_attempt_tag = coalesce(${opts.attemptTag ?? null}, processing_attempt_tag)
     WHERE id = ${articleId} RETURNING processing_attempt_tag`;
   if (!queued) return null;
   // Extraction and the sweep only carry articleId; retain the current evaluation's paid identity.
   const attemptTag = queued.processing_attempt_tag ?? undefined;
-  if (step === "extract") return enqueue(QUEUES.extractBody, { articleId }, { singletonKey: articleId, priority: r.historical ? PRIORITY.history : PRIORITY.live }, opts.db);
+  if (step === "extract") return enqueue(QUEUES.extractBody, { articleId }, { singletonKey: articleId, priority }, opts.db);
   if (r.signal && !attemptTag) {
     return enqueue(QUEUES.group, { articleId, signalOnly: true }, { singletonKey: articleId, priority: r.historical ? PRIORITY.history : PRIORITY.liveSignal }, opts.db);
   }
   const tagged = !!attemptTag;
   return enqueue(QUEUES.analyze, tagged ? { articleId, attemptTag } : { articleId },
-    { singletonKey: tagged ? `manual:analyze:${articleId}:${attemptTag}` : articleId, priority: r.historical ? PRIORITY.history : PRIORITY.live }, opts.db);
+    { singletonKey: tagged ? `manual:analyze:${articleId}:${attemptTag}` : articleId, priority }, opts.db);
 }
 
 /**
@@ -100,8 +102,8 @@ export async function settleNonEditorial(articleId: string): Promise<{ group: bo
 }
 
 async function processingInput(articleId: string) {
-  const [row] = await sql<{ participation_mode: string; revision: number; backfill: boolean; published_at: Date | null; discovered_at: Date }[]>`
-    SELECT s.participation_mode, a.revision, a.backfill, a.published_at, a.discovered_at FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.id = ${articleId}`;
+  const [row] = await sql<{ participation_mode: string; tier: string; revision: number; backfill: boolean; published_at: Date | null; discovered_at: Date }[]>`
+    SELECT s.participation_mode, s.tier, a.revision, a.backfill, a.published_at, a.discovered_at FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.id = ${articleId}`;
   return row ? { ...row, historical: isHistorical(row) } : null;
 }
 
@@ -138,7 +140,7 @@ async function processRevision(articleId: string, row: NonNullable<Awaited<Retur
     if (result.stale) return { state: "stale" }; // the newer revision has its own job
     await publishArticle(articleId);
     // History still completes the identity gate; groupArticle confirms it without a model call.
-    if (result.output.relevance === "pass") await enqueue(QUEUES.group, { articleId }, { singletonKey: articleId, priority: row.historical ? PRIORITY.history : PRIORITY.live });
+    if (result.output.relevance === "pass") await enqueue(QUEUES.group, { articleId }, { singletonKey: articleId, priority: row.historical ? PRIORITY.history : row.tier === 'T1' ? PRIORITY.liveOfficial : PRIORITY.live });
     await sql`UPDATE articles SET processing_attempts = 0, processing_retry_at = NULL, processing_queued_at = NULL
               WHERE id = ${articleId} AND revision = ${row.revision}`;
     return { state: result.output.relevance };
@@ -238,6 +240,22 @@ export async function sweepUnprocessed(): Promise<{ enqueued: number }> {
     ORDER BY discovered_at DESC LIMIT 500`;
   let enqueued = 0;
   for (const r of rows) if (await queueProcessing(r.id)) enqueued += 1;
+
+  // Recover the other half of the pipeline: analysis can commit successfully while
+  // its event-group enqueue is interrupted by a restart. The original content sweep
+  // only searched processing_state='new', leaving those articles invisible to hot topics.
+  // The existing singleton key prevents duplicates if the grouping job is still active.
+  const ungrouped = await sql<{ id: string }[]>`
+    SELECT a.id FROM articles a JOIN sources s ON s.id = a.source_id
+    WHERE a.processing_state = 'analyzed' AND a.grouping_status = 'pending'
+      AND a.grouped_at IS NULL AND s.participation_mode = 'editorial'
+      AND a.discovered_at > now() - interval '14 days'
+      AND a.discovered_at < now() - interval '3 minutes'
+    ORDER BY (s.tier = 'T1') DESC, coalesce(a.published_at, a.discovered_at) DESC
+    LIMIT 12`;
+  for (const r of ungrouped) {
+    if (await enqueue(QUEUES.group, { articleId: r.id }, { singletonKey: r.id, priority: PRIORITY.liveOfficial })) enqueued += 1;
+  }
   return { enqueued };
 }
 

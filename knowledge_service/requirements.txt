@@ -1,4 +1,4 @@
-graphiti-core>=0.17,<1
+graphiti-core==0.30.2
 fastapi>=0.115,<1
 uvicorn>=0.34,<1
 httpx>=0.27,<1

@@ -12,6 +12,8 @@ import { IconArrowLeft } from "../components/icons";
 import { beijingDate } from "@aihot/contracts/time";
 import { monthDay, monthDayTime } from "../lib/format";
 import { PhoneBar } from "../components/shell/PhoneBar";
+import { useUiLanguage } from "../components/LanguageSwitch";
+import { EnglishTopic } from "../components/EnglishPages";
 import { inNav } from "../components/shell/nav";
 import type { Screen } from "../components/shell/screens";
 import type { TopicPagePart } from "../modules";
@@ -85,12 +87,14 @@ export function meta({ loaderData }: Route.MetaArgs) {
 }
 
 export default function TopicRoute() {
+  const language=useUiLanguage();
   const { data } = useLoaderData<typeof loader>();
   const { topic, items, page, pageCount, pageSize } = data;
   const parts = partsOf(data);
   const href = (p: number) => (p <= 1 ? `/topics/${topic.slug}` : `/topics/${topic.slug}/page/${p}`);
   const first = (page - 1) * pageSize + 1;
   const last = first + items.length - 1;
+  if(language==="en") return <EnglishTopic data={data}/>;
   return (
     <div className="pb-6">
       <PhoneBar back={inNav("/topics") ? { to: "/topics", label: "全部主题" } : { to: "/", label: "精选" }} title={topic.name} />

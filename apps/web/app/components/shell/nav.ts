@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { NAV, subjectAfter, withSubject } from "@aihot/site";
 import { webModules } from "../../site-modules";
 import {
-  IconBolt, IconBookmark, IconDoc, IconFlame, IconGrid, IconHeart, IconHistory, IconList, IconMessage, IconPlug, IconUser,
+  IconNetwork, IconBolt, IconBookmark, IconDoc, IconFlame, IconGrid, IconHeart, IconHistory, IconList, IconMessage, IconPlug, IconUser,
 } from "../icons";
 
 export interface NavItem {
@@ -19,11 +19,12 @@ export interface NavItem {
 
 const SECTIONS: Array<{ title: string; items: NavItem[] }> = [
   {
-    title: "内容",
+    title: "探索 / EXPLORE",
     items: [
-      { to: "/", label: "精选", icon: IconBolt, end: true },
+      { to: "/", label: "事件观察", icon: IconBolt, end: true },
       { to: "/all", label: subjectAfter("全部", "动态"), icon: IconList },
-      { to: "/hot", label: "热点榜", icon: IconFlame },
+      { to: "/hot", label: "事件脉络", icon: IconFlame },
+      { to: "/knowledge", label: "知识网络", icon: IconNetwork },
       { to: "/daily", label: withSubject("日报"), icon: IconDoc },
       { to: "/topics", label: "主题", icon: IconGrid },
       { to: "/starred", label: "收藏", icon: IconBookmark },
@@ -89,8 +90,9 @@ export interface Tab {
 }
 
 const ENGINE_TABS: Tab[] = [
-  { key: "featured", to: "/", label: "精选", icon: IconBolt },
-  { key: "hot", to: "/hot", label: "热点", icon: IconFlame },
+  { key: "featured", to: "/", label: "观察", icon: IconBolt },
+  { key: "hot", to: "/hot", label: "事件", icon: IconFlame },
+  { key: "knowledge", to: "/knowledge", label: "图谱", icon: IconNetwork },
   { key: "daily", to: "/daily", label: "日报", icon: IconDoc },
   { key: "me", to: "/more", label: "我的", icon: IconUser, changelog: true },
 ];

@@ -11,6 +11,8 @@ import { buttonClass } from "../components/ui/Controls";
 import { IconArrowRight } from "../components/icons";
 import { SignalRiver, type RiverSource } from "../features/about/SignalRiver";
 import { PhoneBar } from "../components/shell/PhoneBar";
+import { useUiLanguage } from "../components/LanguageSwitch";
+import { EnglishAbout } from "../components/EnglishPages";
 import type { Screen } from "../components/shell/screens";
 
 export const handle: Screen = { tab: "me", name: "关于" };
@@ -191,6 +193,7 @@ function Latest({ item, className = "" }: { item: SiteStats["latest"][number] | 
 }
 
 export default function AboutPage() {
+  const language=useUiLanguage();
   const { contact, stats } = useLoaderData<typeof loader>();
   const [focus, setFocus] = useState<number | null>(null);
   const [at, setAt] = useState(0);
@@ -206,6 +209,7 @@ export default function AboutPage() {
     setAt((i) => (i + 1) % latest.length);
   }, [latest.length]);
 
+  if(language==="en") return <EnglishAbout stats={stats}/>;
   return (
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-14 lg:pt-3">
       <PhoneBar back={{ to: "/more", label: "我的" }} title={`关于 ${SITE.name}`} />
@@ -266,6 +270,20 @@ export default function AboutPage() {
             </li>
           ))}
         </ol>
+      </section>
+
+      <section className="mt-14 rounded-card border border-line bg-surface px-5 py-6 lg:mt-20 lg:px-7" aria-labelledby="contributors">
+        <Kicker>原创研究</Kicker>
+        <h2 id="contributors" className="mt-3 text-[23px] font-bold leading-snug text-ink">研究看证据，不看作者是不是 AI</h2>
+        <p className="mt-3 max-w-[52em] text-[14px] leading-[1.85] text-ink-3">
+          本站独立运行，不依赖 Ferro 或任何外部 AI 作者持续供稿。未来可以刊登 Ferro、其他 AI Agent 与独立研究者的原创分析、实测和工具研究。
+          每篇作品应标明作者、使用的数据和原始来源；AI 参与写作不代表结论经过独立核验。本站不会让外部投稿自动发布。
+        </p>
+        <p className="mt-3 text-[13px] leading-relaxed text-ink-4">
+          公开投稿系统尚未开放，当前可通过
+          <Link viewTransition to="/feedback" className="mx-1 text-accent hover:underline">反馈页</Link>
+          提出研究合作意向。
+        </p>
       </section>
 
       {ABOUT.maker && <Maker maker={ABOUT.maker} contact={contact} />}

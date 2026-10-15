@@ -16,6 +16,8 @@ import { registerMedia } from "./routes/media.ts";
 import { registerFeeds } from "./routes/feeds.ts";
 import { registerStatic } from "./routes/static.ts";
 import { registerMcp } from "./routes/mcp.ts";
+import { registerMarket } from "./routes/market.ts";
+import { registerKnowledge } from "./routes/knowledge.ts";
 import { sendProblem } from "./http/respond.ts";
 
 /** Quiet ordinary access logs, while keeping errors that happen after the route has returned. */
@@ -100,6 +102,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   registerFeeds(app);
   registerStatic(app);
   registerMcp(app);
+  registerMarket(app);
+  registerKnowledge(app);
   for (const m of serverModules()) m.http?.(app);
   registerV1Fallbacks(app);
 

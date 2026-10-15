@@ -8,6 +8,7 @@ import { beijingDate } from "@aihot/contracts/time";
 import { markRead, useReadSet } from "../../lib/local-state";
 import { DayHeader, TimelineSlot } from "./Timeline";
 import { FeedItem } from "./FeedItem";
+import { useText } from "../../components/LanguageSwitch";
 
 export function DayList({ items, todayCount = null, headerAside }: { items: FeedItemSummary[]; todayCount?: number | null; headerAside?: React.ReactNode }) {
   const readSet = useReadSet();
@@ -45,14 +46,15 @@ export function DayList({ items, todayCount = null, headerAside }: { items: Feed
  * "2 / 50" and next as large buttons; the numbers stay in the page for crawlers.
  */
 export function Pagination({ page, pageCount, href }: { page: number; pageCount: number; href: (p: number) => string }) {
+  const t=useText();
   if (pageCount <= 1) return null;
   const pages = [...new Set([1, pageCount, page - 2, page - 1, page, page + 1, page + 2].filter((p) => p >= 1 && p <= pageCount))].sort((a, b) => a - b);
   const btn = "inline-flex h-9 min-w-9 items-center justify-center rounded-full px-2.5 text-[13px] transition-colors";
   return (
-    <nav aria-label="分页" className="mt-6 flex flex-wrap items-center justify-center gap-3 lg:gap-1">
+    <nav aria-label={t("分页","Pagination")} className="mt-6 flex flex-wrap items-center justify-center gap-3 lg:gap-1">
       {page > 1 && (
         <IntentLink to={href(page - 1)} className={`${btn} h-11 border border-line-strong bg-surface px-5 text-[14px] text-ink-2 active:bg-bg-sunk lg:h-9 lg:px-3 lg:text-[13px] lg:text-ink-3 lg:hover:border-ink-4 lg:hover:text-ink`}>
-          上一页
+          {t("上一页","Previous")}
         </IntentLink>
       )}
       <span className="num px-1 text-[13px] text-ink-4 lg:hidden">
@@ -72,7 +74,7 @@ export function Pagination({ page, pageCount, href }: { page: number; pageCount:
       ))}
       {page < pageCount && (
         <IntentLink to={href(page + 1)} className={`${btn} h-11 gap-0.5 border border-line-strong bg-surface px-5 text-[14px] text-ink-2 active:bg-bg-sunk lg:h-9 lg:px-3 lg:text-[13px] lg:text-ink-3 lg:hover:border-ink-4 lg:hover:text-ink`}>
-          下一页 <IconChevronRight size={14} />
+          {t("下一页","Next")} <IconChevronRight size={14} />
         </IntentLink>
       )}
     </nav>

@@ -4,6 +4,8 @@ import { edgeTtl } from "../lib/api.server";
 import { pageMeta } from "../lib/seo";
 import { prepareCopy } from "../lib/site-copy";
 import { CopyPage, LegalFooterLinks } from "../features/copy/CopyPage";
+import { useUiLanguage } from "../components/LanguageSwitch";
+import { EnglishLegal } from "../components/EnglishUtility";
 import type { Screen } from "../components/shell/screens";
 import { webModules } from "../site-modules";
 
@@ -20,6 +22,8 @@ export function meta() {
 }
 
 export default function TermsPage() {
+  const language=useUiLanguage();
+  if(language==="en") return <EnglishLegal kind="terms"/>;
   return (
     <CopyPage
       doc={TERMS.doc}

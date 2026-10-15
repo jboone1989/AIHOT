@@ -16,6 +16,7 @@ import { PhoneBar } from "../components/shell/PhoneBar";
 import { isPhone, type Screen } from "../components/shell/screens";
 import { openSearch } from "../features/search/SearchOverlay";
 import { addRecentSearch } from "../lib/local-state";
+import { useText,useUiLanguage } from "../components/LanguageSwitch";
 
 export const handle: Screen = { tab: "featured", name: "全部" };
 export { pageHeaders as headers } from "../lib/api.server";
@@ -68,6 +69,8 @@ function pageHref(params: URLSearchParams, page: number) {
 
 export default function AllPage() {
   const { data } = useLoaderData<typeof loader>();
+  const t=useText();
+  const language=useUiLanguage();
   const [params] = useSearchParams();
   const navigation = useNavigation();
   const f = data.filters;
@@ -81,7 +84,7 @@ export default function AllPage() {
     else sp.delete("tab");
     return `/all?${sp}`;
   };
-  const title = f.q ? `搜索“${f.q}”` : f.tag ? `#${f.tag}` : null;
+  const title = f.q ? t(`搜索“${f.q}”`,`Search: ${f.q}`) : f.tag ? `#${f.tag}` : null;
   const updated = beijingTime(data.freshness);
   // Searches are remembered in this browser for the phone search (listed in the privacy notice).
   useEffect(() => {
@@ -97,7 +100,7 @@ export default function AllPage() {
       {/* Phones: the feed bar, or for a search the query (tap to change it) and back to 全部. */}
       {f.q ? (
         <PhoneBar
-          back={{ to: "/all", label: "全部" }}
+          back={{ to: "/all", label: t("全部","All news") }}
           center={
             <button type="button" onClick={(event) => openSearch(f.q ?? "", event.currentTarget)} className="flex h-11 min-w-0 max-w-full items-center gap-2 rounded-full bg-bg-sunk px-3.5 text-[15px] text-ink ring-1 ring-inset ring-line-soft dark:bg-bg-muted/60">
               <IconSearch size={16} className="shrink-0 text-ink-4" />
@@ -112,7 +115,7 @@ export default function AllPage() {
 
       {/* Desktop, as on 精选: the title, then one filter row with the search field aligned on the right. */}
       <div className="hidden lg:block">
-        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">{title ?? ALL_TITLE}</h1>
+        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">{title ?? t(ALL_TITLE,"All news")}</h1>
         <div className="mb-5 mt-4 flex items-center justify-between gap-4">
           <CategoryTabs base="/all" category={f.category} channel={f.channel} layoutId="all-cat-desk" className="min-w-0" />
           <SearchField defaultValue={f.q ?? ""} keep={keep} />
@@ -124,12 +127,12 @@ export default function AllPage() {
           <PillTabs
             size="xs"
             layoutId="all-search-sort"
-            label="搜索排序"
+            label={t("搜索排序","Search sorting")}
             active={f.tab}
-            items={(["time", "relevance"] as const).map((t) => ({ key: t, label: t === "time" ? "最新（标题与摘要）" : "全文相关", to: searchTabHref(t) }))}
+            items={(["time", "relevance"] as const).map((t) => ({ key: t, label: t === "time" ? (language==="en"?"Latest":"最新（标题与摘要）") : (language==="en"?"Relevance":"全文相关"), to: searchTabHref(t) }))}
           />
           <span className="text-[12px] text-ink-4">
-            找到 <span className="num">{data.total >= 2000 ? "2000+" : data.total}</span> 条 · 更新于 <span className="num">{updated}</span>
+            {t("找到","Found")} <span className="num">{data.total >= 2000 ? "2000+" : data.total}</span> {t("条 · 更新于","results · updated")} <span className="num">{updated}</span>
           </span>
         </div>
       )}
@@ -138,16 +141,16 @@ export default function AllPage() {
         {data.items.length === 0 ? (
           <div className="mt-2 lg:card">
             <EmptyState
-              title="没有找到相关内容"
+              title={t("没有找到相关内容","No matching results")}
               action={
                 f.q && f.tab === "time" ? (
                   <Link to={searchTabHref("relevance")} className="text-[13px] font-medium text-accent hover:underline">
-                    试试“全文相关”，连正文一起搜
+                    {t("试试“全文相关”，连正文一起搜","Try full-text relevance search")}
                   </Link>
                 ) : undefined
               }
             >
-              {f.q ? "换个说法，或者去掉筛选再试。" : "这个筛选下暂时没有内容。"}
+              {f.q ? t("换个说法，或者去掉筛选再试。","Try a different query or remove filters.") : t("这个筛选下暂时没有内容。","No news matches these filters.")}
             </EmptyState>
           </div>
         ) : (
@@ -155,7 +158,7 @@ export default function AllPage() {
         )}
       </div>
       <Pagination page={data.page} pageCount={data.pageCount} href={(p) => pageHref(params, p)} />
-      {data.page >= 50 && <p className="mt-4 text-center text-[12px] text-ink-4">最多提供 50 页，更早的内容请使用搜索或主题页。</p>}
+      {data.page >= 50 && <p className="mt-4 text-center text-[12px] text-ink-4">{t("最多提供 50 页，更早的内容请使用搜索或主题页。","Up to 50 pages are available. Search for older reports.")}</p>}
     </div>
   );
 }

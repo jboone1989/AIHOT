@@ -4,6 +4,7 @@
 import { forwardRef, useEffect, useLayoutEffect, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { IconChevronLeft } from "../icons";
+import { useUiLanguage } from "../LanguageSwitch";
 import { historyIndex, previousScreen } from "./screens";
 import { markBack } from "./transitions";
 
@@ -71,13 +72,14 @@ export function PhoneBar({ back, title, large = false, sub, leading, center, act
 /** "‹ 精选": back through the reader's history, or to the page's parent when it was opened directly. */
 function BackButton({ to, label }: BackTarget) {
   const navigate = useNavigate();
+  const language=useUiLanguage();
   const { key } = useLocation();
   const [text, setText] = useState(label);
   useIsoLayoutEffect(() => {
     if (historyIndex() === 0) return setText(label);
     const behind = previousScreen();
-    setText(behind ? behind : "返回");
-  }, [key, label]);
+    setText(behind ? (language==="en"?({精选:"News",全部:"All",我的:"More",日报:"Daily",事件树:"Events"} as Record<string,string>)[behind]??behind:behind) : language==="en"?"Back":"返回");
+  }, [key, label, language]);
   return (
     <button
       type="button"

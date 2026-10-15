@@ -1,11 +1,13 @@
 // Admin sign-in: the admin password (ADMIN_PASSWORD), and Feishu when it is configured. The form posts
 // straight to the API, which sets the session cookie and sends the browser on.
 import { useLoaderData } from "react-router";
+import { useEffect } from "react";
 import type { Route } from "./+types/admin-login";
 import { SITE } from "@aihot/site";
 import { apiGet } from "../lib/api.server";
 import { Wordmark } from "@aihot/site/brand/Logo.tsx";
 import { buttonClass } from "../components/ui/Controls";
+import { useText, useUiLanguage } from "../components/LanguageSwitch";
 
 const ERRORS: Record<string, string> = {
   wrong: "密码不对，再试一次。",
@@ -25,19 +27,22 @@ export const meta: Route.MetaFunction = () => [{ title: `登录 · ${SITE.name} 
 export const headers: Route.HeadersFunction = () => ({ "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" });
 
 export default function AdminLogin() {
+  const t=useText();
+  const lang=useUiLanguage();
+  useEffect(()=>{document.title=lang==="en"?`Sign in · ${SITE.name} Admin`:`登录 · ${SITE.name} 后台`;},[lang]);
   const { returnTo, error, password, feishu } = useLoaderData<typeof loader>();
-  const message = error ? (ERRORS[error] ?? ERRORS.wrong) : !password ? ERRORS.unset : null;
+  const message = error ? (lang==="en" ? ({wrong:"Incorrect password. Try again.",unset:"Set ADMIN_PASSWORD in .env and restart the app.","too-many":"Too many attempts. Try again in 15 minutes."} as Record<string,string>)[error]??"Sign-in failed.":ERRORS[error]??ERRORS.wrong) : !password ? t(ERRORS.unset,"Administrator password is not configured.") : null;
   return (
     <div className="flex min-h-dvh items-center justify-center bg-bg px-4">
       <div className="w-full max-w-[360px]">
         <div className="flex items-center justify-center gap-2">
           <Wordmark size={28} className="text-ink" />
-          <span className="text-[15px] font-semibold text-ink-3">后台</span>
+          <span className="text-[15px] font-semibold text-ink-3">{t("后台","Admin")}</span>
         </div>
         <form method="post" action="/api/auth/password" className="card mt-8 p-6">
           <input type="hidden" name="return" value={returnTo} />
           <label htmlFor="password" className="block text-[13px] font-medium text-ink-2">
-            管理员密码
+            {t("管理员密码","Administrator password")}
           </label>
           <input
             id="password"
@@ -54,17 +59,17 @@ export default function AdminLogin() {
             </p>
           )}
           <button type="submit" className={`${buttonClass("primary", "lg")} mt-5 w-full`}>
-            登录
+            {t("登录","Sign in")}
           </button>
           {feishu && (
             <a href={`/api/auth/feishu?${new URLSearchParams({ return: returnTo })}`} className={`${buttonClass("secondary", "lg")} mt-3 w-full`}>
-              用飞书登录
+              {t("用飞书登录","Sign in with Feishu")}
             </a>
           )}
         </form>
         <p className="mt-6 text-center text-[12px] text-ink-4">
           <a href="/" className="hover:text-ink-2">
-            回到 {SITE.name}
+            {t("回到","Back to")} {SITE.name}
           </a>
         </p>
       </div>

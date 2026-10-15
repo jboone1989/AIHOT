@@ -1,0 +1,32 @@
+import type {FastifyInstance} from "fastify";
+import {graphForStory,graphForEntity,graphStats,graphSearch,graphOverview} from "@aihot/backend/knowledge/graphiti";
+import {timingSafeEqual} from "node:crypto";
+
+export function registerKnowledge(app:FastifyInstance){
+  app.get<{Querystring:{q?:string;limit?:string}}>("/api/v1/knowledge/search",async(req,reply)=>{
+    const expected=process.env.KNOWLEDGE_SEARCH_TOKEN;
+    const presented=req.headers.authorization?.replace(/^Bearer /,"");
+    if(!expected || !presented || presented.length!==expected.length ||
+       !timingSafeEqual(Buffer.from(presented),Buffer.from(expected)))
+      return reply.code(401).header("Cache-Control","no-store").send({error:"unauthorized"});
+    const q=req.query.q?.trim()??"";
+    const limit=Number(req.query.limit??10);
+    if(q.length<2||q.length>500||!Number.isInteger(limit)||limit<1||limit>30)
+      return reply.code(400).send({error:"invalid_query"});
+    return reply.header("Cache-Control","no-store").send(await graphSearch(q,limit));
+  });
+  app.get("/api/site/knowledge/overview",async(_req,reply)=>
+    reply.header("Cache-Control","public, max-age=60").send(await graphOverview()));
+  app.get("/api/site/knowledge/stats",async(_req,reply)=>
+    reply.header("Cache-Control","public, max-age=60").send(await graphStats()));
+  app.get<{Params:{publicId:string}}>("/api/site/knowledge/stories/:publicId",async(req,reply)=>{
+    const {publicId}=req.params;
+    if(!/^[a-f0-9-]{36}$/i.test(publicId))return reply.code(400).send({error:"invalid_story"});
+    return reply.header("Cache-Control","public, max-age=120").send(await graphForStory(publicId));
+  });
+  app.get<{Params:{key:string}}>("/api/site/knowledge/entities/:key",async(req,reply)=>{
+    const key=req.params.key;
+    if(key.length>180)return reply.code(400).send({error:"invalid_entity"});
+    return reply.header("Cache-Control","public, max-age=120").send(await graphForEntity(key));
+  });
+}

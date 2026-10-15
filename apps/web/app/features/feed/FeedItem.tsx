@@ -15,6 +15,7 @@ import { GroupButton, GroupSources } from "./ReadingGroup";
 import { IconExternal } from "../../components/icons";
 import { QuotedLine } from "../item/QuotedPost";
 import { rememberPreview } from "../item/preview";
+import { useUiLanguage } from "../../components/LanguageSwitch";
 
 export interface FeedItemProps {
   item: FeedItemSummary;
@@ -29,7 +30,10 @@ export interface FeedItemProps {
 }
 
 export const FeedItem = memo(function FeedItem({ item, group, filters, read = false, onOpen, showTags = false, at }: FeedItemProps) {
+  const language=useUiLanguage();
   const isX = item.channel === "x" && !!item.x;
+  const title = language==="en" ? (item.originalTitle && !/[\u3400-\u9fff]/u.test(item.originalTitle) ? item.originalTitle : !/[\u3400-\u9fff]/u.test(item.title) ? item.title : "Original report from publisher") : item.title;
+  const link = `/items/${item.id}${language==="en"?"/original":""}`;
   const open = () => {
     rememberPreview(item);
     onOpen?.(item.id);
@@ -48,17 +52,17 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
             · {beijingTime(at)}
           </time>
         )}
-        {item.selected && (
+        {language==="zh" && item.selected && (
           <span className="hidden lg:inline-flex">
             {item.sameEvent ? <SameEventBadge /> : <SelectedBadge />}
           </span>
         )}
         <span className="ml-auto flex shrink-0 items-center gap-1 pl-2 lg:gap-1.5">
           <span className="hidden lg:inline-flex">
-            <ScoreLabel score={item.score} />
+            {language==="zh"&&<ScoreLabel score={item.score} />}
           </span>
           <span className="lg:hidden">
-            <ScoreLabel score={item.score} compact />
+            {language==="zh"&&<ScoreLabel score={item.score} compact />}
           </span>
           <span className="-my-[11px] -mr-3 inline-flex lg:-my-1 lg:mr-0">
             <StarButton item={item} className="size-11 lg:size-[26px]" />
@@ -67,37 +71,41 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
       </header>
 
       {isX ? (
-        item.summary ? <p className={`mt-1.5 whitespace-pre-line text-[15px] leading-[1.75] line-clamp-5 lg:mt-2 lg:line-clamp-4 ${read ? "text-ink-4" : "text-ink"}`}>
-          <IntentLink viewTransition to={`/items/${item.id}`} onClick={open} className="after:absolute after:inset-0 after:content-['']">
+        language==="zh" && item.summary ? <p className={`mt-1.5 whitespace-pre-line text-[15px] leading-[1.75] line-clamp-5 lg:mt-2 lg:line-clamp-4 ${read ? "text-ink-4" : "text-ink"}`}>
+          <IntentLink viewTransition to={link} onClick={open} className="after:absolute after:inset-0 after:content-['']">
             {item.summary}
           </IntentLink>
-        </p> : <IntentLink viewTransition to={`/items/${item.id}`} onClick={open} aria-label={`查看 ${item.x!.authorName} 的帖子`} className="absolute inset-0" />
+        </p> : <p className="mt-2 line-clamp-5 whitespace-pre-line text-[14px] leading-[1.7] text-ink-2">
+          <IntentLink viewTransition to={link} onClick={open} className="block hover:text-accent">
+            {language==="en" && item.x!.text && !/[\u3400-\u9fff]/u.test(item.x!.text) ? item.x!.text : language==="en" ? "Open this post on X" : "查看原帖"}
+          </IntentLink>
+        </p>
       ) : (
         <>
           <h3 className={`mt-1.5 line-clamp-2 text-[17px] font-[650] leading-[1.5] lg:mt-2 lg:line-clamp-none lg:leading-[1.55] ${read ? "text-ink-4" : "text-ink"}`}>
             <IntentLink viewTransition to={`/items/${item.id}`} onClick={open} className="after:absolute after:inset-0 after:content-['']">
-              {item.title}
+              {title}
             </IntentLink>
           </h3>
-          {item.summary && <p className="mt-1 line-clamp-4 text-[14.5px] leading-[1.7] text-ink-3 lg:mt-2 lg:line-clamp-5 lg:text-[15px] lg:leading-[1.75]">{item.summary}</p>}
+          {item.summary && language==="zh" && <p className="mt-1 line-clamp-4 text-[14.5px] leading-[1.7] text-ink-3 lg:mt-2 lg:line-clamp-5 lg:text-[15px] lg:leading-[1.75]">{item.summary}</p>}
         </>
       )}
 
       {originalUrl && (
         <div className="relative z-10 mt-2 flex items-center gap-2 text-[12.5px] leading-relaxed">
           <a href={originalUrl} target="_blank" rel="noopener noreferrer"
-            aria-label={`阅读${item.source.name}原始报道（新标签页）`}
+            aria-label={language==="en"? "Read original publisher report":`阅读${item.source.name}原始报道（新标签页）`}
             className="inline-flex min-h-8 items-center gap-1.5 rounded-control border border-line-strong bg-surface px-2.5 font-medium text-accent transition-colors hover:border-accent hover:bg-bg-sunk">
-            {isX ? "查看原帖" : "阅读原文"} <IconExternal size={13} />
+            {language==="en"?(isX?"View original post":"Read source"):(isX ? "查看原帖" : "阅读原文")} <IconExternal size={13} />
           </a>
-          {!isX && <span className="truncate text-ink-4">来源：{item.source.name}</span>}
+          {!isX && <span className="truncate text-ink-4">{language==="en"?"Source: ":"来源："}{language==="en"&&/[\u3400-\u9fff]/u.test(item.source.name)?"Publisher":item.source.name}</span>}
         </div>
       )}
 
       {isX && item.x!.media.length > 0 && <MediaThumbs media={item.x!.media} className="mt-2.5" />}
-      {isX && item.x!.quoted?.text && <QuotedLine quoted={item.x!.quoted} />}
+      {isX && language==="zh" && item.x!.quoted?.text && <QuotedLine quoted={item.x!.quoted} />}
 
-      {(tags.length > 0 || (showTags && item.category)) && (
+      {language==="zh" && (tags.length > 0 || (showTags && item.category)) && (
         <div className="relative z-10 mt-2 hidden flex-wrap gap-x-2.5 gap-y-1 text-[12px] text-ink-4 lg:flex">
           {showTags && item.category && (
             <Link to={`/all?category=${item.category}`} className="hover:text-accent">
@@ -112,7 +120,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
         </div>
       )}
 
-      {item.sameEvent && (
+      {language==="zh" && item.sameEvent && (
         <p className="relative z-10 mt-2 line-clamp-1 text-[12.5px] text-ink-4">
           同一新闻，精选展示
           <Link viewTransition to={`/items/${item.sameEvent.id}`} className="text-ink-3 transition-colors hover:text-accent">
@@ -120,20 +128,20 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
           </Link>
         </p>
       )}
-      {group && showSources && (
+      {language==="zh" && group && showSources && (
         <div className="mt-2 hidden lg:block">
           <GroupSources group={group} filters={filters} parentId={item.id} />
         </div>
       )}
 
-      {item.reason && (
+      {item.reason && language==="zh" && (
         <div className="mt-1 lg:mt-3 lg:border-t lg:border-line-soft lg:pt-3">
           <p className="line-clamp-2 text-[13px] leading-[1.65] text-note lg:line-clamp-none lg:leading-[1.75]">{`${ITEM_COPY.reasonLabel}：`}{item.reason}</p>
         </div>
       )}
 
       {/* Phones: duplicate reports open in a sheet. */}
-      {group && showSources && <GroupButton group={group} filters={filters} parentId={item.id} />}
+      {language==="zh" && group && showSources && <GroupButton group={group} filters={filters} parentId={item.id} />}
     </article>
   );
 });

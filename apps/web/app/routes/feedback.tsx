@@ -9,6 +9,8 @@ import { IconCheck, IconClose, IconImage } from "../components/icons";
 import { RingMark } from "@aihot/site/brand/Logo.tsx";
 import { AsideCard, ReadingLayout } from "../components/ui/Page";
 import { PhoneBar } from "../components/shell/PhoneBar";
+import { useUiLanguage } from "../components/LanguageSwitch";
+import { EnglishFeedback } from "../components/EnglishUtility";
 import type { Screen } from "../components/shell/screens";
 import { webModules } from "../site-modules";
 
@@ -91,6 +93,7 @@ const MAX_IMAGE = 5 * 1024 * 1024;
 const MAX_TEXT = 2000;
 
 export default function FeedbackPage() {
+  const language=useUiLanguage();
   const [params] = useSearchParams();
   const [draft, setDraft] = useState<Draft>({ content: "", email: "", pageUrl: params.get("from") ?? "" });
   const [shot, setShot] = useState<{ file: File; url: string } | null>(null);
@@ -158,6 +161,7 @@ export default function FeedbackPage() {
     }
   };
 
+  if(language==="en") return <EnglishFeedback/>;
   if (state.kind === "done") {
     return (
       <ReadingLayout>

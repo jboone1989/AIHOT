@@ -19,7 +19,7 @@ const provider = await stub((_hit, req) => {
   requests.push(step);
   const content = step === "prefilter" ? { label: "UNKNOWN", reason: "No standalone text evidence" }
     : step === "score" ? { attentionScore: req.body.includes("high-score") ? SELECTING_SCORE : 12 }
-    : step === "structure" ? { category: "ai-products", tags: [], subjects: [], scope: "single", fact: null }
+    : step === "structure" ? { category: "term", tags: [], subjects: [], scope: "single", fact: null }
     : step === "understand" ? { itemType: "product_update", authorRole: "principal", tags: [], editorialJudgment: "产品更新", titleZh: "实际正文标题", summaryZh: "这是实际正文的中文摘要。" }
     : "title_zh: 实际正文标题\nbody_zh: 这是实际正文的中文摘要。";
   return { choices: [{ message: { content: typeof content === "string" ? content : JSON.stringify(content) } }] };
@@ -28,7 +28,7 @@ pointModels(provider.url);
 const app = await buildApp();
 before(async () => {
   await sql`INSERT INTO sources (id,name,kind,tier,participation_mode,site_fulltext,syndicate_fulltext,next_fetch_at)
-    VALUES (${source},'Original post test','x_search','T1','editorial',true,true,'2100-01-01')`;
+    VALUES (${source},'Original post test','x_search','T1_5','editorial',true,true,'2100-01-01')`;
 });
 after(async () => { await app.close(); await provider.close(); await stopBoss(); await closeDb(); });
 

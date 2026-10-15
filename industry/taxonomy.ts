@@ -11,12 +11,11 @@
  * feedLabel 是分类 RSS 标题里的名字（不写就用 label）。公开接口、RSS 和 MCP 里要把一类并进另一类发布，写在站点设置里（site/site.ts 的 PUBLIC_CATEGORIES）。
  */
 export const CATEGORIES = [
-  { key: "ai-models", label: "模型", feedLabel: "AI 模型", section: "模型发布/更新", guide: "模型本身的发布、版本、权重开放、能力或价格变化，以及既有榜单上的模型成绩。公布一次跑分不是发布新基准，也不是教程。" },
-  { key: "ai-products", label: "产品", feedLabel: "AI 产品", section: "产品发布/更新", guide: "可使用的 AI 产品、功能、应用、工具、API、平台和工程组件的发布更新。模型厂商发布的推理框架、算子库、硬件适配组件仍是产品，不能因为厂商名归成模型。" },
-  { key: "industry", label: "行业", feedLabel: "行业动态", section: "行业动态", guide: "已发生的公司经营、融资并购、人事、合作、诉讼、政策、真实安全事故及调查进展。新闻由当事人发帖、带有态度，也不因此变成观点。" },
-  { key: "paper", label: "论文", feedLabel: "论文", section: "论文研究", guide: "以新研究方法、实验设计与发现为核心的论文、技术报告、新基准或研究数据集。系统性红队实验属于研究；既有榜单成绩归模型，真实事故的新闻调查归行业。" },
-  { key: "tip", label: "教程", section: "技巧与观点", guide: "读者可以照着使用的方法、提示词、工具用法、工程实践复盘与技术讲解。重点是可复用的做法；单纯发布工具归产品，只有态度和预测而无做法归观点。", commentary: true },
-  { key: "opinion", label: "观点", section: "技巧与观点", guide: "重点是作者的解释、判断、主张、预测、评论或访谈观点。讨论市场不自动归行业，作者是名人不自动归观点。", commentary: true },
+  { key: "ai", label: "AI", feedLabel: "AI 动态", section: "人工智能", guide: "AI 模型、应用、算力、基础设施、研究和产业变化。" },
+  { key: "crypto", label: "加密货币", feedLabel: "加密市场", section: "加密货币", guide: "比特币、区块链、稳定币、交易所、链上金融、数字资产监管与市场结构。" },
+  { key: "finance", label: "金融", feedLabel: "金融市场", section: "金融与宏观", guide: "货币政策、利率、流动性、资本市场、金融机构、ETF 与金融科技。" },
+  { key: "world", label: "全球事件", feedLabel: "国际与地缘", section: "全球政治与产业", guide: "影响金融市场、供应链、能源、贸易或技术产业的重大国际政治、军事和产业事件。排除与市场及技术关系不明的泛社会热点。" },
+  { key: "research", label: "深度研究", feedLabel: "原创研究与解释", section: "独立研究", guide: "有独立分析、可核验的方法、数据比较、实测或可迁移的系统解释；Ferro 和其他作者均可归此类。单纯转述新闻不应归此类。" },
 ] as const satisfies ReadonlyArray<{ key: string; label: string; feedLabel?: string; section: string; guide: string; commentary?: true }>;
 
 /**
@@ -24,10 +23,10 @@ export const CATEGORIES = [
  * category 是类别，tag 是标签，两者都对上才算；unit 接在数字后面。
  * 没有这样一类的行业设成 null，报头就不显示这个数。
  */
-export const RELEASE: { category: string; tag: string; unit: string } | null = { category: "ai-models", tag: "模型发布", unit: "个新模型" };
+export const RELEASE: { category: string; tag: string; unit: string } | null = null;
 
 /** 周报月报的总述可以直接写、不必在报道里找到出处的行业通用词（小写）。站名会自动算进去。 */
-export const PLAIN_TERMS: readonly string[] = ["ai", "api", "llm", "gpu", "agi", "ceo", "ipo"];
+export const PLAIN_TERMS: readonly string[] = ["ai", "api", "llm", "agent", "agents", "mcp", "btc", "eth", "etf", "defi"];
 
 /**
  * 内容理解一步给每篇资料判的“内容类型”（写在 prompts/content-understanding.md 里，改了类型要同步改那份提示词）。
@@ -38,30 +37,25 @@ export const ITEM_TYPES = ["model_release", "product_launch", "tool_or_prompt", 
 // ── 标签词表 ────────────────────────────────────────────────────────────────────────────
 
 /** 每篇资料的第一个标签必须是这些“分类标签”之一。 */
-export const CATEGORY_TAGS = [
-  "产品更新", "模型发布", "论文/研究", "开源/仓库", "教程/实践", "现象/趋势", "大佬观点", "评测/基准", "安全/对齐", "行业动态", "政策/监管",
-  "非AI/通用工具", "其他",
-] as const;
+export const CATEGORY_TAGS = ["新闻动态", "原创研究", "深度解读", "数据分析", "实用教程", "产品发布", "政策监管", "观点评论", "其他"] as const;
 
 /** 可选的主题标签。 */
-export const TOPIC_TAGS = [
-  "Agent", "编码", "推理", "多模态", "语音", "视频", "图像生成", "RAG", "端侧", "数据/训练", "搜索", "部署/工程", "开源生态", "具身智能", "MCP/工具调用",
-] as const;
+export const TOPIC_TAGS = ["大模型", "AI Agent", "算力与芯片", "AI 应用", "AI 成本", "开源技术", "比特币", "以太坊", "稳定币", "DeFi", "链上数据", "交易平台", "ETF", "利率债券", "宏观流动性", "金融科技", "市场结构", "监管政策", "地缘政治", "能源与大宗商品", "半导体产业", "宏观数据"] as const;
 
 /** 可选的实体标签（公司、机构、平台）。 */
-export const ENTITY_TAGS = ["OpenAI", "Anthropic", "DeepSeek", "DeepMind", "Google", "Meta", "Microsoft", "xAI", "Hugging Face", "GitHub", "arXiv"] as const;
+export const ENTITY_TAGS = ["OpenAI", "Anthropic", "DeepSeek", "Google", "Meta", "Microsoft", "NVIDIA", "xAI", "Hugging Face", "GitHub", "arXiv", "Bitcoin", "Ethereum", "Federal Reserve", "SEC"] as const;
 
-/** 模型常写的近义词，统一成词表里的写法。 */
+/** 模型常写的近义词，统一成词表里的写法（按小写匹配）。 */
 export const TAG_SYNONYMS: Readonly<Record<string, string>> = {
-  "教程/玩法": "教程/实践", "技巧/最佳实践": "教程/实践", "合作/生态": "行业动态", "融资/收购": "行业动态", "公司动态": "行业动态",
-  合作: "行业动态", 生态: "行业动态", 融资: "行业动态", 收购: "行业动态", 投资: "行业动态", 并购: "行业动态",
-  政策: "政策/监管", 监管: "政策/监管", 法规: "政策/监管", 安全: "安全/对齐", 对齐: "安全/对齐",
-  论文: "论文/研究", 研究: "论文/研究", paper: "论文/研究", papers: "论文/研究",
-  "open-source": "开源/仓库", 开源: "开源/仓库", 仓库: "开源/仓库", repo: "开源/仓库",
-  教程: "教程/实践", 玩法: "教程/实践", 指南: "教程/实践", 技巧: "教程/实践", 最佳实践: "教程/实践", 实践: "教程/实践",
-  产品: "产品更新", 更新: "产品更新", 发布: "模型发布", 模型: "模型发布", 趋势: "现象/趋势", 现象: "现象/趋势", 观点: "大佬观点",
-  视频生成: "视频", 非ai: "非AI/通用工具", "non-ai": "非AI/通用工具", 通用工具: "非AI/通用工具", 工程工具: "非AI/通用工具",
-  安全扫描: "非AI/通用工具", devops: "非AI/通用工具", 行业: "行业动态", 动态: "行业动态",
+  news: "新闻动态", release: "产品发布", launch: "产品发布",
+  research: "数据分析", paper: "数据分析", study: "数据分析",
+  analysis: "深度解读", explainer: "深度解读", essay: "观点评论",
+  guide: "实用教程", tutorial: "实用教程", howto: "实用教程",
+  benchmark: "数据分析", data: "数据分析", policy: "政策监管", regulation: "政策监管",
+  agent: "AI Agent", agents: "AI Agent", llm: "大模型", gpu: "算力与芯片",
+  bitcoin: "比特币", btc: "比特币", ethereum: "以太坊", eth: "以太坊",
+  stablecoin: "稳定币", stablecoins: "稳定币", defi: "DeFi", etf: "ETF",
+  "federal reserve": "Federal Reserve", "the fed": "Federal Reserve", sec: "SEC",
 };
 
 // ── 公司与主体 ──────────────────────────────────────────────────────────────────────────
@@ -90,6 +84,10 @@ export const ENTITIES: Record<string, { name: string; displayTag: string | null;
   "hugging-face": { name: "Hugging Face", displayTag: "Hugging Face", aliases: ["Hugging Face"], otherNames: ["HuggingFace"] },
   cursor: { name: "Cursor", displayTag: null, aliases: ["Cursor", "Anysphere"] },
   openrouter: { name: "OpenRouter", displayTag: null, aliases: ["OpenRouter"] },
+  bitcoin: { name: "Bitcoin", displayTag: "Bitcoin", aliases: ["Bitcoin", "BTC", "比特币"] },
+  ethereum: { name: "Ethereum", displayTag: "Ethereum", aliases: ["Ethereum", "ETH", "以太坊"] },
+  "federal-reserve": { name: "Federal Reserve", displayTag: "Federal Reserve", aliases: ["Federal Reserve", "Fed", "美联储", "FOMC"] },
+  sec: { name: "SEC", displayTag: "SEC", aliases: ["U.S. Securities and Exchange Commission", "SEC", "美国证券交易委员会"] },
 };
 
 /**
@@ -110,6 +108,10 @@ export const IDENTITY_LEXICON: ReadonlyArray<{ id: string; name: string; pattern
   { id: "cursor", name: "Cursor", patterns: [/\bCursor\b/] },
   { id: "kimi", name: "Kimi / 月之暗面", patterns: [/\bkimi\b|月之暗面|\bmoonshot\s?ai\b/i] },
   { id: "openrouter", name: "OpenRouter", patterns: [/openrouter/i] },
+  { id: "bitcoin", name: "Bitcoin", patterns: [/\\bbitcoin\\b|\\bbtc\\b|比特币/i] },
+  { id: "ethereum", name: "Ethereum", patterns: [/\\bethereum\\b|\\beth\\b|以太坊/i] },
+  { id: "federal-reserve", name: "Federal Reserve", patterns: [/federal reserve|\\bfomc\\b|美联储/i] },
+  { id: "sec", name: "SEC", patterns: [/\\bsec\\b|securities and exchange commission|美国证券交易委员会/i] },
   { id: "minimax", name: "MiniMax", patterns: [/minimax/i] },
   { id: "zhipu", name: "智谱 GLM", patterns: [/智谱|\bglm-?[4-9]/i] },
   { id: "hunyuan", name: "腾讯混元", patterns: [/混元|hunyuan/i] },
@@ -144,6 +146,8 @@ export const PUBLISHER_DOMAINS: ReadonlyArray<{ entityId: string; domains: reado
   { entityId: "qwen", domains: ["qwen.ai"] },
   { entityId: "cursor", domains: ["cursor.com"] },
   { entityId: "openrouter", domains: ["openrouter.ai"] },
+  { entityId: "federal-reserve", domains: ["federalreserve.gov"] },
+  { entityId: "sec", domains: ["sec.gov"] },
 ];
 
 /** 原文里的这些写法也算提到了对应公司。 */

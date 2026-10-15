@@ -4,6 +4,8 @@ import { edgeTtl } from "../lib/api.server";
 import { pageMeta } from "../lib/seo";
 import { prepareCopy } from "../lib/site-copy";
 import { CopyPage, LegalFooterLinks } from "../features/copy/CopyPage";
+import { useUiLanguage } from "../components/LanguageSwitch";
+import { EnglishLegal } from "../components/EnglishUtility";
 import type { Screen } from "../components/shell/screens";
 
 export const handle: Screen = { tab: "me" };
@@ -19,6 +21,8 @@ export function meta() {
 }
 
 export default function PrivacyPage() {
+  const language=useUiLanguage();
+  if(language==="en") return <EnglishLegal kind="privacy"/>;
   return (
     <CopyPage
       doc={PRIVACY.doc}
