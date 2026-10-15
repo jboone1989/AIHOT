@@ -2,7 +2,8 @@ import { useId, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useText, useUiLanguage } from "./LanguageSwitch";
 const hasHan=(s:string)=>/[\u3400-\u9fff]/u.test(s);
-const englishEntity=(name:string,key:string)=>hasHan(name)?"Entity "+key.slice(0,8):name;
+// Preserve original entity names even when an English translation is not available.
+const englishEntity=(name:string,_key:string)=>name;
 import { IconArrowUpRight, IconClock, IconExternal } from "./icons";
 
 export interface KnowledgeEdge {
@@ -132,13 +133,13 @@ export function RelationEvidence({ edge }: { edge: KnowledgeEdge }) {
   const lang=useUiLanguage();
   return (
     <article className="lr-evidence">
-      <div className="lr-eyebrow">RELATION / {lang==="en"&&hasHan(edge.predicate)?"RELATED TO":edge.predicate.replaceAll("_", " ")}</div>
+      <div className="lr-eyebrow">RELATION / {edge.predicate.replaceAll("_", " ")}</div>
       <div className="mt-3 flex flex-wrap items-center gap-2 text-[15px] font-semibold">
         <Link to={`/knowledge/entity/${encodeURIComponent(edge.subject.key)}`} className="lr-entity-pill">{lang==="en"?englishEntity(edge.subject.name,edge.subject.key):edge.subject.name} <IconArrowUpRight size={12}/></Link>
         <span className="text-ink-4">→</span>
         <Link to={`/knowledge/entity/${encodeURIComponent(edge.object.key)}`} className="lr-entity-pill">{lang==="en"?englishEntity(edge.object.name,edge.object.key):edge.object.name} <IconArrowUpRight size={12}/></Link>
       </div>
-      <p className="mt-3 text-[14px] leading-[1.75] text-ink-2">{lang==="en"&&hasHan(edge.fact)?"Relationship recorded from original-language evidence; consult the publisher source for the original wording.":edge.fact}</p>
+      <p className="mt-3 text-[14px] leading-[1.75] text-ink-2">{edge.fact}{lang === "en" && hasHan(edge.fact) && <span className="ml-2 text-[11px] text-ink-4">(original language)</span>}</p>
       <div className="mt-3 flex flex-wrap items-center gap-3 text-[11.5px] text-ink-4">
         <span className="inline-flex items-center gap-1"><IconClock size={13}/> {formatDate(edge.validAt)??t("时间未确定","Date unknown")} {t("起","since")}</span>
         {edge.invalidAt && <span className="text-hot">{t("关系已失效：","Expired: ")}{formatDate(edge.invalidAt)}</span>}
