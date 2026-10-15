@@ -28,13 +28,14 @@ export { pageHeaders as headers } from "../lib/api.server";
 export const { clientLoader, shouldRevalidate } = pageReuse<typeof loader>();
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const story = await loadOr404<StoryDetail>(`/api/site/stories/${encodeURIComponent(params.publicId)}`, { signal: request.signal, merged: (id) => `/story/${id}` });
+  const storyPromise = loadOr404<StoryDetail>(`/api/site/stories/${encodeURIComponent(params.publicId)}`, { signal: request.signal, merged: (id) => `/story/${id}` });
   // Graph availability must never hide an otherwise public event and its source timeline.
-  const graph = await apiGet<KnowledgeGraph>(`/api/site/knowledge/stories/${encodeURIComponent(params.publicId)}`, { signal: request.signal })
+  const graphPromise = apiGet<KnowledgeGraph>(`/api/site/knowledge/stories/${encodeURIComponent(params.publicId)}`, { signal: request.signal, timeoutMs: 2_000 })
     .catch((error): KnowledgeGraph => {
       if (request.signal.aborted) throw error;
       return { entities: 0, edges: [], status: "unavailable" };
     });
+  const [story, graph] = await Promise.all([storyPromise, graphPromise]);
   return cachedPage(120, { story, graph });
 }
 
