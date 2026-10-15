@@ -37,7 +37,7 @@ export default function AnalyticsAdmin({ loaderData: a }: Route.ComponentProps) 
   const totals = a.totals;
   const max = Math.max(1, ...a.daily.map(d => d.page_views));
   return (
-    <AdminPage title="流量与行为" subtitle={<>最近 {a.periodDays} 天 · 更新于 {new Date(a.asOf).toLocaleString("zh-CN")} · 匿名会话统计，不等于独立访客数（UV）</>}>
+    <AdminPage title="流量与行为" subtitle={<>最近 {a.periodDays} 天 · 更新于 {a.asOf.slice(0,16).replace("T", " ") + " UTC"} · 匿名会话统计，不等于独立访客数（UV）</>}>
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="7 天有效知识探索" value={n(a.weeklyEffectiveExplorers)} hint="同一匿名会话：打开事件后选择 Graph 节点或访问原文"/>
         <Stat label="页面浏览 PV" value={n(totals.page_views)} hint="仅站内匿名事件，非 CDN 请求数"/>
