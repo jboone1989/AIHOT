@@ -1,10 +1,12 @@
 # docker compose up -d --build     → http://localhost:3000   (the admin is at /admin)
 # docker compose --profile https up -d --build   → HTTPS for SITE_DOMAIN through Caddy
 name: aihot
+# Keep the existing Compose project name and volumes until the data migration is verified.
+# Product branding is EventGraph; old PostgreSQL identities and AIHOT_* env vars stay compatible.
 
 x-app: &app
   build: .
-  image: aihot-app
+  image: eventgraph-app
   restart: unless-stopped
 
 x-backend: &backend
