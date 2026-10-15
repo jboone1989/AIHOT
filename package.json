@@ -1,5 +1,5 @@
 {
-  "name": "aihot",
+  "name": "eventgraph",
   "private": true,
   "type": "module",
   "workspaces": [
