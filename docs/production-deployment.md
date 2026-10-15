@@ -2,22 +2,28 @@
 
 Official source: `main`. Current release source: `/home/ubuntu/livingruntime-prod-source` on VM09. The domain `livingruntime.com` and `www.livingruntime.com` stay on VM09. `43.133.185.154` is for Ferro; never deploy this site there.
 
-## One stack
+## One-stack architecture and single-command releases
 
-Cloudflare Tunnel -> VM09 `127.0.0.1:3000` -> Docker Compose `livingruntime`:
+Production is **only** VM09 and the `livingruntime` Docker Compose project. Cloudflare Tunnel forwards to `127.0.0.1:3000`. Web, API, one worker, PostgreSQL, Graphiti and Neo4j run in the same Compose project. `43.133.185.154` remains Ferro-only.
 
-- Web (SSR), API, one worker, PostgreSQL 17 with durable `livingruntime_db` volume.
-- Graphiti API and Neo4j 5.26.2, with durable `livingruntime_knowledge_neo4j` volume.
-- The Tunnel remains an independent host-level entrypoint and is not recreated with app releases.
-- `docker-compose.yml`, `docker-compose.production.yml`, `docker-compose.knowledge.yml` are composed **in that order** with the `knowledge` profile. This is the only supported production deployment path.
+**For every ordinary software release, from VM09:**
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.production.yml -f docker-compose.knowledge.yml --profile knowledge config --quiet
-docker compose -f docker-compose.yml -f docker-compose.production.yml -f docker-compose.knowledge.yml --profile knowledge up -d
-python3 scripts/production-smoke.py
+cd /home/ubuntu/livingruntime-prod-source
+bash scripts/deploy-prod.sh
 ```
 
-No original native AIHOT services remain: old `lrsite-web`, `lrsite-api`, and `lrsite-worker` unit files and enabled symlinks were deleted, as was `/home/ubuntu/src/AIHOT`. Do not recreate them. The old site is not a rollback target.
+That one command fetches the exact `main` commit, builds version-tagged application and Graphiti images on cn-dev using a clean `git archive`, streams both images to VM09 over the existing SSH connection, advances VM09's Git checkout, sets `LRSITE_RELEASE`, recreates existing Docker Compose services **without any build on VM09**, and runs a substantive production smoke check. The PostgreSQL and Neo4j named volumes are **not replaced or re-imported**. AdSense and model inference retain their configured flags.
+
+For a safe environment check before deploying:
+
+```bash
+bash scripts/deploy-prod.sh --check
+```
+
+The release uses `docker-compose.yml`, `docker-compose.production.yml`, `docker-compose.knowledge.yml`, and `docker-compose.release.yml` in that order. The final overlay selects prebuilt `livingruntime-app:<sha>` and `livingruntime-knowledge:<sha>` images; `--no-build --pull never` prevents accidental image builds on VM09. The development host must be SSH-reachable from VM09 and have working Docker, and both hosts access the same internal Git remote. Image transport requires no paid registry.
+
+**Initial migration is a separate one-time task, not part of ordinary deployment.** The old host application, three app systemd units and old `lrsite` host PostgreSQL database have been removed. Never revive them or copy legacy databases into production.
 
 ## Data ownership
 

@@ -1,0 +1,13 @@
+# Final layer: production consumes immutable versioned application images.
+# Building happens on cn-dev; VM09 only loads the images and recreates containers.
+services:
+  setup:
+    image: livingruntime-app:${LRSITE_RELEASE:?Set LRSITE_RELEASE}
+  api:
+    image: livingruntime-app:${LRSITE_RELEASE:?Set LRSITE_RELEASE}
+  worker:
+    image: livingruntime-app:${LRSITE_RELEASE:?Set LRSITE_RELEASE}
+  web:
+    image: livingruntime-app:${LRSITE_RELEASE:?Set LRSITE_RELEASE}
+  knowledge:
+    image: livingruntime-knowledge:${LRSITE_RELEASE:?Set LRSITE_RELEASE}
