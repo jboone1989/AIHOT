@@ -56,10 +56,12 @@ function viewBox(points: Array<{ x: number; y: number }>) {
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }
 
-export function KnowledgeCanvas({ edges, activeId, compact = false }: {
+export function KnowledgeCanvas({ edges, activeId, compact = false, selectedNodeKey, onSelectNode }: {
   edges: KnowledgeEdge[]; activeId?: string; compact?: boolean;
+  selectedNodeKey?: string; onSelectNode?: (key: string) => void;
 }) {
   const gridId = `lr-grid-${useId().replaceAll(":", "")}`;
+  const [zoom, setZoom] = useState(1);
   const { nodes, coords, visibleEdges } = useMemo(() => layout(edges), [edges]);
   const t=useText();
   const lang=useUiLanguage();
@@ -72,11 +74,13 @@ export function KnowledgeCanvas({ edges, activeId, compact = false }: {
   );
   const active = edges.find(e => e.id === activeId);
   const related = new Set(active ? [active.subject.key, active.object.key] : []);
+  if (selectedNodeKey) related.add(selectedNodeKey);
   const box = viewBox([...coords.values()]);
   const grid = gridId;
+  const focusBox = { x: box.x + (box.w - box.w / zoom) / 2, y: box.y + (box.h - box.h / zoom) / 2, w: box.w / zoom, h: box.h / zoom };
   return (
-    <div className={`lr-graph-canvas ${compact ? "lr-graph-compact" : ""}`}>
-      <svg viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`} role="img" aria-label={lang==="en"?`Knowledge network with ${nodes.length} entities and ${visibleEdges.length} relationships`:`知识关系网络，包含 ${nodes.length} 个可见实体、${visibleEdges.length} 条可见关系`}>
+    <div className={`lr-graph-canvas relative ${compact ? "lr-graph-compact" : ""}`}>
+      <svg viewBox={`${focusBox.x} ${focusBox.y} ${focusBox.w} ${focusBox.h}`} role="group" aria-label={lang==="en"?`Knowledge network with ${nodes.length} entities and ${visibleEdges.length} relationships`:`知识关系网络，包含 ${nodes.length} 个可见实体、${visibleEdges.length} 条可见关系`}>
         <defs>
           <pattern id={grid} width="28" height="28" patternUnits="userSpaceOnUse">
             <circle cx="1" cy="1" r="0.75" fill="currentColor" opacity="0.14" />
@@ -96,7 +100,7 @@ export function KnowledgeCanvas({ edges, activeId, compact = false }: {
           const focus = related.has(node.key), dim = activeId && !focus;
           const r = i === 0 ? 30 : node.degree > 2 ? 21 : 16;
           return (
-            <a key={node.key} href={`/knowledge/entity/${encodeURIComponent(node.key)}`} aria-label={`${lang==="en"?englishEntity(node.name,node.key):node.name} · ${t("查看实体关系","Explore entity")}`}
+            <a key={node.key} href={`/knowledge/entity/${encodeURIComponent(node.key)}`} onClick={onSelectNode ? (event) => { event.preventDefault(); onSelectNode(node.key); } : undefined} aria-current={selectedNodeKey === node.key ? "true" : undefined} aria-label={`${lang==="en"?englishEntity(node.name,node.key):node.name} · ${t("查看实体关系","Explore entity")}`}
               className={`lr-g-node ${i === 0 ? "is-hub" : ""} ${focus ? "is-focus" : ""} ${dim ? "is-dim" : ""}`}>
               <circle cx={pt.x} cy={pt.y} r={r + 8} className="lr-g-halo" />
               <circle cx={pt.x} cy={pt.y} r={r} className="lr-g-dot" />
@@ -107,6 +111,11 @@ export function KnowledgeCanvas({ edges, activeId, compact = false }: {
           );
         })}
       </svg>
+      {!compact && <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-lg border border-line bg-surface/95 p-1 shadow-sm" aria-label={t("图谱缩放", "Graph zoom")}>
+        <button type="button" aria-label={t("缩小图谱", "Zoom out")} disabled={zoom <= 0.65} onClick={() => setZoom(v => Math.max(0.65, +(v - 0.25).toFixed(2)))} className="min-h-8 min-w-8 rounded text-ink hover:bg-bg-sunk disabled:opacity-40">−</button>
+        <button type="button" aria-label={t("重置图谱视图", "Reset graph view")} onClick={() => setZoom(1)} className="min-h-8 rounded px-1.5 text-[11px] text-ink hover:bg-bg-sunk">{Math.round(zoom * 100)}%</button>
+        <button type="button" aria-label={t("放大图谱", "Zoom in")} disabled={zoom >= 2.5} onClick={() => setZoom(v => Math.min(2.5, +(v + 0.25).toFixed(2)))} className="min-h-8 min-w-8 rounded text-ink hover:bg-bg-sunk disabled:opacity-40">+</button>
+      </div>}
       <span className="lr-graph-legend"><i className="lr-legend-dot" /> {t("实体节点","Entities")} <i className="lr-legend-line" /> {t("有来源的关系","Sourced relations")}</span>
     </div>
   );
@@ -156,17 +165,24 @@ export function RelationEvidence({ edge }: { edge: KnowledgeEdge }) {
 export function KnowledgeExplorer({ graph, compact = false }: { graph: KnowledgeGraph; compact?: boolean }) {
   const lang=useUiLanguage();
   const [selected, setSelected] = useState<string | null>(null);
+  const [nodeKey, setNodeKey] = useState<string | null>(null);
   const t=useText();
-  const edges = graph.edges;
+  const edges = nodeKey ? graph.edges.filter(e => e.subject.key === nodeKey || e.object.key === nodeKey) : graph.edges;
   const active = edges.find(e => e.id === selected) ?? edges[0];
+  const selectedNode = graph.edges.flatMap(e => [e.subject, e.object]).find(n => n.key === nodeKey);
   return (
     <div className="lr-explorer-grid">
       <div className="lr-graph-frame">
         <div className="lr-graph-topline"><span><span className="lr-pulse" /> KNOWLEDGE MAP</span><span>GRAPHITI / NEO4J</span></div>
-        <KnowledgeCanvas edges={edges} activeId={active?.id} compact={compact}/>
-        <div className="lr-graph-bottomline">{t("节点可打开实体档案 · 点击右侧关系切换高亮","Open a node for its profile · Select a relation to highlight it")}</div>
+        <KnowledgeCanvas edges={graph.edges} activeId={active?.id} selectedNodeKey={nodeKey ?? undefined} onSelectNode={(key) => { setNodeKey(current => current === key ? null : key); setSelected(null); }} compact={compact}/>
+        <div className="lr-graph-bottomline">{t("点击节点查看关系 · 右侧打开档案 · 点击关系查看证据","Select a node to inspect links · Open its profile · Select a relation for evidence")}</div>
       </div>
       <div className="min-w-0">
+        {selectedNode && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-panel border border-accent/20 bg-accent-soft/40 p-3 text-[12.5px]">
+          <strong className="min-w-0 flex-1 truncate">{lang === "en" ? englishEntity(selectedNode.name, selectedNode.key) : selectedNode.name}</strong>
+          <Link prefetch="intent" to={`/knowledge/entity/${encodeURIComponent(selectedNode.key)}`} className="font-semibold text-accent hover:underline">{t("打开实体档案", "Open profile")} ↗</Link>
+          <button type="button" onClick={() => { setNodeKey(null); setSelected(null); }} className="text-ink-4 hover:text-ink">{t("清除选择", "Clear")}</button>
+        </div>}
         <div className="mb-3 flex items-center justify-between">
           <span className="lr-eyebrow">RELATION INDEX / {t("关系索引","RELATIONSHIPS")}</span>
           <span className="mono text-[12px] text-ink-4">{edges.length} LINKS</span>
