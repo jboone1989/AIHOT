@@ -37,7 +37,13 @@ function anonymousSession() {
     const key = "eventgraph:anonymous-session";
     let session = sessionStorage.getItem(key);
     if (!session || !/^[0-9a-f-]{36}$/i.test(session)) {
-      session = crypto.randomUUID();
+      // getRandomValues also works on HTTP development origins; randomUUID requires a secure context.
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      bytes[6] = (bytes[6]! & 0x0f) | 0x40;
+      bytes[8] = (bytes[8]! & 0x3f) | 0x80;
+      const hex = [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
+      session = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
       sessionStorage.setItem(key, session);
     }
     return session;
