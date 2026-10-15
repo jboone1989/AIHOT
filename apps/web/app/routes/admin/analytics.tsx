@@ -7,7 +7,7 @@ import { AdminPage, Card, Stat } from "../../features/admin/ui";
 type Metric = { name: string; count: number; sessions: number };
 type Day = { day: string; page_views: number; sessions: number; graph_sessions: number };
 type Overview = {
-  periodDays: number; asOf: string;
+  periodDays: number; asOf: string; weeklyEffectiveExplorers: number;
   totals: { page_views?: number; sessions?: number; story_sessions?: number; graph_sessions?: number; source_sessions?: number; search_sessions?: number };
   daily: Day[]; events: Metric[];
   content: Array<{ page_type: string; content_id: string; count: number }>;
@@ -39,6 +39,7 @@ export default function AnalyticsAdmin({ loaderData: a }: Route.ComponentProps) 
   return (
     <AdminPage title="流量与行为" subtitle={<>最近 {a.periodDays} 天 · 更新于 {new Date(a.asOf).toLocaleString("zh-CN")} · 匿名会话统计，不等于独立访客数（UV）</>}>
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat label="7 天有效知识探索" value={n(a.weeklyEffectiveExplorers)} hint="同一匿名会话：打开事件后选择 Graph 节点或访问原文"/>
         <Stat label="页面浏览 PV" value={n(totals.page_views)} hint="仅站内匿名事件，非 CDN 请求数"/>
         <Stat label="匿名会话" value={n(totals.sessions)} hint="本标签页会话 ID，非 UV"/>
         <Stat label="事件打开会话" value={n(totals.story_sessions)} hint={pct(totals.story_sessions, totals.sessions) + " / 会话"} />
