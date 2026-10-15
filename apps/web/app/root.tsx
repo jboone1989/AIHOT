@@ -12,6 +12,7 @@ import "./app.css";
 import { Sidebar } from "./components/shell/Sidebar";
 import { LanguageSwitch, useText } from "./components/LanguageSwitch";
 import { ClientLanguageMeta } from "./components/ClientLanguageMeta";
+import { AnalyticsTracker } from "./components/AnalyticsTracker";
 import { TabBar } from "./components/shell/TabBar";
 import { PullToRefresh } from "./components/shell/PullToRefresh";
 import { usePageTransition } from "./components/shell/transitions";
@@ -34,6 +35,16 @@ export const links: Route.LinksFunction = () => [
 
 /** The release rendering this document: once a newer one is deployed, a render error reloads the page (entry.client). */
 export async function loader({ request }: Route.LoaderArgs) {
+  // Only public project/verification tokens reach HTML. Never expose private API keys.
+  const cloudflare = process.env.CLOUDFLARE_WEB_ANALYTICS_TOKEN ?? "";
+  const posthog = process.env.POSTHOG_PROJECT_TOKEN ?? "";
+  const searchConsole = process.env.GOOGLE_SITE_VERIFICATION ?? "";
+  const analytics = {
+    cloudflareToken: /^[a-zA-Z0-9_-]{16,100}$/.test(cloudflare) ? cloudflare : null,
+    posthogToken: /^phc_[a-zA-Z0-9]{16,100}$/.test(posthog) ? posthog : null,
+    posthogRegion: process.env.POSTHOG_REGION === "eu" ? "eu" as const : "us" as const,
+    searchConsoleVerification: /^[a-zA-Z0-9_-]{8,160}$/.test(searchConsole) ? searchConsole : null,
+  };
   const release = process.env.AIHOT_RELEASE ?? null;
   const adsenseAccount = adsenseVerificationId(process.env);
   try {
@@ -41,9 +52,9 @@ export async function loader({ request }: Route.LoaderArgs) {
       headers: Object.assign({}, ...webModules().map((m) => m.root?.documentHeaders?.(request) ?? {})),
       signal: request.signal,
     });
-    return { ...meta, release, adsenseAccount };
+    return { ...meta, release, adsenseAccount, analytics };
   } catch {
-    return { changelogVersion: null, release, adsenseAccount };
+    return { changelogVersion: null, release, adsenseAccount, analytics };
   }
 }
 
@@ -57,6 +68,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         {site?.adsenseAccount && <meta name="google-adsense-account" content={site.adsenseAccount} />}
+        {site?.analytics.searchConsoleVerification && <meta name="google-site-verification" content={site.analytics.searchConsoleVerification} />}
         {documentRelease && <meta name="livingruntime-release" content={documentRelease} />}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f5f8" />
@@ -71,6 +83,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration getKey={(location) => location.key} />
         <Scripts />
+        {site?.analytics.cloudflareToken && <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={JSON.stringify({ token: site.analytics.cloudflareToken, spa: true })} />}
       </body>
     </html>
   );
@@ -132,6 +145,7 @@ export default function App() {
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return <Outlet />;
   return (
     <>
+      <AnalyticsTracker config={meta.analytics} />
       <SiteShell changelogVersion={meta.changelogVersion}>
         <Outlet />
       </SiteShell>
