@@ -94,7 +94,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
       ) : (
         <>
           <h3 className={`mt-1.5 line-clamp-2 text-[17px] font-[650] leading-[1.5] lg:mt-2 lg:line-clamp-none lg:leading-[1.55] ${read ? "text-ink-4" : "text-ink"}`}>
-            <IntentLink viewTransition to={`/items/${item.id}`} onClick={open} className="after:absolute after:inset-0 after:content-['']">
+            <IntentLink viewTransition to={link} onClick={open} className="after:absolute after:inset-0 after:content-['']">
               {title}
             </IntentLink>
           </h3>
