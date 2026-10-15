@@ -41,10 +41,12 @@ def main():
         raise RuntimeError("Compose database must already be running")
     pg=prefix+["exec","-T","db"]
     if args.replace:
-        print("Resetting ONLY the isolated Compose database's public schema",flush=True)
-        command(pg+["psql","-X","-v","ON_ERROR_STOP=1","-U","aihot","-d","aihot",
-                    "-c","DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO public;"],
-                timeout=90,stdout=subprocess.DEVNULL)
+        # A full refresh must also remove the pgboss schema and any other
+        # app-owned schemas or extensions from the isolated Compose database.
+        print("Replacing ONLY isolated Compose database livingruntime/aihot",flush=True)
+        admin=["psql","-X","-v","ON_ERROR_STOP=1","-U","aihot","-d","postgres"]
+        command(pg,admin+["-c","DROP DATABASE IF EXISTS aihot WITH (FORCE)"],timeout=90,stdout=subprocess.DEVNULL)
+        command(pg,admin+["-c","CREATE DATABASE aihot OWNER aihot"],timeout=90,stdout=subprocess.DEVNULL)
     restore=pg+["pg_restore","-U","aihot","-d","aihot","--no-owner","--no-acl","--exit-on-error"]
     if not args.replace:
         restore.extend(["--clean","--if-exists"])
