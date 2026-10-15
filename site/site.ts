@@ -18,16 +18,16 @@ export const EDITION_WHEN = {
 
 export const SITE = {
   /** 站名：导航、页面标题、分享图、RSS、MCP、后台都用它。 */
-  name: "LivingRuntime",
+  name: "EventGraph",
   /**
    * 行业词：拼进默认说法里，比如“AI 日报”“AI 动态”。
    * 改成“法律”“HR”“黄金”之类，页面上就会变成“法律日报”“法律动态”。
    */
   subject: "科技金融",
   /** 首页的完整标题（浏览器标签、搜索结果）。 */
-  homeTitle: "LivingRuntime — AI、加密货币、金融与全球市场事件追踪",
+  homeTitle: "EventGraph — AI、加密货币、金融与全球事件知识图谱",
   /** 主题目录页（/topics）的标题。 */
-  topicsTitle: "AI、加密货币与金融主题追踪 | LivingRuntime",
+  topicsTitle: "AI、加密货币与金融主题追踪 | EventGraph",
   /** 反馈表单输入框里的示例。 */
   feedbackExample: "例如：我在搜索某个关键词时遇到……我原本想……",
   /** 反馈页标题下面的一句话。 */
@@ -35,11 +35,11 @@ export const SITE = {
   /** 反馈表单邮箱框里的提示。 */
   feedbackEmailHint: "留下邮箱，我们可以回信联系你",
   /** 一句话介绍：搜索引擎、分享卡片、RSS、llms.txt 会用。 */
-  description: "追踪人工智能、加密货币、金融与影响市场的全球事件，汇集可信报道、事件进展和有证据的原创研究。",
+  description: "面向人类与 AI Agent 的公共事件知识基础设施，追踪 AI、加密货币、金融与全球事件，组织来源、进展与关系。",
   /** llms.txt 里一句话介绍下面的一段详细介绍（选填）。 */
   llmsIntro: null as string | null,
   /** 一行小字：分享图、海报下方。 */
-  tagline: "发现重要变化，研究变化背后的原因",
+  tagline: "从分散报道到可追溯的事件知识",
   /** 搜索引擎读到的关键词（首页结构化数据）。 */
   keywords: ["AI", "人工智能", "加密货币", "比特币", "稳定币", "金融市场", "金融科技", "原创研究"] as string[],
   /** 网站开始收录的年份（结构化数据的时间范围，选填）。 */
@@ -67,15 +67,15 @@ export const SITE = {
   /** 中国大陆网站的 ICP 备案号（选填），填了就显示在侧栏底部和“我的”页底部，并链接到工信部备案系统。 */
   icp: null as string | null,
   /** 源码的 GitHub 仓库地址（选填），填了就在侧栏底部和“我的”页底部显示“GitHub 开源”。 */
-  github: null as string | null,
+  github: "https://github.com/jboone1989/AIHOT" as string | null,
   /** 结构化数据里的网站运营者（搜索引擎用）。 */
   organization: {
-    name: "LivingRuntime",
+    name: "EventGraph",
     /** 创始人（选填）。 */
     founder: null as null | { name: string; alternateName?: string; jobTitle?: string; description?: string; url?: string },
   },
   /** 抓取信源时报上的名字和版本（User-Agent 里用），不要冒用别的站。 */
-  crawlerName: "LivingRuntimeBot/1.0",
+  crawlerName: "EventGraphBot/1.0",
 } as const;
 
 /** 使用规则和隐私说明两页（正文在 pages/ 里）。 */
@@ -145,7 +145,7 @@ export const ABOUT = {
   /** 大标题：第一行正常颜色，第二行强调色。 */
   headline: ["发现正在发生的变化。", "理解变化意味着什么。"] as [string, string],
   /** 标题下面的一段话。{sources} 会换成实时的信源数（两边自动加空格，所以 {sources} 两边不写空格）；统计没取到时换成 sourcesFallback。 */
-  lead: `LivingRuntime 汇集{sources}个信源中的重要科技与金融信息，按事件组织公开报道，也为今后的原创研究及独立作者保留栏目。报道与观点分开呈现，读者可以回到原始来源核对。`,
+  lead: `EventGraph 汇集{sources}个信源中的重要科技与金融信息，按事件组织公开报道，也为今后的原创研究及独立作者保留栏目。报道与观点分开呈现，读者可以回到原始来源核对。`,
   sourcesFallback: "若干",
   /** 信源河动画下面的四个环节。 */
   steps: {
