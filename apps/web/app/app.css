@@ -637,8 +637,10 @@
 }
 
 
+/* In the components layer, so utilities on the same element (hidden, lg:inline-flex, margins) win. */
+@layer components {
 /* ---------------------------------------------------------------------------
-   LivingRuntime: events → relations → evidence. Night panels carry the lead story and the graph; serif
+   EventGraph: events → relations → evidence. Night panels carry the lead story and the graph; serif
    numerals carry counts and ranks; mono carries labels and data.
    --------------------------------------------------------------------------- */
 .lr-eyebrow { font-family: var(--font-mono); font-weight: 500; letter-spacing: .1em; font-size: 10.5px; line-height: 1.6; text-transform: uppercase; color: var(--ink-4); }
@@ -692,7 +694,7 @@
 .lr-lead-data > div { display: grid; }
 .lr-lead-data strong { font-size: 48px; line-height: .9; }
 .lr-lead-data small { font-size: 11.5px; color: var(--night-ink-3); }
-.lr-lead-spark { --surface: var(--night); height: 52px; width: 100%; color: var(--h3); }
+.lr-lead-spark { --surface: var(--night); height: 52px; width: 100%; }
 .lr-lead-facts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding-top: 10px; border-top: 1px solid var(--night-line); font-size: 12px; color: var(--night-ink-3); }
 .lr-lead-facts b { color: var(--night-ink); font-weight: 600; }
 .lr-lead-more { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-weight: 650; color: var(--night-accent); }
@@ -723,7 +725,7 @@
 .lr-trend-text b { font-size: 14px; font-weight: 700; line-height: 1.45; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lr-trend-row:hover .lr-trend-text b { color: var(--accent); }
 .lr-trend-text span { font-size: 12px; color: var(--ink-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lr-trend-spark { width: 92px; height: 28px; color: var(--h2); }
+.lr-trend-spark { width: 92px; height: 28px; }
 .lr-trend-heat { display: grid; text-align: right; }
 .lr-trend-heat strong { font-size: 24px; line-height: 1; color: var(--ink); }
 .lr-trend-heat small { font: 11px var(--font-mono); color: var(--ink-4); }
@@ -829,6 +831,36 @@
 .lr-story-knowledge .lr-explorer-grid { grid-template-columns: minmax(0, 1fr); }
 .lr-story-knowledge .lr-graph-canvas svg { max-height: 360px; }
 
+/* Entity profile (routes/knowledge-entity). */
+.lr-metric-strip.is-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.lr-entity-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+.lr-relation-timeline { display: grid; padding: 6px 16px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-card); border: 1px solid var(--line-soft); }
+.lr-relation-timeline li { display: grid; grid-template-columns: 84px 18px minmax(0, 1fr); gap: 0 10px; }
+.lr-relation-timeline time { padding-top: 13px; text-align: right; font-size: 11.5px; color: var(--ink-4); }
+.lr-tl-line { position: relative; }
+.lr-tl-line::before { content: ""; position: absolute; left: 8px; top: 0; bottom: 0; width: 1.5px; background: var(--line); }
+.lr-tl-line::after { content: ""; position: absolute; left: 4px; top: 16px; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+.lr-relation-timeline li.is-ended .lr-tl-line::after { border-color: var(--ink-4); background: var(--bg-sunk); }
+.lr-relation-timeline li > div { display: grid; gap: 4px; padding: 10px 0 12px; border-bottom: 1px solid var(--line-soft); }
+.lr-relation-timeline li:last-child > div { border-bottom: 0; }
+.lr-tl-rel { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 14px; font-weight: 650; color: var(--ink); overflow-wrap: anywhere; }
+.lr-relation-timeline li.is-ended .lr-tl-rel { color: var(--ink-3); }
+.lr-relation-timeline p { font-size: 13px; line-height: 1.7; color: var(--ink-3); overflow-wrap: anywhere; }
+.lr-tl-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 12px; color: var(--ink-4); }
+.lr-tl-meta .lr-inline-link { font-size: 12px; }
+.lr-entity-list li { border-top: 1px solid var(--line-soft); }
+.lr-entity-list li:first-child { border-top: 0; }
+.lr-entity-list a { display: grid; gap: 2px; padding: 9px 0; }
+.lr-entity-list b { font-size: 13.5px; font-weight: 650; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
+.lr-entity-list a:hover b { color: var(--accent); }
+.lr-entity-list span { font-size: 11.5px; color: var(--ink-4); }
+@media (max-width: 1100px) { .lr-entity-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  .lr-metric-strip.is-four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lr-relation-timeline { padding: 4px 12px; }
+  .lr-relation-timeline li { grid-template-columns: 70px 18px minmax(0, 1fr); gap: 0 6px; }
+}
+
 /* Hot page: one line on how events lead into the graph. */
 .lr-event-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: 0 0 18px; padding: 12px 16px; border-radius: var(--radius-panel); background: var(--accent-softer); box-shadow: inset 0 0 0 1px var(--line-soft); }
 .lr-event-summary p { flex: 1; min-width: 240px; font-size: 13px; color: var(--ink-3); }
@@ -859,4 +891,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .lr-button-primary, .lr-relation-row, .lr-trend-row { transition: none; }
+}
 }

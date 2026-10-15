@@ -180,7 +180,7 @@ async def relations_by_entity(uuid: str):
         return {"entity": None, "edges": []}
     nodes, _, _ = await app.state.graph.driver.execute_query(
         "MATCH (n:Entity {uuid:$uuid,group_id:'aihot'}) "
-        "RETURN n.name AS name LIMIT 1", uuid=uuid, routing_="r",
+        "RETURN n.name AS name, n.summary AS summary LIMIT 1", uuid=uuid, routing_="r",
     )
     if not nodes:
         return {"entity": None, "edges": []}
@@ -190,7 +190,9 @@ async def relations_by_entity(uuid: str):
         "RETURN " + EDGE_COLUMNS + " ORDER BY r.created_at DESC LIMIT 100",
         uuid=uuid, routing_="r",
     )
-    return {"entity": {"key": uuid, "name": nodes[0]["name"], "kind": "entity"},
+    # summary: Graphiti's own entity summary, written when episodes were ingested (not at read time).
+    return {"entity": {"key": uuid, "name": nodes[0]["name"], "kind": "entity",
+                       "summary": nodes[0].get("summary") or None},
             **(await relation_results(rows))}
 
 

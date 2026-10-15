@@ -1,5 +1,6 @@
 import type {FastifyInstance} from "fastify";
-import {graphForStory,graphForEntity,graphStats,graphSearch,graphOverview} from "@aihot/backend/knowledge/graphiti";
+import {graphForStory,graphStats,graphSearch,graphOverview} from "@aihot/backend/knowledge/graphiti";
+import {entityProfile} from "@aihot/backend/publication/knowledge";
 import {timingSafeEqual} from "node:crypto";
 
 export function registerKnowledge(app:FastifyInstance){
@@ -27,6 +28,6 @@ export function registerKnowledge(app:FastifyInstance){
   app.get<{Params:{key:string}}>("/api/site/knowledge/entities/:key",async(req,reply)=>{
     const key=req.params.key;
     if(key.length>180)return reply.code(400).send({error:"invalid_entity"});
-    return reply.header("Cache-Control","public, max-age=120").send(await graphForEntity(key));
+    return reply.header("Cache-Control","public, max-age=120").send(await entityProfile(key));
   });
 }

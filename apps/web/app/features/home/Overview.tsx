@@ -99,7 +99,7 @@ export function LeadStory({ entry, storyGraph, overview }: { entry: HotEntryView
                 <strong className="numeral">{Math.round(entry.heat)}</strong>
                 <small>{t("热度指数", "Heat index")}</small>
               </div>
-              <Sparkline values={entry.spark} className="lr-lead-spark" />
+              <Sparkline values={entry.spark} className="lr-lead-spark text-heat-3!" />
             </div>
             <div className="lr-lead-facts">
               <span><b className="mono">{entry.sourceCount}</b> {t("个来源", entry.sourceCount === 1 ? "source" : "sources")}</span>
@@ -151,7 +151,7 @@ export function Trending({ entries }: { entries: HotEntryView[] }) {
                 <b>{title(e)}</b>
                 <span>{e.sourceCount} {t("个来源", "sources")} · {e.participantCount} {t("位参与者", "participants")}</span>
               </span>
-              <Sparkline values={e.spark} className="lr-trend-spark" />
+              <Sparkline values={e.spark} className="lr-trend-spark text-heat-2!" />
               <span className="lr-trend-heat"><strong className="numeral">{Math.round(e.heat)}</strong><small>{t("热度", "heat")}</small></span>
             </IntentLink>
           </li>

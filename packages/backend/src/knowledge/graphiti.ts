@@ -84,7 +84,7 @@ export async function graphForStory(publicId: string): Promise<Graph> {
 export async function graphForEntity(uuid: string) {
   if (!process.env.GRAPHITI_API_URL) return { entity: null, edges: [], status: "disabled" };
   try {
-    return await graphiti<{ entity: {key:string;name:string;kind:string}|null; edges:Edge[] }>("/entities/" + encodeURIComponent(uuid));
+    return await graphiti<{ entity: {key:string;name:string;kind:string;summary?:string|null}|null; edges:Edge[]; status?: string }>("/entities/" + encodeURIComponent(uuid));
   } catch (error) {
     console.error("graphiti_entity_lookup_failed", error);
     return { entity: null, edges: [], status: "unavailable" };
