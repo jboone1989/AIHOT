@@ -11,5 +11,3 @@ CREATE TABLE IF NOT EXISTS product_analytics_events (
   duration_ms INTEGER,
   referrer_host VARCHAR(100)
 );
-CREATE INDEX IF NOT EXISTS product_analytics_time_idx ON product_analytics_events (occurred_at DESC);
-CREATE INDEX IF NOT EXISTS product_analytics_name_time_idx ON product_analytics_events (event_name, occurred_at DESC);
