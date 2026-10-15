@@ -21,7 +21,7 @@ VM09 has about 3.6 GiB memory and 2 GiB swap. The production overlay caps resour
 
 ## Cutover, monitoring and rollback
 
-Stop the legacy worker and API before the final data backup and import. No two workers should process the same queue. Stop the staging app while restoring its target database, run migrations, and start the new API. Stop the old web process, update the new web port to 3000 and start the new web and one worker. Cloudflare Tunnel already points at 127.0.0.1:3000 and need not change.
+Stop the legacy worker and API before the final data backup and import. No two workers should process the same queue. Stop BOTH staging web and staging API before the final import; keep only the isolated Compose database running. Refresh the isolated database from the FINAL backup with `python3 scripts/production-db-restore.py --archive /path/to/final.dump --compose docker-compose.yml --compose docker-compose.production.yml --replace --confirm-destination livingruntime`. The replace option resets only the Compose database public schema, not the original host database; it refuses to run while any Compose API/worker/web service is running. Reapply migrations with `docker compose -f docker-compose.yml -f docker-compose.production.yml run --rm setup`, verify record counts and start the new API. Stop the old web process, update the new web port to 3000 and start the new web and one worker. Cloudflare Tunnel already points at 127.0.0.1:3000 and need not change.
 
 Watch public home HTTP status, APIs, selected reports, jobs, nginx/Cloudflare health, DB volume, and RAM. Check that /ads.txt returns 404 and no Google ads script loads until AdSense is approved.
 

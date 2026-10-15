@@ -1,44 +1,59 @@
 #!/usr/bin/env python3
-"""Restore a PostgreSQL custom archive to an UNINITIALIZED Docker Compose database.
+"""Restore a private PostgreSQL archive ONLY to the livingruntime Compose database.
 
-No passwords are printed; Docker Compose carries POSTGRES_PASSWORD via .env.
-Only execute while the destination app services are stopped. Named-volume state
-and source PostgreSQL remain intact. This is NOT a rollback command.
+Use --replace --confirm-destination livingruntime for a final refresh after
+staging migrations. Replaces the isolated database public schema, not the legacy
+host database; refuses to run while API/web/worker is running.
 """
 import argparse
+import json
 import pathlib
 import subprocess
 import sys
 
 
-def main() -> None:
-    p = argparse.ArgumentParser()
+def command(prefix, rest, **kwargs):
+    return subprocess.run(prefix + rest, check=True, **kwargs)
+
+
+def main():
+    p=argparse.ArgumentParser()
     p.add_argument("--archive", type=pathlib.Path, required=True)
-    p.add_argument("--compose", action="append", required=True, help="Compose YAML path, in order")
-    args = p.parse_args()
+    p.add_argument("--compose", action="append", required=True)
+    p.add_argument("--replace", action="store_true", help="Reset staged public schema first")
+    p.add_argument("--confirm-destination", default="", help="Must be livingruntime for --replace")
+    args=p.parse_args()
     if not args.archive.is_file() or args.archive.stat().st_size < 1024:
         raise RuntimeError("Missing/empty backup archive")
-    prefix = ["docker", "compose"]
-    for file in args.compose:
-        prefix += ["-f", file]
-    # Only database service should be running.  Never restore against live API/worker.
-    state = subprocess.run(prefix+["ps","--status","running","--services"],text=True,capture_output=True,check=True).stdout.splitlines()
-    active = {s.strip() for s in state}
-    if active - {"db"}:
-        raise RuntimeError("Refusing restore with live app containers: " + ", ".join(sorted(active-{"db"})))
+    prefix=["docker","compose"]
+    for name in args.compose:
+        prefix += ["-f",name]
+    config=json.loads(command(prefix,["config","--format","json"],capture_output=True,text=True).stdout)
+    if config.get("name")!="livingruntime":
+        raise RuntimeError("Refusing restore: unexpected Compose project")
+    if args.replace and args.confirm_destination!="livingruntime":
+        raise RuntimeError("Reset must be explicitly confirmed for livingruntime")
+    running=command(prefix,["ps","--status","running","--services"],capture_output=True,text=True).stdout.splitlines()
+    active=set(map(str.strip,running))
+    if active-{"db"}:
+        raise RuntimeError("Refusing restore while application services run: "+", ".join(sorted(active-{"db"})))
     if "db" not in active:
-        raise RuntimeError("Database container is not running")
-    args_pg = ["docker", "compose"]
-    for file in args.compose:
-        args_pg += ["-f", file]
-    args_pg += ["exec","-T","db","pg_restore","-U","aihot","-d","aihot",
-                "--no-owner","--no-acl","--clean","--if-exists","--exit-on-error"]
-    with args.archive.open("rb") as archive:
-        rc = subprocess.run(args_pg,stdin=archive,check=False,timeout=1800).returncode
+        raise RuntimeError("Compose database must already be running")
+    pg=prefix+["exec","-T","db"]
+    if args.replace:
+        print("Resetting ONLY the isolated Compose database's public schema",flush=True)
+        command(pg+["psql","-X","-v","ON_ERROR_STOP=1","-U","aihot","-d","aihot",
+                    "-c","DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO public;"],
+                timeout=90,stdout=subprocess.DEVNULL)
+    restore=pg+["pg_restore","-U","aihot","-d","aihot","--no-owner","--no-acl","--exit-on-error"]
+    if not args.replace:
+        restore.extend(["--clean","--if-exists"])
+    with args.archive.open("rb") as source:
+        rc=subprocess.run(restore,stdin=source,timeout=1800,check=False).returncode
     if rc:
-        raise SystemExit("Restore failed with exit code "+str(rc))
-    print("Restore finished. Run migrations and verify records before starting worker.")
+        raise SystemExit("Restore failed: "+str(rc))
+    print("Restore successful; apply migrations and check rows before restarting services.")
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     main()
