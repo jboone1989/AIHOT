@@ -20,12 +20,12 @@ class ApiError extends Error {
   }
 }
 
-export async function apiGet<T>(path: string, init?: { signal?: AbortSignal; headers?: Record<string, string>; responseHeaders?: Headers }): Promise<T> {
+export async function apiGet<T>(path: string, init?: { signal?: AbortSignal; headers?: Record<string, string>; responseHeaders?: Headers; timeoutMs?: number }): Promise<T> {
   try {
     const res = await fetch(`${API_BASE_URL}${path}`, {
       headers: { accept: "application/json", "x-aihot-ssr": "1", ...init?.headers },
       redirect: "manual",
-      signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000),
+      signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(init?.timeoutMs ?? 15_000)]) : AbortSignal.timeout(init?.timeoutMs ?? 15_000),
     });
     if (!res.ok) {
       const body = (await res.json().catch(() => null)) as { mergedInto?: string } | null;
