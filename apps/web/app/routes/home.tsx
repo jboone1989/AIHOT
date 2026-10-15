@@ -28,15 +28,15 @@ export async function loader({ request }: Route.LoaderArgs) {
   const signal = request.signal;
   const [data, graph, stats, hot, site, dailies] = await Promise.all([
     loadOr404<TimelineResponse>(listPath("/api/site/timeline", filterParams(filters)), { responseHeaders: upstream, signal }),
-    apiGet<KnowledgeGraph>("/api/site/knowledge/overview", { signal }).catch(() => EMPTY_GRAPH),
-    apiGet<KnowledgeStats>("/api/site/knowledge/stats", { signal }).catch(() => EMPTY_STATS),
-    apiGet<HotResponse>("/api/site/hot", { signal }).catch(() => null),
-    apiGet<SiteStats>("/api/site/stats", { signal }).catch(() => null),
-    apiGet<ReportIndexResponse>("/api/site/reports/daily", { signal }).catch(() => null),
+    apiGet<KnowledgeGraph>("/api/site/knowledge/overview", { signal, timeoutMs: 1_800 }).catch(() => EMPTY_GRAPH),
+    apiGet<KnowledgeStats>("/api/site/knowledge/stats", { signal, timeoutMs: 1_800 }).catch(() => EMPTY_STATS),
+    apiGet<HotResponse>("/api/site/hot", { signal, timeoutMs: 1_800 }).catch(() => null),
+    apiGet<SiteStats>("/api/site/stats", { signal, timeoutMs: 1_800 }).catch(() => null),
+    apiGet<ReportIndexResponse>("/api/site/reports/daily", { signal, timeoutMs: 1_800 }).catch(() => null),
   ]);
   const lead = hot?.entries[0] ?? null;
   const storyGraph = lead
-    ? await apiGet<KnowledgeGraph>(`/api/site/knowledge/stories/${encodeURIComponent(lead.story.publicId)}`, { signal }).catch(() => EMPTY_GRAPH)
+    ? await apiGet<KnowledgeGraph>(`/api/site/knowledge/stories/${encodeURIComponent(lead.story.publicId)}`, { signal, timeoutMs: 1_800 }).catch(() => EMPTY_GRAPH)
     : EMPTY_GRAPH;
   return cachedPage(60, { data, filters, graph, stats, hot: hot?.entries ?? [], site, storyGraph, daily: dailies?.items[0] ?? null }, upstream);
 }
