@@ -3,6 +3,7 @@
 // public, so a cited report that was withdrawn, held back or never published is left out here.
 import { sql } from "../db.ts";
 import { graphForEntity } from "../knowledge/graphiti.ts";
+import { cachedByKey } from "../lib/cache.ts";
 import { publicSourceName } from "./rules.ts";
 import { storyReportCondition } from "./scope.ts";
 
@@ -64,10 +65,17 @@ export async function citedReports(articleIds: string[], now = new Date()) {
   return { reports, stories: [...stories.values()] };
 }
 
+/** One entity's Graphiti relations, kept a minute: profiles, follows and feeds ask for the same entities. */
+export const entityGraph = cachedByKey((key: string) => key, graphForEntity, { freshMs: 60_000, maxStaleMs: 60_000, maxKeys: 500 });
+
+/** The articles an entity's relations cite, as evidence ids. */
+export const citedArticleIds = (graph: Awaited<ReturnType<typeof graphForEntity>>) =>
+  [...new Set(graph.edges.flatMap((e) => e.evidence.map((ev) => ev.articleId)).filter(Boolean))];
+
 /** The relations around one Graphiti entity, with the public reports and events behind them. */
 export async function entityProfile(key: string) {
-  const graph = await graphForEntity(key);
-  const ids = [...new Set(graph.edges.flatMap((e) => e.evidence.map((ev) => ev.articleId)).filter(Boolean))];
+  const graph = await entityGraph(key);
+  const ids = citedArticleIds(graph);
   const { reports, stories } = await citedReports(ids);
   return { ...graph, reports: reports.slice(0, 30), stories: stories.slice(0, 12) };
 }

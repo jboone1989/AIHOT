@@ -1,3 +1,4 @@
+import { FollowControls } from "./FollowButton";
 import {Link} from "react-router";
 import type {ReportDetail,ReportCitation,ReportIndexEntry,TopicSummary,TopicPage,TopicsResponse,SiteStats,ChangelogRelease} from "@aihot/contracts/site";
 import {DayList,Pagination} from "../features/feed/DayList";
@@ -39,6 +40,7 @@ export function EnglishTopic({data}:{data:TopicPage}){
  const href=(p:number)=>p<=1?"/topics/"+topic.slug:"/topics/"+topic.slug+"/page/"+p;
  return <main className="pb-12"><PhoneBar back={{to:"/topics",label:"Topics"}} title={enTopic(topic)}/>
  <Header eyebrow="TOPIC REPORTING" title={enTopic(topic)} description={enDescription(topic)}/>
+ <div className="mb-4"><FollowControls kind="topic" id={topic.slug} name={topic.name}/></div>
  <p className="mb-4 text-[12px] text-ink-3">{topic.total} selected reports · {topic.recent} in the last 30 days · {topic.poolTotal} indexed</p>
  {items.length?<DayList items={items} headerAside={<span className="text-[12px] text-ink-4">Items {(page-1)*pageSize+1}–{(page-1)*pageSize+items.length}</span>}/>:<p className="rounded-xl border border-line p-6">No reports available yet.</p>}
  <Pagination page={page} pageCount={pageCount} href={href}/></main>;

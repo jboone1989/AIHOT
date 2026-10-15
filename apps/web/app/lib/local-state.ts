@@ -12,10 +12,12 @@ export const KEYS = {
   changelogSeen: "aihot-changelog-seen-version",
   feedbackDraft: "aihot-feedback-draft-v1",
   recentSearches: "aihot-recent-searches",
+  follows: "eventgraph-follows",
 } as const;
 
 const STARRED_LIMIT = 500;
 const READ_LIMIT = 5000;
+const FOLLOW_LIMIT = 50;
 const RECENT_SEARCH_LIMIT = 10;
 const RECENT_SEARCH_MAX_CHARS = 200;
 const IMPORT_MAX_CHARS = 2_000_000;
@@ -117,6 +119,7 @@ const subscribeTheme = subscribeKey(KEYS.theme);
 const subscribeFont = subscribeKey(KEYS.font);
 const subscribeChangelog = subscribeKey(KEYS.changelogSeen);
 const subscribeRecentSearches = subscribeKey(KEYS.recentSearches);
+const subscribeFollows = subscribeKey(KEYS.follows);
 
 // Snapshot cache so useSyncExternalStore gets stable references between changes.
 const cache = new Map<string, unknown>();
@@ -201,6 +204,46 @@ export function removeStar(id: string) {
     if (starredUnreadable()) return;
     writeRaw(KEYS.starred, JSON.stringify(getStarred().filter((s) => s.id !== id)));
     invalidate(KEYS.starred);
+  });
+}
+
+// follows (topics and graph entities; newest first, at most FOLLOW_LIMIT; this browser only)
+export interface LocalFollow {
+  kind: "topic" | "entity";
+  key: string;
+  /** The name when it was followed, for the list before the site answers. */
+  name: string;
+  followedAt: string;
+}
+
+function isFollow(v: unknown): v is LocalFollow {
+  if (!v || typeof v !== "object") return false;
+  const o = v as Record<string, unknown>;
+  return (o.kind === "topic" || o.kind === "entity") && typeof o.key === "string" && ID_PATTERN.test(o.key) && typeof o.name === "string";
+}
+
+const normalizeFollow = (v: LocalFollow): LocalFollow =>
+  ({ kind: v.kind, key: v.key, name: v.name.slice(0, 120), followedAt: isDisplayableDate(v.followedAt) ? v.followedAt : new Date().toISOString() });
+
+export function getFollows(): LocalFollow[] {
+  return cached(KEYS.follows, () => {
+    const parsed = readJson(KEYS.follows);
+    return Array.isArray(parsed) ? parsed.filter(isFollow).map(normalizeFollow).slice(0, FOLLOW_LIMIT) : [];
+  });
+}
+
+const sameFollow = (a: Pick<LocalFollow, "kind" | "key">, b: Pick<LocalFollow, "kind" | "key">) => a.kind === b.kind && a.key === b.key;
+
+/** Follows or unfollows; true when it is now followed and saved. */
+export function toggleFollow(follow: Omit<LocalFollow, "followedAt">): boolean {
+  return editLocalData(() => {
+    if (!ID_PATTERN.test(follow.key)) return false;
+    const list = getFollows();
+    const exists = list.some((f) => sameFollow(f, follow));
+    const next = exists ? list.filter((f) => !sameFollow(f, follow)) : [{ ...follow, followedAt: new Date().toISOString() }, ...list].slice(0, FOLLOW_LIMIT);
+    const saved = writeRaw(KEYS.follows, JSON.stringify(next));
+    invalidate(KEYS.follows);
+    return saved && !exists;
   });
 }
 
@@ -364,11 +407,12 @@ export interface ExportBundle {
   read: string[];
   theme: "light" | "dark" | "auto" | null;
   font?: "system" | "browser";
+  follows?: LocalFollow[];
 }
 
 export function exportBundle(): ExportBundle {
   const pref = getThemePreference();
-  return { version: 1, starred: getStarred(), read: getReadIds(), theme: pref ?? "auto", font: getFontPreference() ?? "system" };
+  return { version: 1, starred: getStarred(), read: getReadIds(), theme: pref ?? "auto", font: getFontPreference() ?? "system", follows: getFollows() };
 }
 
 export interface ImportReport {
@@ -378,6 +422,7 @@ export interface ImportReport {
   readSkipped: number;
   themeApplied: boolean;
   fontApplied: boolean;
+  followsAdded: number;
   /** The stars were saved but the read marks could not be (storage full or unavailable). */
   readFailed: boolean;
 }
@@ -398,6 +443,7 @@ export function importBundle(text: string): ImportReport {
     read: Array.isArray(d.read) ? d.read : [],
     theme: d.theme ?? null,
     font: d.font ?? null,
+    follows: Array.isArray(d.follows) ? d.follows : [],
   });
 }
 
@@ -412,7 +458,7 @@ function starredUnreadable(): boolean {
   }
 }
 
-function mergeLocalData(incoming: { starred: unknown[]; read: unknown[]; theme: unknown; font?: unknown }): ImportReport {
+function mergeLocalData(incoming: { starred: unknown[]; read: unknown[]; theme: unknown; font?: unknown; follows?: unknown[] }): ImportReport {
   return editLocalData(() => {
     // The reader's own data stays recoverable (export it, or fix it) rather than replaced by the import.
     if (starredUnreadable()) throw new Error("这台设备上已有的收藏数据无法读取，为避免覆盖，这次没有导入。");
@@ -452,9 +498,14 @@ function mergeLocalData(incoming: { starred: unknown[]; read: unknown[]; theme: 
       themeApplied = writeRaw(KEYS.theme, incoming.theme);
     }
     const fontApplied = !getFontPreference() && incoming.font === "browser" && writeRaw(KEYS.font, "browser");
+    const follows = getFollows();
+    const newFollows = (incoming.follows ?? []).filter(isFollow).map(normalizeFollow)
+      .filter((f, i, all) => !follows.some((g) => sameFollow(g, f)) && all.findIndex((g) => sameFollow(g, f)) === i)
+      .slice(0, Math.max(0, FOLLOW_LIMIT - follows.length));
+    const followsAdded = newFollows.length && writeRaw(KEYS.follows, JSON.stringify([...follows, ...newFollows])) ? newFollows.length : 0;
     cache.clear();
     emit();
-    return { starredAdded: accepted.length, starredSkipped, readAdded: readFailed ? 0 : Math.min(readAdditions.length, readRoom), readSkipped, themeApplied, fontApplied, readFailed };
+    return { starredAdded: accepted.length, starredSkipped, readAdded: readFailed ? 0 : Math.min(readAdditions.length, readRoom), readSkipped, themeApplied, fontApplied, followsAdded, readFailed };
   });
 }
 
@@ -487,6 +538,15 @@ export function useFontPreference(): FontPreference {
 
 export function useChangelogSeen(): string | null {
   return useSyncExternalStore(subscribeChangelog, getChangelogSeen, () => null);
+}
+
+const NO_FOLLOWS: LocalFollow[] = [];
+export function useFollows(): LocalFollow[] {
+  return useSyncExternalStore(subscribeFollows, getFollows, () => NO_FOLLOWS);
+}
+
+export function useIsFollowed(kind: LocalFollow["kind"], key: string): boolean {
+  return useSyncExternalStore(subscribeFollows, () => getFollows().some((f) => f.kind === kind && f.key === key), () => false);
 }
 
 const NO_SEARCHES: string[] = [];

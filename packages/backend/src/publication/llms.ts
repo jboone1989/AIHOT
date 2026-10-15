@@ -76,6 +76,7 @@ export function llmsTxt(opts: {
   if (opts.hasWeekly) lines.push(`- [周报 RSS](${u("/feed/weekly.xml")}): ${EDITION_WHEN.weekly}（北京时间）发布的周报，每期附总述和按栏目分好的${REPORTS.entry.noun}目录，保留最近 12 期。`);
   if (opts.hasMonthly) lines.push(`- [月报 RSS](${u("/feed/monthly.xml")}): ${EDITION_WHEN.monthly}（北京时间）发布的月报，每期附总述和按栏目分好的${REPORTS.entry.noun}目录，保留最近 12 期。`);
   lines.push(`- [分类 RSS](${u(`/feed/category/${sample}.xml`)}): 按分类订阅精选，slug 支持 ${PUBLIC_API_CATEGORY_KEYS.join(" / ")}`);
+  lines.push(`- 主题与实体 RSS: \`/feed/topic/<slug>.xml\` 是一个主题近 30 天的精选，slug 见 /topics；\`/feed/entity/<key>.xml\` 是知识图谱里一个实体的关系所引用的公开报道，key 见实体档案页地址`);
   lines.push(`- [OpenAPI 规范](${u("/openapi-v1.json")}): REST API 的机器可读定义（版本 ${v}，路径是 /api/v1）`);
   lines.push(`- [公开 API · 最近资讯](${u("/api/v1/items")}): JSON，支持 mode=selected/all、window=24h/7d（历史检索需 q，可用 window=30d/90d/365d）、by=timeline/published（时间口径：默认与网页一致的时间轴，对账原文发布时间用 published）、category、q、limit 与 cursor`);
   lines.push(`- [公开 API · 当前热点](${u("/api/v1/hot-topics")}): 热点榜 Top 10；每条含从 1 开始的 rank，不返回热度值，links.story 指向事件页`);

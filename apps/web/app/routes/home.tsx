@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, redirect, useLoaderData } from "react-router";
 import type { Route } from "./+types/home";
 import type { HotResponse, ReportIndexResponse, SiteStats, TimelineResponse } from "@aihot/contracts/site";
@@ -12,6 +13,8 @@ import { IconArrowRight } from "../components/icons";
 import type { KnowledgeGraph, KnowledgeStats } from "../components/KnowledgeNetwork";
 import { useText } from "../components/LanguageSwitch";
 import { AgentCard, DailyCard, LeadStory, MarketCard, PulseStrip, Trending } from "../features/home/Overview";
+import { FollowingFeed } from "../features/home/Following";
+import { useFollows } from "../lib/local-state";
 
 const EMPTY_GRAPH: KnowledgeGraph = { entities: 0, edges: [], status: "unavailable" };
 const EMPTY_STATS: KnowledgeStats = { entities: 0, relations: 0, episodes: 0, status: "unavailable" };
@@ -56,6 +59,8 @@ export default function Home() {
   const { data, filters, graph, stats, hot, site, storyGraph, daily } = useLoaderData<typeof loader>();
   const t=useText();
   const filtered = Boolean(filters.tag || filters.category || (filters.channel !== "all"));
+  const follows = useFollows();
+  const [following, setFollowing] = useState(false);
   return (
     <div className="pb-6 lr-home">
       <FeedBar base="/" category={filters.category} channel={filters.channel} />
@@ -72,10 +77,16 @@ export default function Home() {
           <div className="lr-feed-heading">
             <div>
               <div className="lr-eyebrow">{t("实时信息流","NEWS STREAM")}</div>
-              <h2>{filters.tag ? `#${filters.tag}` : filtered ? t("筛选后的动态","Filtered news") : t("正在发生的事","What’s happening now")}</h2>
+              <h2>{following ? t("我关注的","Following") : filters.tag ? `#${filters.tag}` : filtered ? t("筛选后的动态","Filtered news") : t("正在发生的事","What’s happening now")}</h2>
             </div>
-            <Link to="/all" className="lr-inline-link">{t("全部动态","All news")} <IconArrowRight size={16}/></Link>
+            {filtered
+              ? <Link to="/all" className="lr-inline-link">{t("全部动态","All news")} <IconArrowRight size={16}/></Link>
+              : <div className="lr-feed-switch" role="group" aria-label={t("信息流范围","Feed scope")}>
+                  <button type="button" aria-pressed={!following} onClick={() => setFollowing(false)}>{t("全部","Everything")}</button>
+                  <button type="button" aria-pressed={following} onClick={() => setFollowing(true)}>{t("我关注的","Following")}{follows.length > 0 && <span className="ml-1 font-mono text-[11px] text-ink-4">{follows.length}</span>}</button>
+                </div>}
           </div>
+          {following && !filtered ? <FollowingFeed /> : <>
           <div className="hidden lg:block">
             <div className="mb-5 flex items-center justify-between gap-4">
               <CategoryTabs base="/" category={filters.category} channel={filters.channel} layoutId="home-cat-desk" className="min-w-0" />
@@ -83,6 +94,7 @@ export default function Home() {
             </div>
           </div>
           <Timeline initial={data} filters={data.filters}/>
+          </>}
         </div>
         <aside className="lr-home-aside" aria-label={t("行情、日报与接入","Markets, daily brief and access")}>
           <MarketCard />

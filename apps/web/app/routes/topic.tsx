@@ -14,6 +14,7 @@ import { monthDay, monthDayTime } from "../lib/format";
 import { PhoneBar } from "../components/shell/PhoneBar";
 import { useUiLanguage } from "../components/LanguageSwitch";
 import { EnglishTopic } from "../components/EnglishPages";
+import { FollowControls } from "../components/FollowButton";
 import { inNav } from "../components/shell/nav";
 import type { Screen } from "../components/shell/screens";
 import type { TopicPagePart } from "../modules";
@@ -124,7 +125,8 @@ export default function TopicRoute() {
             </span>
           </p>
         </div>
-        <div className="flex items-center gap-4 text-[12px] text-ink-4">
+        <div className="flex flex-wrap items-center gap-4 text-[12px] text-ink-4">
+          <FollowControls kind="topic" id={topic.slug} name={topic.name} />
           {topic.latest && (
             <span>
               <time dateTime={topic.latest.at} className="num">{monthDayTime(topic.latest.at)}</time> 更新

@@ -102,7 +102,7 @@ export function topicMembership(topics: Topic[] = TOPICS) {
 }
 
 /** Report `p` is in topic `t`; the tag overlap comes first, for the tags index. */
-function inTopic(t: Topic) {
+export function inTopic(t: Topic) {
   const pattern: ReturnType<typeof sql> = t.pattern === null ? sql`NULL::text` : sql`${t.pattern}::text`;
   return topicMatch(sql`${t.tags}::text[]`, pattern);
 }
@@ -351,6 +351,15 @@ export async function loadTopicPage(slug: string, page: number, now?: Date): Pro
     pageCount,
     pageSize: TOPIC_PAGE_SIZE,
   };
+}
+
+/** The newest selected reports of each known topic among `slugs`, from the minute-old index. */
+export async function topicMemberIds(slugs: string[], perTopic: number): Promise<Map<string, string[]>> {
+  const index = await topicIndex();
+  return new Map(slugs.flatMap((slug) => {
+    const seats = index.bySlug.get(slug);
+    return seats ? [[slug, seats.slice(0, perTopic).map((s) => s.id)] as const] : [];
+  }));
 }
 
 const STORY_TOPICS = 6;
