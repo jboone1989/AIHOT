@@ -1,0 +1,73 @@
+# LivingRuntime production application stack. Cloudflare Tunnel is the independent edge.
+# Apply with:
+# docker compose -f docker-compose.yml -f docker-compose.production.yml up -d --build
+#
+# The public listener is LOOPBACK ONLY; expose through the existing Cloudflare Tunnel.
+# PostgreSQL and app state persist in named volumes. Neo4j/Graphiti are optional and
+# enabled only with --profile knowledge and verified model credentials.
+name: livingruntime
+
+services:
+  db:
+    restart: unless-stopped
+    shm_size: 128m
+    mem_limit: 520m
+    command: ["postgres", "-c", "shared_buffers=96MB", "-c", "max_connections=50"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aihot -d aihot"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    # Never publish the database port.
+
+  setup:
+    image: livingruntime-app:${LRSITE_RELEASE:-main}
+    # Production schema setup must not seed demo data or reset imported records.
+    command: ["node", "scripts/migrate.ts"]
+    restart: "no"
+    mem_limit: 350m
+
+  api:
+    image: livingruntime-app:${LRSITE_RELEASE:-main}
+    init: true
+    mem_limit: 620m
+    environment:
+      GRAPHITI_API_URL: ${GRAPHITI_API_URL:-}
+      MODEL_CALLS_ENABLED: ${MODEL_CALLS_ENABLED:-false}
+      GRAPHITI_INGEST_ENABLED: ${GRAPHITI_INGEST_ENABLED:-false}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/site/knowledge/stats').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  worker:
+    image: livingruntime-app:${LRSITE_RELEASE:-main}
+    init: true
+    mem_limit: 620m
+    environment:
+      GRAPHITI_API_URL: ${GRAPHITI_API_URL:-}
+      MODEL_CALLS_ENABLED: ${MODEL_CALLS_ENABLED:-false}
+      GRAPHITI_INGEST_ENABLED: ${GRAPHITI_INGEST_ENABLED:-false}
+
+  web:
+    image: livingruntime-app:${LRSITE_RELEASE:-main}
+    init: true
+    mem_limit: 480m
+    ports: !override
+      - "127.0.0.1:${LRSITE_PORT:-3000}:3000"
+    environment:
+      # DNS stays at Cloudflare, TLS is terminated at the edge.
+      SITE_URL: ${SITE_URL:-https://www.livingruntime.com}
+      ADSENSE_VERIFICATION_ENABLED: ${ADSENSE_VERIFICATION_ENABLED:-false}
+      ADSENSE_PUBLISHER_ID: ${ADSENSE_PUBLISHER_ID:-}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    depends_on:
+      api:
+        condition: service_healthy
