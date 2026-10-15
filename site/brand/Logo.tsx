@@ -1,6 +1,6 @@
 import { SITE } from "../site.ts";
 
-/** Unique LivingRuntime constellation mark, independent of the upstream engine's trademarks. */
+/** Unique EventGraph constellation mark, independent of the upstream engine's trademarks. */
 export function NetworkMark({ className = "", spinning = false, size }: { className?: string; spinning?: boolean; size?: number }) {
   return (
     <svg viewBox="0 0 512 512" className={className} style={size ? { width: size, height: size } : undefined} aria-hidden="true" focusable="false">
@@ -20,7 +20,7 @@ export function NetworkMark({ className = "", spinning = false, size }: { classN
   );
 }
 
-/** Stable public brand wordmark: the name in the serif, its second word in italic accent ("Living*Runtime*"). */
+/** Stable public brand wordmark: the name in the serif, its second word in italic accent ("Event*Graph*"). */
 export function Wordmark({ size = 24, className = "", title = SITE.name }: { size?: number; className?: string; title?: string }) {
   const [, head = SITE.name, tail = ""] = /^([A-Z][a-z]+)([A-Z].*)?$/.exec(SITE.name) ?? [];
   return (
