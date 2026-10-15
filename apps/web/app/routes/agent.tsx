@@ -15,7 +15,6 @@ import { ApiPanel, McpPanel, mcpToolCount, RssPanel } from "../features/agent/pa
 import type { AgentTrack } from "../modules";
 import { PhoneBar } from "../components/shell/PhoneBar";
 import { useUiLanguage } from "../components/LanguageSwitch";
-import { trackAnalytics } from "../lib/analytics.client";
 import { EnglishAgent } from "../components/EnglishUtility";
 import type { Screen } from "../components/shell/screens";
 
