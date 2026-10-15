@@ -5,6 +5,7 @@ const hasHan=(s:string)=>/[\u3400-\u9fff]/u.test(s);
 // Preserve original entity names even when an English translation is not available.
 const englishEntity=(name:string,_key:string)=>name;
 import { IconArrowUpRight, IconClock, IconExternal } from "./icons";
+import { trackAnalytics } from "../lib/analytics.client";
 
 export interface KnowledgeEdge {
   id: string;
@@ -154,7 +155,7 @@ export function RelationEvidence({ edge }: { edge: KnowledgeEdge }) {
               <div className="mt-1 text-[11.5px] text-ink-4">{formatDate(source.publishedAt)??t("时间未确定","Date unknown")} · {t("Graphiti 提取的关系事实，非原文逐字引述","Graphiti-extracted fact, not a verbatim quote")}</div>
             </div>
             {/^https?:\/\//i.test(source.url) ? (
-              <a href={source.url} target="_blank" rel="noopener noreferrer" className="lr-source-link" aria-label={t(`打开${source.source}原文`,`Open original report from ${source.source&&hasHan(source.source)?"publisher":source.source}`)}><IconExternal size={14}/></a>
+              <a href={source.url} target="_blank" rel="noopener noreferrer" data-analytics-event="source_open" className="lr-source-link" aria-label={t(`打开${source.source}原文`,`Open original report from ${source.source&&hasHan(source.source)?"publisher":source.source}`)}><IconExternal size={14}/></a>
             ) : <Link to={`/items/${source.articleId}`} className="lr-source-link">{t("查看","View")}</Link>}
           </div>
         )) : <p className="text-[12px] text-ink-4">{t("暂无可展示的来源记录","No source records available")}</p>}
@@ -175,7 +176,7 @@ export function KnowledgeExplorer({ graph, compact = false }: { graph: Knowledge
     <div className="lr-explorer-grid">
       <div className="lr-graph-frame">
         <div className="lr-graph-topline"><span><span className="lr-pulse" /> KNOWLEDGE MAP</span><span>GRAPHITI / NEO4J</span></div>
-        <KnowledgeCanvas edges={graph.edges} activeId={active?.id} selectedNodeKey={nodeKey ?? undefined} onSelectNode={(key) => { setNodeKey(current => current === key ? null : key); setSelected(null); }} compact={compact}/>
+        <KnowledgeCanvas edges={graph.edges} activeId={active?.id} selectedNodeKey={nodeKey ?? undefined} onSelectNode={(key) => { trackAnalytics("graph_node_select"); setNodeKey(current => current === key ? null : key); setSelected(null); }} compact={compact}/>
         <div className="lr-graph-bottomline">{t("点击节点查看关系 · 右侧打开档案 · 点击关系查看证据","Select a node to inspect links · Open its profile · Select a relation for evidence")}</div>
       </div>
       <div className="min-w-0">
@@ -193,7 +194,7 @@ export function KnowledgeExplorer({ graph, compact = false }: { graph: Knowledge
             <div className="lr-relation-list">
               {edges.slice(0, compact ? 8 : 24).map(edge=> (
                 <button key={edge.id} type="button" aria-pressed={edge.id === active?.id}
-                  onClick={()=>setSelected(edge.id)} className={`lr-relation-row ${edge.id === active?.id ? "is-active" : ""}`}>
+                  onClick={()=>{ trackAnalytics("graph_relation_select"); setSelected(edge.id); }} className={`lr-relation-row ${edge.id === active?.id ? "is-active" : ""}`}>
                   <span className="min-w-0">
                     <strong>{lang==="en"?englishEntity(edge.subject.name,edge.subject.key):edge.subject.name}</strong><span className="block truncate text-[11px] font-normal text-ink-4">{edge.predicate.replaceAll("_", " ")} → {lang==="en"?englishEntity(edge.object.name,edge.object.key):edge.object.name}</span>
                   </span>
