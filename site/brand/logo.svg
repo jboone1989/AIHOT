@@ -1,12 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LivingRuntime knowledge network mark">
-  <rect width="512" height="512" rx="115" fill="#102b34"/>
-  <g stroke="#63b0af" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".95">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="EventGraph knowledge network mark">
+  <rect width="512" height="512" rx="115" fill="#0f1424"/>
+  <g stroke="#a7a0ff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".75">
     <path d="M125 141 292 97 392 246 264 394 108 338 125 141"/>
     <path d="M125 141 264 394 292 97"/>
   </g>
-  <circle cx="125" cy="141" r="23" fill="#a8f0d6"/>
-  <circle cx="292" cy="97" r="18" fill="#d3ffee"/>
-  <circle cx="392" cy="246" r="27" fill="#eab372"/>
-  <circle cx="264" cy="394" r="32" fill="#a2ead3"/>
-  <circle cx="108" cy="338" r="18" fill="#72cbc4"/>
+  <circle cx="125" cy="141" r="23" fill="#eef0f8"/>
+  <circle cx="292" cy="97" r="18" fill="#a7a0ff"/>
+  <circle cx="392" cy="246" r="27" fill="#ff8a3d"/>
+  <circle cx="264" cy="394" r="32" fill="#f2335f"/>
+  <circle cx="108" cy="338" r="18" fill="#a7a0ff"/>
 </svg>

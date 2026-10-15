@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useText, useUiLanguage } from "./LanguageSwitch";
 const hasHan=(s:string)=>/[\u3400-\u9fff]/u.test(s);
@@ -47,9 +47,19 @@ function shortName(value: string) {
   return value.length > 19 ? value.slice(0, 18) + "…" : value;
 }
 
+/** The drawn area: the nodes' bounds plus room for rings and labels, so a small story graph fills its frame. */
+function viewBox(points: Array<{ x: number; y: number }>) {
+  const xs = points.map(p => p.x), ys = points.map(p => p.y);
+  let x0 = Math.min(...xs) - 110, x1 = Math.max(...xs) + 110;
+  const y0 = Math.min(...ys) - 58, y1 = Math.max(...ys) + 72;
+  if (x1 - x0 < 460) { const c = (x0 + x1) / 2; x0 = c - 230; x1 = c + 230; }
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+
 export function KnowledgeCanvas({ edges, activeId, compact = false }: {
   edges: KnowledgeEdge[]; activeId?: string; compact?: boolean;
 }) {
+  const gridId = `lr-grid-${useId().replaceAll(":", "")}`;
   const { nodes, coords, visibleEdges } = useMemo(() => layout(edges), [edges]);
   const t=useText();
   const lang=useUiLanguage();
@@ -62,43 +72,42 @@ export function KnowledgeCanvas({ edges, activeId, compact = false }: {
   );
   const active = edges.find(e => e.id === activeId);
   const related = new Set(active ? [active.subject.key, active.object.key] : []);
+  const box = viewBox([...coords.values()]);
+  const grid = gridId;
   return (
     <div className={`lr-graph-canvas ${compact ? "lr-graph-compact" : ""}`}>
-      <svg viewBox="0 0 780 450" role="img" aria-label={lang==="en"?`Knowledge network with ${nodes.length} entities and ${visibleEdges.length} relationships`:`知识关系网络，包含 ${nodes.length} 个可见实体、${visibleEdges.length} 条可见关系`}>
+      <svg viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`} role="img" aria-label={lang==="en"?`Knowledge network with ${nodes.length} entities and ${visibleEdges.length} relationships`:`知识关系网络，包含 ${nodes.length} 个可见实体、${visibleEdges.length} 条可见关系`}>
         <defs>
-          <pattern id={compact ? "lr-grid-mini" : "lr-grid"} width="28" height="28" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="0.75" fill="currentColor" opacity="0.12" />
+          <pattern id={grid} width="28" height="28" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.75" fill="currentColor" opacity="0.14" />
           </pattern>
         </defs>
-        <rect width="780" height="450" fill={`url(#${compact ? "lr-grid-mini" : "lr-grid"})`} />
+        <rect x={box.x} y={box.y} width={box.w} height={box.h} fill={`url(#${grid})`} />
         {visibleEdges.map((edge) => {
           const a = coords.get(edge.subject.key)!; const b = coords.get(edge.object.key)!;
           const emphasized = activeId === edge.id;
           return (
             <line key={edge.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-              stroke={emphasized ? "#f0aa70" : "#74a6ab"} opacity={activeId ? (emphasized ? 1 : .17) : .39}
-              strokeWidth={emphasized ? 2.5 : 1.25} />
+              className={`lr-g-edge ${emphasized ? "is-on" : activeId ? "is-dim" : ""}`} />
           );
         })}
         {nodes.map((node, i) => {
           const pt = coords.get(node.key)!;
           const focus = related.has(node.key), dim = activeId && !focus;
-          const r = i === 0 ? 34 : node.degree > 2 ? 23 : 18;
+          const r = i === 0 ? 30 : node.degree > 2 ? 21 : 16;
           return (
-            <a key={node.key} href={`/knowledge/entity/${encodeURIComponent(node.key)}`} aria-label={`${lang==="en"?englishEntity(node.name,node.key):node.name} · ${t("查看实体关系","Explore entity")}`}>
-              <circle cx={pt.x} cy={pt.y} r={r + 7} fill="#74d1c9" fillOpacity={focus || i === 0 ? .08 : .03} />
-              <circle cx={pt.x} cy={pt.y} r={r} fill={i === 0 ? "#b1f1dc" : focus ? "#f0aa70" : "#183a43"}
-                stroke={i === 0 ? "#c7ffee" : focus ? "#f0aa70" : "#51828a"}
-                strokeWidth={i === 0 || focus ? 2 : 1} opacity={dim ? .28 : 1} />
-              {i === 0 && <circle cx={pt.x} cy={pt.y} r="7" fill="#173640" />}
-              <text x={pt.x} y={pt.y + r + 18} textAnchor="middle"
-                fill="#e6f3f2" opacity={dim ? .38 : 1} fontSize={i === 0 ? 15 : 12.5}
+            <a key={node.key} href={`/knowledge/entity/${encodeURIComponent(node.key)}`} aria-label={`${lang==="en"?englishEntity(node.name,node.key):node.name} · ${t("查看实体关系","Explore entity")}`}
+              className={`lr-g-node ${i === 0 ? "is-hub" : ""} ${focus ? "is-focus" : ""} ${dim ? "is-dim" : ""}`}>
+              <circle cx={pt.x} cy={pt.y} r={r + 8} className="lr-g-halo" />
+              <circle cx={pt.x} cy={pt.y} r={r} className="lr-g-dot" />
+              {i === 0 && <circle cx={pt.x} cy={pt.y} r="6" className="lr-g-core" />}
+              <text x={pt.x} y={pt.y + r + 19} textAnchor="middle" className="lr-g-label" fontSize={i === 0 ? 15 : 12.5}
                 fontWeight={i === 0 ? 700 : 500}>{shortName(lang==="en"?englishEntity(node.name,node.key):node.name)}</text>
             </a>
           );
         })}
       </svg>
-      <span className="lr-graph-legend">● {t("实体节点","Entities")} <span>— {t("有来源的关系","Sourced relations")}</span></span>
+      <span className="lr-graph-legend"><i className="lr-legend-dot" /> {t("实体节点","Entities")} <i className="lr-legend-line" /> {t("有来源的关系","Sourced relations")}</span>
     </div>
   );
 }

@@ -16,6 +16,10 @@ import { IconExternal } from "../../components/icons";
 import { QuotedLine } from "../item/QuotedPost";
 import { rememberPreview } from "../item/preview";
 import { useUiLanguage } from "../../components/LanguageSwitch";
+import { categoryName } from "./Filters";
+
+const hasHan = (s: string) => /[\u3400-\u9fff]/u.test(s);
+const hostOf = (url: string) => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return null; } };
 
 export interface FeedItemProps {
   item: FeedItemSummary;
@@ -32,20 +36,27 @@ export interface FeedItemProps {
 export const FeedItem = memo(function FeedItem({ item, group, filters, read = false, onOpen, showTags = false, at }: FeedItemProps) {
   const language=useUiLanguage();
   const isX = item.channel === "x" && !!item.x;
-  const title = language==="en" ? (item.originalTitle && !/[\u3400-\u9fff]/u.test(item.originalTitle) ? item.originalTitle : !/[\u3400-\u9fff]/u.test(item.title) ? item.title : "Original report from publisher") : item.title;
+  // Only genuine source URLs, not the AIHot detail URL or untrusted schemes.
+  const originalUrl = item.links?.original && /^https?:\/\//i.test(item.links.original) ? item.links.original : null;
+  const host = originalUrl ? hostOf(originalUrl) : null;
+  // English reading is source-first: the publisher's own headline, else where the report lives.
+  const title = language==="en" ? (item.originalTitle && !hasHan(item.originalTitle) ? item.originalTitle : !hasHan(item.title) ? item.title : host ? `Original report on ${host}` : "Original report from publisher") : item.title;
   const link = `/items/${item.id}${language==="en"?"/original":""}`;
   const open = () => {
     rememberPreview(item);
     onOpen?.(item.id);
   };
   const showSources = !!group && (group.additionalSourceCount > 0 || group.reportCount > 1);
-  // Only genuine source URLs, not the AIHot detail URL or untrusted schemes.
-  const originalUrl = item.links?.original && /^https?:\/\//i.test(item.links.original) ? item.links.original : null;
   const tags = showTags ? item.tags.slice(0, 3) : [];
 
   return (
     <article className="relative min-w-0 lg:card lg:card-hover lg:px-[18px] lg:pb-[14px] lg:pt-[15px]" data-item-id={item.id}>
       <header className="flex min-h-[22px] items-center gap-1.5 text-[12.5px] leading-[18px] text-ink-4 lg:min-h-[18px] lg:gap-2">
+        {item.category && !showTags && (
+          <span className="lr-cat hidden shrink-0 sm:inline-flex" style={{ "--cc": `var(--c-${item.category}, var(--ink-4))` } as React.CSSProperties}>
+            {categoryName(item.category, language)}
+          </span>
+        )}
         <SourceLine item={item} className="text-ink-4" />
         {at && (
           <time dateTime={at} className="mono shrink-0 text-[12px] lg:hidden">
@@ -83,7 +94,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
       ) : (
         <>
           <h3 className={`mt-1.5 line-clamp-2 text-[17px] font-[650] leading-[1.5] lg:mt-2 lg:line-clamp-none lg:leading-[1.55] ${read ? "text-ink-4" : "text-ink"}`}>
-            <IntentLink viewTransition to={`/items/${item.id}`} onClick={open} className="after:absolute after:inset-0 after:content-['']">
+            <IntentLink viewTransition to={link} onClick={open} className="after:absolute after:inset-0 after:content-['']">
               {title}
             </IntentLink>
           </h3>
@@ -98,7 +109,10 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
             className="inline-flex min-h-8 items-center gap-1.5 rounded-control border border-line-strong bg-surface px-2.5 font-medium text-accent transition-colors hover:border-accent hover:bg-bg-sunk">
             {language==="en"?(isX?"View original post":"Read source"):(isX ? "查看原帖" : "阅读原文")} <IconExternal size={13} />
           </a>
-          {!isX && <span className="truncate text-ink-4">{language==="en"?"Source: ":"来源："}{language==="en"&&/[\u3400-\u9fff]/u.test(item.source.name)?"Publisher":item.source.name}</span>}
+          {!isX && <span className="truncate text-ink-4">{language==="en" ? (host ?? "Publisher") : `来源：${item.source.name}`}</span>}
+          {language==="en" && group && group.additionalSourceCount > 0 && (
+            <span className="lr-group-pill">+{group.additionalSourceCount} {group.additionalSourceCount === 1 ? "more outlet" : "more outlets"}</span>
+          )}
         </div>
       )}
 
@@ -135,8 +149,8 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
       )}
 
       {item.reason && language==="zh" && (
-        <div className="mt-1 lg:mt-3 lg:border-t lg:border-line-soft lg:pt-3">
-          <p className="line-clamp-2 text-[13px] leading-[1.65] text-note lg:line-clamp-none lg:leading-[1.75]">{`${ITEM_COPY.reasonLabel}：`}{item.reason}</p>
+        <div className="lr-reason mt-1.5 lg:mt-3">
+          <p className="line-clamp-2 lg:line-clamp-none"><b>{ITEM_COPY.reasonLabel}</b>{item.reason}</p>
         </div>
       )}
 

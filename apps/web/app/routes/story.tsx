@@ -4,7 +4,7 @@ import { Link, useLoaderData, useLocation } from "react-router";
 import type { Route } from "./+types/story";
 import type { StoryDetail, StoryReportView } from "@aihot/contracts/site";
 import { SITE } from "@aihot/site";
-import { cachedPage, loadOr404 } from "../lib/api.server";
+import { apiGet, cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
 import { breadcrumbLd, pageMeta, storyLd, titled } from "../lib/seo";
 import { beijingDate, beijingTime } from "@aihot/contracts/time";
@@ -29,7 +29,12 @@ export const { clientLoader, shouldRevalidate } = pageReuse<typeof loader>();
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const story = await loadOr404<StoryDetail>(`/api/site/stories/${encodeURIComponent(params.publicId)}`, { signal: request.signal, merged: (id) => `/story/${id}` });
-  const graph = await loadOr404<KnowledgeGraph>(`/api/site/knowledge/stories/${encodeURIComponent(params.publicId)}`, { signal: request.signal });
+  // Graph availability must never hide an otherwise public event and its source timeline.
+  const graph = await apiGet<KnowledgeGraph>(`/api/site/knowledge/stories/${encodeURIComponent(params.publicId)}`, { signal: request.signal })
+    .catch((error): KnowledgeGraph => {
+      if (request.signal.aborted) throw error;
+      return { entities: 0, edges: [], status: "unavailable" };
+    });
   return cachedPage(120, { story, graph });
 }
 

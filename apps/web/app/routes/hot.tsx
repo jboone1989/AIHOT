@@ -117,7 +117,7 @@ function Lead({ e }: { e: HotEntryView }) {
   return (
     <article className="card card-hover group relative flex flex-col overflow-hidden p-5 sm:p-6">
       <div className="flex items-center gap-2.5">
-        <span className={`mono text-[12px] font-bold tracking-[0.16em] ${rankColor(e.rank)}`}>NO.{pad(e.rank)}</span>
+        <span className={`numeral text-[38px] italic leading-[0.8] ${rankColor(e.rank)}`}>{e.rank}</span>
         <Badges e={e} />
         <Delta trend={e.trend} pct={e.trendPct} className="ml-auto" />
       </div>
@@ -155,7 +155,7 @@ function Lead({ e }: { e: HotEntryView }) {
         <div className="flex w-full shrink-0 items-end justify-between gap-5 sm:ml-auto sm:w-auto sm:justify-end">
           {!panel && <Sparkline values={e.spark} className="h-10 w-[140px]" />}
           <div className="text-right">
-            <div className="mono text-[34px] font-semibold leading-none tracking-[-0.03em] text-ink">{Math.round(e.heat)}</div>
+            <div className="numeral text-[48px] leading-none text-ink">{Math.round(e.heat)}</div>
             <div className="mt-1 text-[11.5px] text-ink-4">{t("热度指数","Activity index")}</div>
           </div>
         </div>
@@ -170,7 +170,7 @@ function Runner({ e }: { e: HotEntryView }) {
   return (
     <article className="card card-hover group relative flex flex-col px-5 py-4">
       <div className="flex items-center gap-2.5">
-        <span className={`mono text-[12px] font-bold tracking-[0.16em] ${rankColor(e.rank)}`}>NO.{pad(e.rank)}</span>
+        <span className={`numeral text-[38px] italic leading-[0.8] ${rankColor(e.rank)}`}>{e.rank}</span>
         <Badges e={e} />
         <Delta trend={e.trend} pct={e.trendPct} className="ml-auto" />
       </div>
@@ -188,7 +188,7 @@ function Runner({ e }: { e: HotEntryView }) {
         </div>
         <div className="flex items-end gap-3">
           <Sparkline values={e.spark} className="h-7 w-[92px]" />
-          <span className="mono text-[24px] font-semibold leading-none tracking-[-0.02em] text-ink">{Math.round(e.heat)}</span>
+          <span className="numeral text-[34px] leading-none text-ink">{Math.round(e.heat)}</span>
         </div>
       </div>
     </article>
@@ -200,8 +200,8 @@ function Row({ e }: { e: HotEntryView }) {
   const lang=useUiLanguage();
   return (
     <li className="group relative grid grid-cols-[30px_minmax(0,1fr)] items-start gap-x-3 px-4 py-3 transition-colors hover:bg-bg-sunk/70 sm:px-5 lg:grid-cols-[44px_minmax(0,1fr)_auto_104px_76px] lg:items-center lg:gap-x-6 lg:px-6 lg:py-3.5 dark:hover:bg-bg-muted/40">
-      <span className={`mono text-[16px] font-semibold leading-[24px] lg:text-[17px] ${rankColor(e.rank)}`} aria-label={lang==="en"?`Rank ${e.rank}`:`热度排名第 ${e.rank} 位`}>
-        {pad(e.rank)}
+      <span className={`numeral text-[26px] italic leading-[24px] ${rankColor(e.rank)}`} aria-label={lang==="en"?`Rank ${e.rank}`:`热度排名第 ${e.rank} 位`}>
+        {e.rank}
       </span>
       <div className="min-w-0">
         <h3 className="text-[15px] font-[650] leading-[1.55] text-ink">
@@ -219,7 +219,7 @@ function Row({ e }: { e: HotEntryView }) {
             <span className="num">{e.sourceCount}</span> {lang==="en"?"sources":"个来源"}
           </span>
           <span className="ml-auto flex items-center gap-2">
-            <span className="mono text-[17px] font-semibold leading-none text-ink">{Math.round(e.heat)}</span>
+            <span className="numeral text-[24px] leading-none text-ink">{Math.round(e.heat)}</span>
             <Delta trend={e.trend} pct={e.trendPct} />
           </span>
         </div>
@@ -229,7 +229,7 @@ function Row({ e }: { e: HotEntryView }) {
       </div>
       <Sparkline values={e.spark} className="hidden h-7 w-[104px] lg:block" />
       <div className="hidden flex-col items-end gap-1 lg:flex">
-        <span className="mono text-[20px] font-semibold leading-none tracking-[-0.02em] text-ink">{Math.round(e.heat)}</span>
+        <span className="numeral text-[28px] leading-none text-ink">{Math.round(e.heat)}</span>
         <Delta trend={e.trend} pct={e.trendPct} />
       </div>
     </li>
@@ -293,12 +293,9 @@ export default function HotPage() {
       </header>
 
       <section className="lr-event-summary" aria-label={t("事件树与长期知识库的关系","How events connect to knowledge")}>
-        <div>
-          <div className="lr-eyebrow text-[#9bd7ca]">EVENT LAYER / WHAT HAPPENED</div>
-          <h2 className="mt-2 text-[20px] font-semibold text-white">{t("热点会变，事件有脉络。","Trends fade. Context remains.")}</h2>
-          <p className="mt-2 text-[12.5px] leading-[1.8] text-[#abcaca]">{t("这里保留多来源归组与事件进展；点开一个事件，还能继续观察它沉淀出的实体关系和原始证据。","News from multiple sources forms an evolving event tree. Open a story to follow its timeline, factual relationships and original evidence.")}</p>
-        </div>
-        <Link to="/knowledge" className="lr-event-summary-link"><IconNetwork size={18} /> {t("进入长期知识网络","Explore Knowledge Graph")} <IconArrowRight size={16}/></Link>
+        <span className="lr-layers"><b>{t("事件","EVENT")}</b><i>→</i>{t("关系","RELATIONS")}<i>→</i>{t("证据","EVIDENCE")}</span>
+        <p>{t("点开一个事件，看它的进展、在知识图谱里连出的关系和原始来源。","Open an event for its developments, the relations it adds to the knowledge graph and the original sources.")}</p>
+        <Link to="/knowledge" className="lr-inline-link"><IconNetwork size={16} /> {t("知识网络","Knowledge graph")} <IconArrowRight size={14}/></Link>
       </section>
 
       {!lead ? (
