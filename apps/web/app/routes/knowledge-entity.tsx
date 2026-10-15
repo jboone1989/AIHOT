@@ -13,7 +13,7 @@ export const handle: Screen = { tab: "knowledge", name: "实体档案" };
 export { pageHeaders as headers } from "../lib/api.server";
 export const { clientLoader, shouldRevalidate } = pageReuse<typeof loader>();
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const entity = await apiGet<KnowledgeGraph & {entity:{key:string;name:string;kind:string}|null}>(`/api/site/knowledge/entities/${encodeURIComponent(params.key)}`,{signal:request.signal})
+  const entity = await apiGet<KnowledgeGraph & {entity:{key:string;name:string;kind:string}|null}>(`/api/site/knowledge/entities/${encodeURIComponent(params.key)}`,{signal:request.signal, timeoutMs:4_000})
     .catch(()=>({entity:null,entities:0,edges:[],status:"unavailable"} as KnowledgeGraph & {entity:null}));
   return cachedPage(60,{entity});
 }
