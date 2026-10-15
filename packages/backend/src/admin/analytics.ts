@@ -34,7 +34,7 @@ export async function analyticsOverview() {
       GROUP BY referrer_host ORDER BY page_views DESC LIMIT 12`,
     sql`SELECT COUNT(*)::int AS samples,
       ROUND(AVG(duration_ms))::int AS mean_ms,
-      ROUND(PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY duration_ms))::int AS p75_ms
+      ROUND((PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY duration_ms))::numeric)::int AS p75_ms
       FROM product_analytics_events WHERE occurred_at >= NOW() - INTERVAL '30 days'
         AND event_name='navigation_complete' AND duration_ms IS NOT NULL`,
   ]);
