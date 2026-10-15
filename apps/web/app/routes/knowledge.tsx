@@ -16,8 +16,8 @@ export { pageHeaders as headers } from "../lib/api.server";
 export const { clientLoader, shouldRevalidate } = pageReuse<typeof loader>();
 export async function loader({ request }: Route.LoaderArgs) {
   const [graph, stats] = await Promise.all([
-    apiGet<KnowledgeGraph>("/api/site/knowledge/overview", {signal: request.signal}).catch(()=>({entities: 0, edges: [], status: "unavailable"} as KnowledgeGraph)),
-    apiGet<KnowledgeStats>("/api/site/knowledge/stats", {signal: request.signal}).catch(()=>({episodes: 0, entities: 0, relations: 0, status: "unavailable"} as KnowledgeStats)),
+    apiGet<KnowledgeGraph>("/api/site/knowledge/overview", {signal: request.signal, timeoutMs: 4_000}).catch(()=>({entities: 0, edges: [], status: "unavailable"} as KnowledgeGraph)),
+    apiGet<KnowledgeStats>("/api/site/knowledge/stats", {signal: request.signal, timeoutMs: 4_000}).catch(()=>({episodes: 0, entities: 0, relations: 0, status: "unavailable"} as KnowledgeStats)),
   ]);
   return cachedPage(60, { graph, stats });
 }

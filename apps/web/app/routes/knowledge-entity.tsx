@@ -25,7 +25,7 @@ const hasHan = (s: string) => /[㐀-鿿]/u.test(s);
 const day = (iso: string | null) => (iso ? beijingDate(iso) : null);
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const profile = await apiGet<EntityProfile>(`/api/site/knowledge/entities/${encodeURIComponent(params.key)}`, { signal: request.signal })
+  const profile = await apiGet<EntityProfile>(`/api/site/knowledge/entities/${encodeURIComponent(params.key)}`, { signal: request.signal, timeoutMs: 4_000 })
     .catch(() => UNAVAILABLE);
   return cachedPage(120, { profile });
 }

@@ -11,7 +11,6 @@ import { ActiveFilters, CategoryTabs, FeedBar, SearchField } from "../features/f
 import { IconArrowRight } from "../components/icons";
 import type { KnowledgeGraph, KnowledgeStats } from "../components/KnowledgeNetwork";
 import { useText } from "../components/LanguageSwitch";
-import { SITE } from "@aihot/site";
 import { AgentCard, DailyCard, LeadStory, MarketCard, PulseStrip, Trending } from "../features/home/Overview";
 
 const EMPTY_GRAPH: KnowledgeGraph = { entities: 0, edges: [], status: "unavailable" };
@@ -29,15 +28,15 @@ export async function loader({ request }: Route.LoaderArgs) {
   const signal = request.signal;
   const [data, graph, stats, hot, site, dailies] = await Promise.all([
     loadOr404<TimelineResponse>(listPath("/api/site/timeline", filterParams(filters)), { responseHeaders: upstream, signal }),
-    apiGet<KnowledgeGraph>("/api/site/knowledge/overview", { signal }).catch(() => EMPTY_GRAPH),
-    apiGet<KnowledgeStats>("/api/site/knowledge/stats", { signal }).catch(() => EMPTY_STATS),
-    apiGet<HotResponse>("/api/site/hot", { signal }).catch(() => null),
-    apiGet<SiteStats>("/api/site/stats", { signal }).catch(() => null),
-    apiGet<ReportIndexResponse>("/api/site/reports/daily", { signal }).catch(() => null),
+    apiGet<KnowledgeGraph>("/api/site/knowledge/overview", { signal, timeoutMs: 1_800 }).catch(() => EMPTY_GRAPH),
+    apiGet<KnowledgeStats>("/api/site/knowledge/stats", { signal, timeoutMs: 1_800 }).catch(() => EMPTY_STATS),
+    apiGet<HotResponse>("/api/site/hot", { signal, timeoutMs: 1_800 }).catch(() => null),
+    apiGet<SiteStats>("/api/site/stats", { signal, timeoutMs: 1_800 }).catch(() => null),
+    apiGet<ReportIndexResponse>("/api/site/reports/daily", { signal, timeoutMs: 1_800 }).catch(() => null),
   ]);
   const lead = hot?.entries[0] ?? null;
   const storyGraph = lead
-    ? await apiGet<KnowledgeGraph>(`/api/site/knowledge/stories/${encodeURIComponent(lead.story.publicId)}`, { signal }).catch(() => EMPTY_GRAPH)
+    ? await apiGet<KnowledgeGraph>(`/api/site/knowledge/stories/${encodeURIComponent(lead.story.publicId)}`, { signal, timeoutMs: 1_800 }).catch(() => EMPTY_GRAPH)
     : EMPTY_GRAPH;
   return cachedPage(60, { data, filters, graph, stats, hot: hot?.entries ?? [], site, storyGraph, daily: dailies?.items[0] ?? null }, upstream);
 }
@@ -46,7 +45,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
   const path = listPath("/", loaderData ? filterParams(loaderData.filters) : {});
   const titles = loaderData?.data.cards.map(c => c.item.title) ?? [];
   return pageMeta({
-    title: `事件观察 · ${SITE.name}`,
+    title: "事件观察",
     description: "实时追踪 AI、加密与金融事件，沿报道时间线深入长期知识关系与原始证据。",
     path, noindex: hasFeedFilters(loaderData?.filters),
     jsonLd: path === "/" ? [...siteLd(), itemListLd("/", "事件观察", titles)] : undefined,

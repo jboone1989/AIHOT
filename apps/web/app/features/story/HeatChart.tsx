@@ -3,6 +3,7 @@ import type { HeatPoint } from "@aihot/contracts/site";
 import { monthDayTime } from "../../lib/format";
 import { useEntrance } from "../../lib/hydration";
 import { PillTabs } from "../../components/ui/Tabs";
+import { useText, useUiLanguage } from "../../components/LanguageSwitch";
 import { areaPath, curvePath, type Pt } from "../hot/curve";
 
 const HOUR = 3600 * 1000;
@@ -71,6 +72,8 @@ function Stat({ label, children }: { label: string; children: ReactNode }) {
 
 export function HeatChart({ points: all }: { points: HeatPoint[] }) {
   const wash = `heat${useId().replace(/[^\w-]/g, "")}`;
+  const t = useText();
+  const lang = useUiLanguage();
   const [active, setActive] = useState<number | null>(null);
   const ranges = useMemo(() => distinctRanges(all), [all]);
   const [hours, setHours] = useState<number>(168);
@@ -121,7 +124,7 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
     return { seen, last, peak, change, ticks, x, y, line, area, labels: timeTicks(t0, t1) };
   }, [series]);
   if (!geometry) {
-    return <p className="rounded-tile bg-bg-sunk px-4 py-8 text-center text-[13px] text-ink-4">还没有足够的连续观测数据，暂不绘制趋势。</p>;
+    return <p className="rounded-tile bg-bg-sunk px-4 py-8 text-center text-[13px] text-ink-4">{t("还没有足够的连续观测数据，暂不绘制趋势。","Not enough continuous observations to chart activity.")}</p>;
   }
   const { seen, last, peak, change, ticks, x, y, line, area, labels } = geometry;
   const cur = active !== null ? seen[active] : null;
@@ -139,14 +142,14 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
     <div>
       <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-start sm:justify-between">
         <dl className="grid grid-cols-3 gap-x-5 sm:flex sm:gap-x-10">
-          <Stat label="可比范围当前">
+          <Stat label={t("可比范围当前","Latest comparable")}>
             <span className="numeral text-[30px] leading-none text-ink">{Math.round(last.p!.heat)}</span>
           </Stat>
-          <Stat label="可比范围峰值">
+          <Stat label={t("可比范围峰值","Comparable peak")}>
             <span className="numeral text-[30px] leading-none text-ink">{Math.round(peak.p!.heat)}</span>
             <span className="num text-[12px] text-ink-4">{monthDayTime(new Date(peak.t).toISOString())}</span>
           </Stat>
-          <Stat label="近 24 小时变化">
+          <Stat label={t("近 24 小时变化","24h change")}>
             <span className={`mono text-[22px] font-semibold leading-none tracking-[-0.02em] ${change === null ? "text-ink-4" : change > 0 ? "text-hot" : "text-ink"}`}>
               {change === null ? "–" : `${change > 0 ? "+" : ""}${change}%`}
             </span>
@@ -156,13 +159,13 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
           <PillTabs
             size="xs"
             layoutId="heat-range"
-            label="时间范围"
+            label={t("时间范围","Time range")}
             active={String(range!.hours)}
             onSelect={(key) => {
               setActive(null);
               setHours(Number(key));
             }}
-            items={ranges.map((r) => ({ key: String(r.hours), label: r.label }))}
+            items={ranges.map((r) => ({ key: String(r.hours), label: lang === "en" ? ({24:"24 hours",72:"3 days",168:"7 days"} as Record<number,string>)[r.hours] : r.label }))}
             className="self-start"
           />
         )}
@@ -177,7 +180,7 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
         <div
           className="relative size-full touch-pan-y select-none rounded-mark outline-offset-4"
           role="img"
-          aria-label={`热度走势：当前 ${Math.round(last.p!.heat)}，峰值 ${Math.round(peak.p!.heat)}`}
+          aria-label={t(`热度走势：当前 ${Math.round(last.p!.heat)}，峰值 ${Math.round(peak.p!.heat)}`, `Activity: ${Math.round(last.p!.heat)} now, peak ${Math.round(peak.p!.heat)}`)}
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === "ArrowRight") setActive((a) => Math.min(seen.length - 1, a === null ? seen.length - 1 : a + 1));
@@ -223,9 +226,9 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
             >
               <div className="num text-ink-4">{monthDayTime(new Date(cur.t).toISOString())}</div>
               <div className="text-ink-2">
-                热度 <b className="num font-semibold text-ink">{cur.p!.heat.toFixed(1)}</b>
+                {t("热度","Heat")} <b className="num font-semibold text-ink">{cur.p!.heat.toFixed(1)}</b>
                 <span className="mx-1 text-ink-4">·</span>
-                <span className="num">{cur.p!.participants}</span> 位参与者
+                <span className="num">{cur.p!.participants}</span> {t("位参与者","participants")}
               </div>
             </div>
           )}
@@ -246,7 +249,7 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
         })}
       </div>
       <p className="mt-4 text-[12px] leading-relaxed text-ink-4">
-        趋势仅比较持续完整观测到的相同主体，范围可能小于当前热度统计。移动指针或点击图表查看每小时热度；键盘可用左右方向键切换。
+        {t("趋势仅比较持续完整观测到的相同主体，范围可能小于当前热度统计。移动指针或点击图表查看每小时热度；键盘可用左右方向键切换。","The chart compares consistently observed participants only. Hover or tap to inspect each hour; use arrow keys to move between observations.")}
       </p>
     </div>
   );
