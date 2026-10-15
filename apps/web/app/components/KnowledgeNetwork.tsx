@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useText, useUiLanguage } from "./LanguageSwitch";
 const hasHan=(s:string)=>/[\u3400-\u9fff]/u.test(s);
@@ -59,6 +59,7 @@ function viewBox(points: Array<{ x: number; y: number }>) {
 export function KnowledgeCanvas({ edges, activeId, compact = false }: {
   edges: KnowledgeEdge[]; activeId?: string; compact?: boolean;
 }) {
+  const gridId = `lr-grid-${useId().replaceAll(":", "")}`;
   const { nodes, coords, visibleEdges } = useMemo(() => layout(edges), [edges]);
   const t=useText();
   const lang=useUiLanguage();
@@ -72,7 +73,7 @@ export function KnowledgeCanvas({ edges, activeId, compact = false }: {
   const active = edges.find(e => e.id === activeId);
   const related = new Set(active ? [active.subject.key, active.object.key] : []);
   const box = viewBox([...coords.values()]);
-  const grid = compact ? "lr-grid-mini" : "lr-grid";
+  const grid = gridId;
   return (
     <div className={`lr-graph-canvas ${compact ? "lr-graph-compact" : ""}`}>
       <svg viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`} role="img" aria-label={lang==="en"?`Knowledge network with ${nodes.length} entities and ${visibleEdges.length} relationships`:`知识关系网络，包含 ${nodes.length} 个可见实体、${visibleEdges.length} 条可见关系`}>
