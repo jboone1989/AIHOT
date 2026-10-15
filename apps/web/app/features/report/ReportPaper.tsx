@@ -71,7 +71,7 @@ function Masthead({ report, index, quiet }: { report: ReportDetail; index: Repor
         <div className="flex flex-wrap items-baseline gap-x-8 gap-y-1.5 border-y border-line-strong py-3">
           {metricItems(report.metrics).map((m) => (
             <span key={m.unit} className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
-              <span className="num text-[22px] font-bold leading-none tracking-[-0.02em] text-ink @[880px]:text-[24px]">{m.value}</span>
+              <span className="numeral text-[30px] leading-none text-ink @[880px]:text-[34px]">{m.value}</span>
               <span className="text-[12px] text-ink-4">{m.unit}</span>
             </span>
           ))}
@@ -326,7 +326,7 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
                 if (!h.available) {
                   return (
                     <li key={keyOf(h)} className="flex gap-3.5 border-b border-line py-4">
-                      <span className="num w-6 shrink-0 text-[26px] font-black leading-[0.95] tracking-[-0.03em] text-ink-4">{i + 1}</span>
+                      <span className="numeral w-6 shrink-0 text-[30px] italic leading-[0.95] text-ink-4">{i + 1}</span>
                       <span className="min-w-0 text-[13.5px] leading-[1.55] text-ink-4">
                         <span className="line-through">{h.title}</span>
                         <span className="mt-1 block text-[12px]">{WITHDRAWN_NOTE}</span>
@@ -337,7 +337,7 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
                 return (
                   <li key={keyOf(h)}>
                     <Link to={to} viewTransition={to.startsWith("/")} className="group flex gap-3.5 border-b border-line py-4">
-                      <span className="num w-6 shrink-0 text-[26px] font-black leading-[0.95] tracking-[-0.03em] text-accent">{i + 1}</span>
+                      <span className="numeral w-6 shrink-0 text-[30px] italic leading-[0.95] text-accent">{i + 1}</span>
                       <span className="min-w-0">
                         <span className="block text-[15px] font-bold leading-[1.55] text-ink transition-colors group-hover:text-accent">{h.title}</span>
                         <span className="mt-1.5 block truncate text-[12px] text-ink-4">{h.sourceName}</span>
@@ -391,7 +391,7 @@ export function SectionPage({ id, no, label, children }: { id: string; no?: numb
   return (
     <section id={id} aria-labelledby={`${id}-t`} className="scroll-mt-[calc(var(--bar-h)+1.5rem)] pt-12 @[880px]:pt-16">
       <header className="flex items-baseline gap-3 border-b border-line-strong pb-3 @[880px]:gap-4">
-        {no !== undefined && <span className="num text-[26px] font-black leading-none tracking-[-0.03em] text-accent @[880px]:text-[30px]">{pad(no)}</span>}
+        {no !== undefined && <span className="numeral text-[32px] italic leading-none text-accent @[880px]:text-[36px]">{pad(no)}</span>}
         <h2 id={`${id}-t`} className="min-w-0 text-[24px] font-black leading-[1.25] tracking-[-0.02em] text-ink @[880px]:text-[28px]">
           {label}
         </h2>
