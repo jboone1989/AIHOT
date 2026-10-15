@@ -8,6 +8,7 @@ import { IntentLink } from "../../components/ui/IntentLink";
 import { IconArrowRight, IconArrowUpRight, IconCode, IconPlug, IconRss } from "../../components/icons";
 import { KnowledgeCanvas, type KnowledgeGraph, type KnowledgeStats } from "../../components/KnowledgeNetwork";
 import { useText, useUiLanguage } from "../../components/LanguageSwitch";
+import { trackAnalytics } from "../../lib/analytics.client";
 import { Sparkline } from "../hot/Sparkline";
 import { Delta } from "../hot/Delta";
 
@@ -113,7 +114,7 @@ export function LeadStory({ entry, storyGraph, overview }: { entry: HotEntryView
             <h1 id="lead-title" className="lr-lead-title is-slogan">{t("看见事件。", "Follow events.")}<br /><em>{t("连接事实。", "Connect the facts.")}</em></h1>
             <p className="lr-lead-sum">{t("我们把公开报道组织成事件，再把其中有依据的实体关系沉淀为持续更新的知识网络。", "We organize reporting into evolving events and keep evidence-backed relationships in a living knowledge graph.")}</p>
             <div className="mt-2 flex flex-wrap gap-2.5">
-              <Link to="/knowledge" className="lr-button-primary">{t("探索知识网络", "Explore the graph")} <IconArrowUpRight size={16} /></Link>
+              <Link to="/knowledge" className="lr-button-primary" onClick={()=>trackAnalytics("graph_node_select")}>{t("探索知识网络", "Explore the graph")} <IconArrowUpRight size={16} /></Link>
               <Link to="/hot" className="lr-button-quiet">{t("浏览事件", "Browse events")} <IconArrowRight size={16} /></Link>
             </div>
           </>
