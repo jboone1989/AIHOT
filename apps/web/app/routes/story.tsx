@@ -369,7 +369,7 @@ export default function StoryPage() {
                           <Link to={reportPath(report.id)} className="mt-1 block text-[13.5px] font-semibold leading-[1.55] text-ink hover:text-accent">{reportTitle(report)}</Link>
                           {visibleSummary(report.summary) && <p className="mt-1 line-clamp-3 text-[12.5px] leading-[1.7] text-ink-3">{visibleSummary(report.summary)}</p>}
                           {report.originalUrl && /^https?:\/\//i.test(report.originalUrl) &&
-                            <a href={report.originalUrl} target="_blank" rel="noopener noreferrer"
+                            <a href={report.originalUrl} target="_blank" rel="noopener noreferrer" data-analytics-event="source_open"
                               className="mt-2 inline-block text-[12.5px] font-medium text-accent hover:underline">{t("核对原始报道","Read original source")} ↗</a>}
                         </li>
                       ))}
