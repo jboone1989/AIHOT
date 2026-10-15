@@ -2,7 +2,7 @@ import { useLoaderData } from "react-router";
 import type { Route } from "./+types/report-latest";
 import type { ReportLatestPage } from "@aihot/contracts/site";
 import { REPORTS, subjectAfter, withSubject } from "@aihot/site";
-import { cachedPage, loadOr404 } from "../lib/api.server";
+import { apiGet, cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
 import { pageMeta, reportLd } from "../lib/seo";
 import { beijingDate } from "@aihot/contracts/time";
@@ -11,6 +11,7 @@ import { ReportLayout } from "../features/report/ReportLayout";
 import { useUiLanguage } from "../components/LanguageSwitch";
 import { EnglishReport } from "../components/EnglishPages";
 import { ReportPaper, reportOutline } from "../features/report/ReportPaper";
+import { GraphChanges, type DailyGraphChanges } from "../features/report/GraphChanges";
 import { KIND_LABEL, feedLink, kindFromPath } from "../features/report/format";
 import type { Screen } from "../components/shell/screens";
 
@@ -21,7 +22,10 @@ export const { clientLoader, shouldRevalidate } = pageReuse<typeof loader>();
 export async function loader({ request }: Route.LoaderArgs) {
   const kind = kindFromPath(new URL(request.url).pathname);
   const { index, report } = await loadOr404<ReportLatestPage>(`/api/site/reports/${kind}/latest-page`, { signal: request.signal });
-  return cachedPage(600, { kind, report, index, today: beijingDate(Date.now()) });
+  const graph = kind === "daily" && report
+    ? await apiGet<DailyGraphChanges>(`/api/site/knowledge/daily/${report.key}`, { signal: request.signal, timeoutMs: 2_000 }).catch(() => null)
+    : null;
+  return cachedPage(600, { kind, report, index, graph, today: beijingDate(Date.now()) });
 }
 
 export function meta({ loaderData, location }: Route.MetaArgs) {
@@ -40,11 +44,11 @@ export function meta({ loaderData, location }: Route.MetaArgs) {
 
 export default function ReportLatestPage() {
   const language=useUiLanguage();
-  const { kind, report, index, today } = useLoaderData<typeof loader>();
-  if(language==="en") return <EnglishReport report={report} kind={kind}/>;
+  const { kind, report, index, graph, today } = useLoaderData<typeof loader>();
+  if(language==="en") return <EnglishReport report={report} kind={kind} graph={<GraphChanges changes={graph} />}/>;
   return (
     <ReportLayout kind={kind} index={index} current={report?.key ?? null} today={today} outline={report ? reportOutline(report) : []}>
-      {report ? <ReportPaper report={report} index={index} /> : <EmptyState title={subjectAfter("还没有发布", KIND_LABEL[kind])}>第一期发布后会出现在这里。</EmptyState>}
+      {report ? <><ReportPaper report={report} index={index} /><GraphChanges changes={graph} /></> : <EmptyState title={subjectAfter("还没有发布", KIND_LABEL[kind])}>第一期发布后会出现在这里。</EmptyState>}
     </ReportLayout>
   );
 }

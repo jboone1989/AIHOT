@@ -56,7 +56,7 @@ function Citation({c,i}:{c:ReportCitation;i:number}){
  </li>;
 }
 const kindName=(kind:string)=>kind==="weekly"?"Weekly":kind==="monthly"?"Monthly":"Daily";
-export function EnglishReport({report,kind="daily"}:{report:ReportDetail|null;kind?:string}){
+export function EnglishReport({report,kind="daily",graph}:{report:ReportDetail|null;kind?:string;graph?:React.ReactNode}){
  const name=kindName(report?.kind??kind);
  const raw=report?[...report.highlights,...report.sections.flatMap(s=>s.items),...report.flashes]:[];
  const uniq=raw.filter((c,i)=>raw.findIndex(x=>x.itemId?x.itemId===c.itemId:x.title===c.title)===i);
@@ -64,7 +64,7 @@ export function EnglishReport({report,kind="daily"}:{report:ReportDetail|null;ki
  <Header eyebrow="SOURCE DIGEST / ENGLISH" title={name+" Brief"+(report?" · "+report.key:"")}
  description={report?"Issue #"+report.issueNumber+" · "+uniq.length+" source-linked reports. This English digest uses publisher headlines. The original Chinese editorial commentary has not been translated.":"No issue published yet."}/>
  {report&&<><div className="mb-5 flex flex-wrap gap-4 text-[12px]">{report.prev&&<Link to={"/"+report.kind+"/"+report.prev} className="lr-inline-link">← Previous</Link>}{report.next&&<Link to={"/"+report.kind+"/"+report.next} className="lr-inline-link">Next →</Link>}<Link to="/daily/archive" className="lr-inline-link">Archive <IconArrowRight size={14}/></Link></div>
- <h2 className="mb-3 text-[19px] font-semibold">Source coverage</h2><ol className="overflow-hidden rounded-xl border border-line bg-surface">{uniq.length?uniq.map((c,i)=><Citation key={c.itemId??c.title} c={c} i={i}/>):<li className="p-5 text-ink-3">No public citations available.</li>}</ol></>}</main>;
+ <h2 className="mb-3 text-[19px] font-semibold">Source coverage</h2><ol className="overflow-hidden rounded-xl border border-line bg-surface">{uniq.length?uniq.map((c,i)=><Citation key={c.itemId??c.title} c={c} i={i}/>):<li className="p-5 text-ink-3">No public citations available.</li>}</ol></>}{graph}</main>;
 }
 export function EnglishArchive({index}:{index:ReportIndexEntry[]}){
  return <main className="pb-12"><PhoneBar back={{to:"/daily",label:"Daily"}} title="Daily Archive"/>

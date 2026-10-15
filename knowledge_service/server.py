@@ -196,6 +196,38 @@ async def relations_by_entity(uuid: str):
             **(await relation_results(rows))}
 
 
+@app.get("/changes")
+async def graph_changes(since: datetime, until: datetime):
+    """What the graph gained and lost in a time window, by when Graphiti recorded it (not by the facts' own dates)."""
+    window = {"since": since, "until": until}
+    added, _, _ = await app.state.graph.driver.execute_query(
+        "MATCH (s:Entity)-[r:RELATES_TO]->(o:Entity) "
+        "WHERE r.group_id='aihot' AND r.created_at >= $since AND r.created_at < $until "
+        "RETURN " + EDGE_COLUMNS + " ORDER BY r.created_at DESC LIMIT 12", **window, routing_="r",
+    )
+    ended, _, _ = await app.state.graph.driver.execute_query(
+        "MATCH (s:Entity)-[r:RELATES_TO]->(o:Entity) "
+        "WHERE r.group_id='aihot' AND r.expired_at >= $since AND r.expired_at < $until "
+        "RETURN " + EDGE_COLUMNS + " ORDER BY r.expired_at DESC LIMIT 12", **window, routing_="r",
+    )
+    entities, _, _ = await app.state.graph.driver.execute_query(
+        "MATCH (n:Entity) WHERE n.group_id='aihot' AND n.created_at >= $since AND n.created_at < $until "
+        "RETURN n.uuid AS key, n.name AS name ORDER BY n.created_at DESC LIMIT 16", **window, routing_="r",
+    )
+    counts, _, _ = await app.state.graph.driver.execute_query(
+        "CALL { MATCH ()-[r:RELATES_TO]->() WHERE r.group_id='aihot' AND r.created_at >= $since AND r.created_at < $until RETURN count(r) AS added } "
+        "CALL { MATCH ()-[r:RELATES_TO]->() WHERE r.group_id='aihot' AND r.expired_at >= $since AND r.expired_at < $until RETURN count(r) AS ended } "
+        "CALL { MATCH (n:Entity) WHERE n.group_id='aihot' AND n.created_at >= $since AND n.created_at < $until RETURN count(n) AS entities } "
+        "RETURN added, ended, entities", **window, routing_="r",
+    )
+    c = counts[0]
+    return {
+        "added": {"count": c["added"], **(await relation_results(added))},
+        "ended": {"count": c["ended"], **(await relation_results(ended))},
+        "newEntities": {"count": c["entities"], "items": [{"key": r["key"], "name": r["name"]} for r in entities]},
+    }
+
+
 @app.get("/stats")
 async def graph_stats():
     counts = {}

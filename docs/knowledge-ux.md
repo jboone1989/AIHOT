@@ -10,6 +10,8 @@
 - `/hot`：原有事件聚类/热度排序继续保留；顶部一行说明事件、关系、证据三层，并链接知识网络。
 - `/knowledge`：关系探索工作台。读取 `/api/site/knowledge/overview` 的 Graphiti 关系样本，渲染实体连线与关系列表；点击列表高亮当前关系，点击节点打开实体档案；可本地按实体、关系和事实文本筛选。
 - `/knowledge/entity/:key`：实体档案。显示 Graphiti 的实体摘要（有的话）、关系网络、按生效时间排列的关系变化（标出已失效的关系），以及这些关系引用的公开报道和它们所属的事件。有关系的实体允许搜索引擎收录，没有关系的不收录。
+- 关注：主题页和实体档案页有“关注”按钮和各自的 RSS（`/feed/topic/<slug>.xml`、`/feed/entity/<key>.xml`）。关注列表只存在读者浏览器里（`eventgraph-follows`，最多 50 个，随“我的收藏”一起导出导入）；首页信息流可切到“我关注的”，读 `/api/site/following`。
+- 日报：`/daily` 和 `/daily/:key` 的末尾是“图谱今日变化”，统计本期时间窗口里 Graphiti 新增、失效的关系和第一次出现的实体，附几条有公开报道支撑的例子。规则统计，不调用模型。
 - `/story/:publicId`：保留原事件进展、时间线和热度，替换原先的纯文本关系卡为独立关系网络与证据抽屉（列表联动）。
 - 桌面侧边栏、移动端 TabBar、更多工具页新增明确的知识网络入口。
 
@@ -19,6 +21,8 @@
 - `GET /api/site/knowledge/overview`：Graphiti 最近的 **至多 64 条关系样本**；并非完整知识库或“最重要”的全量排名。筛选框只筛选这个样本，不发起模型推理。
 - `GET /api/site/knowledge/stories/:publicId`：通过 PostgreSQL 事件归组找到文章修订版，再获取 Graphiti 对应的实体关系。
 - `GET /api/site/knowledge/entities/:key`：围绕单个 Neo4j 实体查询；节点仅在已经具有关系时被连线展示。返回里另有 `reports` 和 `stories`：关系证据引用的报道中，现在仍公开的那些，以及它们所属的事件（`publication/knowledge.ts`）。
+- `GET /api/site/following?topics=<slug,…>&entities=<key,…>`：主题最多 30 个、实体最多 20 个，返回最近 40 篇报道和每篇来自哪个关注（`via`）。服务端不存关注列表，同样的列表得到同样的回答，可以公共缓存。
+- `GET /api/site/knowledge/daily/:key`：日报本期窗口（`reports.window_start`–`window_end`）内的图谱变化，按 Graphiti 记下变化的时间（关系的 `created_at`、`expired_at`，实体的 `created_at`）统计，不按事实本身的日期。数字是图谱的总数；例子只列出引用了现在仍公开的报道的关系。需要部署新版 knowledge_service（`/changes`）。
 - 来源区展示 Graphiti 提取事实的陈述，**并不标记为原文逐字引述**；用户可点击原始 URL 核实。已失效关系显示 `invalidAt`。
 - Graphiti 不可用时展示说明，不阻断 AIHot 事件树页面或新闻列表。
 

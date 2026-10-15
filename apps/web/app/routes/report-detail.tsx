@@ -10,6 +10,7 @@ import { ReportLayout } from "../features/report/ReportLayout";
 import { useUiLanguage } from "../components/LanguageSwitch";
 import { EnglishReport } from "../components/EnglishPages";
 import { ReportPaper, reportOutline } from "../features/report/ReportPaper";
+import { GraphChanges, type DailyGraphChanges } from "../features/report/GraphChanges";
 import { KIND_LABEL, feedLink, kindFromPath } from "../features/report/format";
 import type { Screen } from "../components/shell/screens";
 
@@ -27,11 +28,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const kind = kindFromPath(new URL(request.url).pathname);
   const key = params.key ?? "";
   if (!PATTERN[kind].test(key)) throw data({ message: "not_found" }, { status: 404 });
-  const [report, { items: index }] = await Promise.all([
+  const [report, { items: index }, graph] = await Promise.all([
     loadOr404<ReportDetail>(`/api/site/reports/${kind}/${key}`, { signal: request.signal }),
     apiGet<ReportNavigationResponse>(`/api/site/reports/${kind}/navigation/${key}`, { signal: request.signal }),
+    kind === "daily" ? apiGet<DailyGraphChanges>(`/api/site/knowledge/daily/${key}`, { signal: request.signal, timeoutMs: 2_000 }).catch(() => null) : null,
   ]);
-  return cachedPage(3600, { report, index, today: beijingDate(Date.now()) });
+  return cachedPage(3600, { report, index, graph, today: beijingDate(Date.now()) });
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -51,11 +53,12 @@ export function meta({ loaderData }: Route.MetaArgs) {
 
 export default function ReportDetailPage() {
   const language=useUiLanguage();
-  const { report, index, today } = useLoaderData<typeof loader>();
-  if(language==="en") return <EnglishReport report={report}/>;
+  const { report, index, graph, today } = useLoaderData<typeof loader>();
+  if(language==="en") return <EnglishReport report={report} graph={<GraphChanges changes={graph} />}/>;
   return (
     <ReportLayout kind={report.kind} index={index} current={report.key} today={today} outline={reportOutline(report)}>
       <ReportPaper report={report} index={index} />
+      <GraphChanges changes={graph} />
     </ReportLayout>
   );
 }
