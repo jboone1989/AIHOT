@@ -73,11 +73,16 @@ export const citedArticleIds = (graph: Awaited<ReturnType<typeof graphForEntity>
   [...new Set(graph.edges.flatMap((e) => e.evidence.map((ev) => ev.articleId)).filter(Boolean))];
 
 /** The relations around one Graphiti entity, with the public reports and events behind them. */
-export async function entityProfile(key: string) {
+export async function entityProfile(key: string, now = new Date()) {
   const graph = await entityGraph(key);
-  const ids = citedArticleIds(graph);
-  const { reports, stories } = await citedReports(ids);
-  return { ...graph, reports: reports.slice(0, 30), stories: stories.slice(0, 12) };
+  const { reports, stories } = await citedReports(citedArticleIds(graph), now);
+  // The public site must apply the same evidence filter as MCP: a withdrawn or unreleased
+  // article cannot remain as an edge or as one of its visible citations.
+  const publicIds = new Set(reports.map((r) => r.id));
+  const edges = graph.edges
+    .map((e) => ({ ...e, evidence: e.evidence.filter((ev) => publicIds.has(ev.articleId)) }))
+    .filter((e) => e.evidence.length > 0);
+  return { ...graph, edges, reports: reports.slice(0, 30), stories: stories.slice(0, 12) };
 }
 
 type Edge = GraphChanges["added"]["edges"][number];
@@ -131,8 +136,7 @@ export async function publicStoryGraph(publicId: string, now = new Date()) {
   return { status: graph.status ?? "ok", edges: await publicRelations(graph.edges, now) };
 }
 
-/** An entity's profile for agents (MCP): as the site's, with only publicly evidenced relations. */
+/** Site and MCP share the same public-only entity profile, including a consistent time boundary. */
 export async function publicEntityProfile(key: string, now = new Date()) {
-  const profile = await entityProfile(key);
-  return { ...profile, edges: await publicRelations(profile.edges, now) };
+  return entityProfile(key, now);
 }
