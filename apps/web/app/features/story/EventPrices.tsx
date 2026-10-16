@@ -1,5 +1,5 @@
-import { useText } from "../../components/LanguageSwitch";
-import { monthDayTime } from "../../lib/format";
+import { useText, useUiLanguage } from "../../components/LanguageSwitch";
+import { localizedMonthDayTime } from "../../lib/format";
 
 export interface StoryMarket {
   eventAt: string;
@@ -16,6 +16,7 @@ const price = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 
 /** Prices of the assets an event names, just before its first report and a day later. Side by side only. */
 export function EventPrices({ market }: { market: StoryMarket | null }) {
   const t = useText();
+  const lang = useUiLanguage();
   if (!market || market.assets.length === 0) return null;
   return (
     <section className="card p-5 lg:p-[22px]">
@@ -36,8 +37,8 @@ export function EventPrices({ market }: { market: StoryMarket | null }) {
         ))}
       </ul>
       <p className="mt-2 text-[11.5px] leading-relaxed text-ink-4">
-        {t(`以最早报道（${monthDayTime(market.eventAt)}）为界的 Binance/OKX 现货价格快照，只作并列参考，不表示事件造成了价格变化。`,
-          `Binance/OKX spot snapshots around the first report (${monthDayTime(market.eventAt)}), shown side by side for reference. They don’t imply the event moved the price.`)}
+        {t(`以最早报道（${localizedMonthDayTime(market.eventAt, lang)}）为界的 Binance/OKX 现货价格快照，只作并列参考，不表示事件造成了价格变化。`,
+          `Binance/OKX spot snapshots around the first report (${localizedMonthDayTime(market.eventAt, lang)} Beijing time), shown side by side for reference. They don’t imply the event moved the price.`)}
       </p>
     </section>
   );
