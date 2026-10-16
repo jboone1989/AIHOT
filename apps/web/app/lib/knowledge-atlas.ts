@@ -31,3 +31,45 @@ export function mergeAtlasNetworks(previous: AtlasNetwork, incoming: AtlasNetwor
   for (const link of incoming.links) links.set(link.id, link);
   return { nodes: [...nodes.values()], links: [...links.values()], truncated: false, status: incoming.status };
 }
+
+/** A visual connection is one unordered entity pair, never one row per fact. */
+export interface AtlasPair { key: string; a: string; b: string; links: AtlasLink[] }
+export function atlasPairKey(a: string, b: string): string {
+  const [first, second] = a < b ? [a, b] : [b, a];
+  return `pair:${first}:${second}`;
+}
+export function groupAtlasPairs(links: AtlasLink[]): AtlasPair[] {
+  const result = new Map<string, AtlasPair>();
+  for (const link of links) {
+    const key = atlasPairKey(link.source, link.target);
+    let pair = result.get(key);
+    if (!pair) {
+      const [a, b] = link.source < link.target ? [link.source, link.target] : [link.target, link.source];
+      pair = { key, a, b, links: [] };
+      result.set(key, pair);
+    }
+    pair.links.push(link);
+  }
+  return [...result.values()];
+}
+
+/** Combine only literally identical directed facts, preserving every source. */
+export function uniqueAtlasFacts<T extends {
+  subject: {key: string}; object: {key: string}; predicate: string;
+  fact: string; invalidAt?: string | null;
+  evidence: Array<{articleId: string; url: string}>;
+}>(edges: T[]): T[] {
+  const facts = new Map<string, T>();
+  for (const edge of edges) {
+    const key = [edge.subject.key, edge.object.key, edge.predicate,
+      edge.fact.trim().replace(/\s+/g, " ").toLocaleLowerCase(), edge.invalidAt ?? ""].join("\u001f");
+    const existing = facts.get(key);
+    if (!existing) { facts.set(key, {...edge, evidence: [...edge.evidence]}); continue; }
+    const seen = new Set(existing.evidence.map(e => e.articleId + "|" + e.url));
+    for (const source of edge.evidence) {
+      const id = source.articleId + "|" + source.url;
+      if (!seen.has(id)) { existing.evidence.push(source); seen.add(id); }
+    }
+  }
+  return [...facts.values()];
+}
