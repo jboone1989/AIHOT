@@ -24,3 +24,6 @@ export function conservativeFailureRisk(s:ModelTraffic):number {
   const attempts=s.completed+s.received+s.unknown+s.failed;
   return (s.unknown+s.failed+1)/(attempts+4);
 }
+
+/** New paid probe identity per minute; never reuse a cached previous-minute result. */
+export function probeAttemptTag(at:Date):string { return at.toISOString().slice(0,16); }
