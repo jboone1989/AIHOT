@@ -53,3 +53,15 @@ test("failed image probe preserves proven text route without claiming vision",()
  assert.equal(restored.visionVerified,false);
  assert.equal(restored.visionCheckedAt,failure.visionCheckedAt);
 });
+
+test("NVIDIA official endpoint families override misleading ID heuristics",()=>{
+ assert.equal(nvidiaCapability("google/diffusiongemma-26b-a4b-it"),"vision");
+ assert.equal(nvidiaCapability("nvidia/nvclip"),"embedding");
+ assert.equal(nvidiaCapability("nvidia/nemotron-parse"),"document");
+ assert.equal(nvidiaCapability("nvidia/nemotron-parse-2.0"),"document");
+ assert.equal(nvidiaCapability("nvidia/riva-translate-4b-instruct-v2"),"text");
+ assert.equal(nvidiaCapability("meta/muse-glimmer-30b"),"vision");
+ assert.equal(nvidiaCapability("nvidia/ising-calibration-1.5-31b"),"vision");
+ assert.equal(nvidiaCapability("poolside/laguna-xs-2.1"),"text");
+ assert.equal(nvidiaCapability("stepfun-ai/step-5-preview"),"text");
+});
