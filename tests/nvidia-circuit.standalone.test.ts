@@ -33,7 +33,7 @@ test("unsafe primary is replaced only by a healthy same-capability fallback",()=
  assert.equal(eligibleFallback("meta/llama-3.3-70b-instruct","nvidia/nemotron-3.5-lightning-30b-a3b"),true);
  state.health["openai/gpt-oss-20b"]!.ok=false;
  state.health["z-ai/glm-5.3-flash"]!.ok=false;
- assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now,traffic),null);
+ assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now,traffic),"meta/llama-3.3-70b-instruct");
 });
 test("vision-required capability never changes to text-only GPT-OSS",()=>{
  const state=pool();
