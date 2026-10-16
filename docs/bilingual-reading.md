@@ -1,4 +1,4 @@
-# LivingRuntime bilingual UI and content provenance
+# EventGraph bilingual UI and content provenance
 
 The desktop sidebar and mobile bar expose EN / 中文. The reading preference persists in the browser. Only one AIHot ingestion dataset and one Graphiti/Neo4j graph exist, shared across languages.
 
@@ -6,15 +6,15 @@ The desktop sidebar and mobile bar expose EN / 中文. The reading preference pe
 
 The public routes now have English experiences: homepage, news feed, hot/events, event detail, original article, graph and entity pages, topics and topic details, daily/weekly/monthly report pages, archive, about, updates, bookmarks, feedback, agent integration, privacy, terms, search busy and login.
 
-- Reports and source cards reuse `original_title` from the stored publication, and do not re-label a Chinese-generated editorial summary as English.
-- English event pages link to original-source reporting. When the source is Chinese, a clear English explanation and link are shown. Graphiti assertions may have source-language texts; the English UI offers evidence links rather than inventing a translation.
-- Daily, weekly and monthly English pages show source-linked **English digests**. The existing Chinese-authored editorial analysis, and any historical Chinese-only reports, are NOT fully translated. Translation is outstanding, not silently hidden as completed.
+- Selected reports get an **English copy** (title, summary, "Why it matters") and stories an **English title and digest**, written by the worker (`packages/backend/src/editorial/english.ts`, job `content.english`, model step "英文版文字", optional `ENGLISH_MODEL`). The writer reads the Chinese copy plus the publisher's own title and opening text, newest first, for reports and stories of the last 90 days. Each copy stores a hash of the Chinese copy it was written from; after a correction the English copy is hidden until it is written again. Answers containing Chinese characters fail and are retried at most three times.
+- Feed cards, article pages (`/en/items/:id`), event pages, the hot list and the daily/weekly/monthly English pages show that copy, labelled as written with AI assistance. Without it they fall back to the publisher's `original_title` and never re-label a Chinese summary as English.
+- Graphiti assertions may have source-language texts; the English UI offers evidence links rather than inventing a translation. Weekly and monthly overviews remain Chinese.
 - The Chinese reading experience, data ids, Graphiti receipts and ingestion paths are retained.
 - Feedback remains postable on the English page, including optional screenshot and email. Legal pages display English renderings of the source policy **drafts**, explicitly noting that operator and AdSense/CMP details still require completion.
 
 ## SEO and QA boundaries
 
-This is a client-side language preference. SSR and canonical URLs remain Chinese. It must not be advertised as an indexed separate English edition until stable localized English URLs, complete editorial translations and hreflang exist.
+English pages have stable `/en` addresses with hreflang to their Chinese pages (`apps/web/app/lib/edition.ts`). Event pages are indexed in English once they have an English digest. An English article page also shows what the site knows around the report (`GET /api/site/items/:id/context`, `packages/backend/src/publication/item-context.ts`): its event's English overview and counts, the other public reports of that event nearest in time, relations the knowledge graph extracted from this report, and spot prices before and a day after it for the assets it names. It is indexed only when it has English copy and its event has at least two public reports (`INDEXED_MIN_REPORTS`), so the page carries context beyond one summary; other pages carry `noindex` and stay out of the sitemap.
 
 Checks:
 ```sh

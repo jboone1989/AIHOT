@@ -2,7 +2,7 @@
 // can index them (with hreflang to the Chinese page). Elsewhere English stays the reader's preference.
 const COUNTERPARTS = [
   /^\/$/, /^\/hot$/, /^\/knowledge$/, /^\/knowledge\/entity\/[^/]+$/, /^\/story\/[^/]+$/,
-  /^\/daily$/, /^\/daily\/\d{4}-\d{2}-\d{2}$/, /^\/topics$/, /^\/topics\/[^/]+$/,
+  /^\/daily$/, /^\/daily\/\d{4}-\d{2}-\d{2}$/, /^\/topics$/, /^\/topics\/[^/]+$/, /^\/items\/[^/]+$/,
 ];
 
 export const isEnglishPath = (pathname: string) => pathname === "/en" || pathname.startsWith("/en/");

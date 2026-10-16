@@ -39,9 +39,10 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
   // Only genuine source URLs, not the AIHot detail URL or untrusted schemes.
   const originalUrl = item.links?.original && /^https?:\/\//i.test(item.links.original) ? item.links.original : null;
   const host = originalUrl ? hostOf(originalUrl) : null;
-  // English reading is source-first: the publisher's own headline, else where the report lives.
-  const title = language==="en" ? (item.originalTitle && !hasHan(item.originalTitle) ? item.originalTitle : !hasHan(item.title) ? item.title : host ? `Original report on ${host}` : "Original report from publisher") : item.title;
-  const link = `/items/${item.id}${language==="en"?"/original":""}`;
+  // English reading: the site's English copy when written, else the publisher's own headline, else where the report lives.
+  const english = language==="en" ? item.english ?? null : null;
+  const title = english ? english.title : language==="en" ? (item.originalTitle && !hasHan(item.originalTitle) ? item.originalTitle : !hasHan(item.title) ? item.title : host ? `Original report on ${host}` : "Original report from publisher") : item.title;
+  const link = language==="en" ? `/en/items/${item.id}` : `/items/${item.id}`;
   const open = () => {
     rememberPreview(item);
     onOpen?.(item.id);
@@ -99,6 +100,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
               {title}
             </IntentLink>
           </h3>
+          {english && <p className="mt-1 line-clamp-4 text-[14.5px] leading-[1.7] text-ink-3 lg:mt-2 lg:line-clamp-5 lg:text-[15px] lg:leading-[1.75]">{english.summary}</p>}
           {item.summary && language==="zh" && <p className="mt-1 line-clamp-4 text-[14.5px] leading-[1.7] text-ink-3 lg:mt-2 lg:line-clamp-5 lg:text-[15px] lg:leading-[1.75]">{item.summary}</p>}
         </>
       )}

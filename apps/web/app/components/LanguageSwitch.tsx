@@ -49,7 +49,7 @@ export function useText() {
   return (zh: string, en: string) => lang === "en" ? en : zh;
 }
 
-/** Shared browser preference. On article pages use the existing original-language endpoint.
+/** Shared browser preference. Article pages move between /items/:id and its English page /en/items/:id.
  * A Chinese-original article remains Chinese; it must never be mislabeled as translated English.
  */
 export function LanguageSwitch({compact=false}: {compact?:boolean}) {
@@ -59,8 +59,9 @@ export function LanguageSwitch({compact=false}: {compact?:boolean}) {
   const choose=(next: UiLanguage) => {
     if(next===lang) return;
     setUiLanguage(next);
-    const match=/^\/items\/([a-zA-Z0-9_-]{1,80})(?:\/original)?$/.exec(pathname);
-    if(match) void navigate(`/items/${match[1]}${next==="en"?"/original":""}`,{replace:true});
+    // An article's English page is its /en address, which reads the original-language text.
+    const match=/^(?:\/en)?\/items\/([a-zA-Z0-9_-]{1,80})(?:\/original)?$/.exec(pathname);
+    if(match) { void navigate(`${next==="en"?"/en":""}/items/${match[1]}`,{replace:true}); return; }
     // A page with an English edition moves to the address of the language chosen.
     const en=englishPath(pathname);
     if(en) void navigate((next==="en"?en:chinesePath(pathname))+search,{replace:true});

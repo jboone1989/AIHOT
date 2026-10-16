@@ -160,7 +160,7 @@ export default function KnowledgeEntity() {
                       const title = lang === "en" ? (r.originalTitle && !hasHan(r.originalTitle) ? r.originalTitle : !hasHan(r.title) ? r.title : `Original report from ${source}`) : r.title;
                       return (
                         <li key={r.id}>
-                          <IntentLink viewTransition to={`/items/${r.id}${lang === "en" ? "/original" : ""}`}>
+                          <IntentLink viewTransition to={lang === "en" ? `/en/items/${r.id}` : `/items/${r.id}`}>
                             <b>{title}</b>
                             <span>{source}{r.source.firstParty ? t(" · 一手", " · first-party") : ""} · {day(r.publishedAt)}</span>
                           </IntentLink>

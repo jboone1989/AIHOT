@@ -100,7 +100,7 @@ export default function MorePage() {
           <RowLink row={{to:"/starred",label:"Saved reports",icon:<IconBookmark size={20}/>,detail:here&&starred.length?String(starred.length):undefined}} />
           <RowLink row={{to:"/daily",label:"Daily report (Chinese edition)",icon:<IconGrid size={20}/>}} />
         </Group>
-        <Group title="LIVINGRUNTIME">
+        <Group title={SITE.name.toUpperCase()}>
           <RowLink row={{to:"/about",label:"About",icon:<IconHeart size={20}/>}} />
           <RowLink row={{to:"/feedback",label:"Feedback",icon:<IconMessage size={20}/>}} />
           <RowLink row={{to:"/changelog",label:"Updates",icon:<IconSparkles size={20}/>}} dot={changelogDot}/>

@@ -1,4 +1,4 @@
-# LivingRuntime — Google AdSense deployment checklist
+# EventGraph — Google AdSense deployment checklist
 
 Scope: **ownership verification only**. This change does not inject the ad-serving JavaScript, create ad placements, collect ad cookies or enable Auto Ads. It is safe to deploy with the default settings.
 
@@ -26,10 +26,19 @@ With default `ADSENSE_VERIFICATION_ENABLED=false` (or a missing/invalid ID), the
 - **Consent management:** When serving ads to visitors in the EEA, UK or Switzerland, use the appropriate Google-certified CMP integrated with IAB TCF as required. Google's AdSense Privacy & Messaging CMP may be configured *after* registering the site. The current software does not implement one.
 - **Ad display:** Do not add AdSense Auto ads / ad units until site review, policy disclosures and CMP decisions are complete. The verification flag intentionally **does not control any ad script**; any future ad runtime should have separate gating and tests.
 - **Content quality:** Check substantial original explanations/research, factual source attribution, sensible navigation and no auto-generated low-value pages or content copied without sufficient additional value. A verification success **does not** imply approval.
-- **SEO:** Confirm public canonical domain, robots.txt, sitemap.xml, structured metadata, no login requirement, mobile accessibility and site ownership. The current language switch is client-side; it is **not** a completed server-rendered English SEO edition with distinct /en/ pages/hreflang. Do not claim English pages are indexed separately until that work is done.
+- **SEO:** Confirm public canonical domain, robots.txt, sitemap.xml, structured metadata, no login requirement, mobile accessibility and site ownership. The English edition is server-rendered under `/en` with its own canonical and `hreflang` pairs, and the sitemap lists its pages. English event pages are indexed only once the worker has written their English digest (`content.english`). English article pages add the event overview, other coverage, knowledge-graph relations and prices around the report, and are indexed only when they have English copy and their event has at least two public reports; a lone summary page stays `noindex` and out of the sitemap.
 - **Production:** The new knowledge site must actually be deployed on the same domain you add to AdSense. A dev-only deployment cannot verify the public production site.
 
-## 3. Regression checks
+## 3. Still open before applying for review
+
+These need the operator, not code:
+
+1. Fill in the operator, contact channel and effective date on `/privacy` and `/terms` (`site/pages/`), and set `SITE.contactEmail` in `site/site.ts` so the site has a visible contact.
+2. Configure a Google-certified CMP for EEA, UK and Switzerland visitors (AdSense "Privacy & messaging" is the simplest route).
+3. Deploy the current `main` to the production domain (see the update notes in `docs/deploy.md`), then verify ownership as in section 1.
+4. After deploying, let `content.english` fill in English copy for recent reports and stories, and let original content accumulate, before requesting review, so reviewers find pages with substantial original text rather than mostly links.
+
+## 4. Regression checks
 
 ```sh
 npm run test:standalone

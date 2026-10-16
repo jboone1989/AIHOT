@@ -10,6 +10,7 @@ import { relatedEvidence, RELATED_MIN_REPORTS } from "../events/related.ts";
 import { pickRepresentative, REPRESENTATIVE_COLUMNS, type RepresentativeIdentity } from "./representative.ts";
 import { compositeCondition, evidenceCondition, listedCondition, storyReportCondition } from "./scope.ts";
 import { publicSourceName } from "./rules.ts";
+import { ENGLISH_ITEM_INPUTS, englishCopy } from "./items.ts";
 import { latestHotRanking, rankingExtras } from "./hot.ts";
 import { storyTexts } from "./story-text.ts";
 import { topicsOfStory } from "./topics.ts";
@@ -64,6 +65,9 @@ interface ReportRow extends RepresentativeIdentity {
   source_name: string;
   first_party: boolean;
   fact_id: number;
+  en_title: string | null;
+  en_summary: string | null;
+  en_reason: string | null;
 }
 
 /**
@@ -77,9 +81,11 @@ async function storyReports(storyId: number, now: Date): Promise<ReportRow[]> {
     SELECT DISTINCT ON (p.article_id) p.article_id AS id, p.title, p.original_title, p.summary, p.url, p.selected,
       coalesce(p.published_at, p.discovered_at) AS at, s.id AS source_id, s.name AS source_name,
       (s.tier = 'T1') AS first_party, f.id AS fact_id,
-      CASE WHEN ${compositeCondition()} THEN 'mention' ELSE fa.role END AS role, p.body_mode, p.score, p.timeline_at, ${REPRESENTATIVE_COLUMNS}
+      CASE WHEN ${compositeCondition()} THEN 'mention' ELSE fa.role END AS role, p.body_mode, p.score, p.timeline_at, ${REPRESENTATIVE_COLUMNS},
+      ec.title AS en_title, ec.summary AS en_summary, ec.reason AS en_reason
     FROM facts f JOIN fact_articles fa ON fa.fact_id = f.id JOIN publications p ON p.article_id = fa.article_id
     JOIN sources s ON s.id = p.source_id
+    LEFT JOIN english_copies ec ON ec.article_id = p.article_id AND ec.outcome = 'written' AND ec.inputs_hash = ${ENGLISH_ITEM_INPUTS}
     WHERE f.story_id = ${storyId} AND ${storyReportCondition(now)}
     ORDER BY p.article_id, (fa.role = 'primary') DESC, (fa.role <> 'mention') DESC, f.id`;
 }
@@ -94,6 +100,7 @@ function reportView(r: ReportRow): StoryReportView {
     source: { name: publicSourceName(r.source_name), firstParty: r.first_party },
     publishedAt: r.at.toISOString(),
     selected: r.selected,
+    english: englishCopy(r),
   };
 }
 
@@ -175,6 +182,7 @@ export async function loadStoryDetail(storyId: number, now = new Date()): Promis
     publicId: s.public_id,
     title: s.title,
     englishTitle: reports.find(r => r.original_title && !/[\u3400-\u9fff]/.test(r.original_title))?.original_title ?? null,
+    english: text.english,
     status: storyStatusFor(latestAt, now.getTime()),
     reportCount: reports.length,
     sourceCount: new Set(reports.map((r) => r.source_id)).size,
@@ -244,6 +252,12 @@ async function queryHotCovers({ entries }: HotRanking) {
   return covers;
 }
 
+/** The card clips its text to a few lines; complete public words belong to the event page. */
+function excerpt(text: string): string {
+  const chars = Array.from(text);
+  return chars.length > 480 ? chars.slice(0, 480).join("") + "…" : text;
+}
+
 export async function loadHot(): Promise<HotResponse> {
   const ranking = await latestHotRanking();
   if (!ranking) return { computedAt: null, windowHours: 48, entries: [] };
@@ -268,12 +282,11 @@ export async function loadHot(): Promise<HotResponse> {
       const picture = covers.get(e.storyId);
       const coverUrl = picture ? proxiedImage(picture.url, "full") : null;
       const text = extras.text(e);
-      // The card clips its text to a few lines; complete public words belong to the event page.
-      const summary = text.summary ? Array.from(text.summary) : null;
       return {
         rank: e.rank,
         story: { publicId: e.storyPublicId, title: e.title },
         englishTitle: englishByArticle.get(e.representativeItemId ?? "") ?? null,
+        english: text.english ? { title: text.english.title, summary: excerpt(text.english.digest) } : null,
         heat: e.heat,
         trend: e.trend,
         trendPct: e.trendPct,
@@ -283,7 +296,7 @@ export async function loadHot(): Promise<HotResponse> {
         sourceNames: [...new Set(e.sourceNames.map(publicSourceName))],
         participants: extras.participants(e),
         spark: sparks.get(e.storyId) ?? [],
-        summary: summary && summary.length > 480 ? summary.slice(0, 480).join('') + '…' : text.summary,
+        summary: text.summary ? excerpt(text.summary) : null,
         latest: text.latest,
         cover: picture && coverUrl ? { url: coverUrl, srcSet: proxiedImageSet(picture.url, "hero") ?? undefined, width: picture.width, height: picture.height } : null,
       };

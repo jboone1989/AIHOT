@@ -7,6 +7,7 @@ import { sweepUnprocessed } from "@aihot/backend/jobs/content";
 import { probeNvidiaPool } from "@aihot/backend/providers/nvidia-pool";
 import { ingestGraphitiOnce } from "@aihot/backend/knowledge/graphiti";
 import { translatePending } from "@aihot/backend/editorial/translate";
+import { writeEnglishPending } from "@aihot/backend/editorial/english";
 import { adaptIntervals, scheduleDueSources } from "@aihot/backend/sources/collect";
 import { scheduleMpReconcile } from "@aihot/backend/sources/mp";
 import { dajialaConfigured } from "@aihot/backend/providers/dajiala";
@@ -35,6 +36,8 @@ const ENGINE_SCHEDULES: Scheduled[] = [
   { name: "content.sweep", cron: "*/5 * * * *", run: sweepUnprocessed },
   // Full-text translations of newly selected items (model calls; off with MODEL_CALLS_ENABLED=false).
   { name: "content.translate", cron: "*/5 * * * *", run: () => translatePending() },
+  // English copy of selected reports and story digests for the /en edition (model calls; off with MODEL_CALLS_ENABLED=false).
+  { name: "content.english", cron: "*/5 * * * *", run: () => writeEnglishPending() },
   { name: "hot.rank", cron: "*/5 * * * *", run: () => computeHotRanking() },
   { name: "hot.snapshot", cron: "2 * * * *", run: () => snapshotHeat() },
   { name: "stories.links", cron: "12 * * * *", run: linkRelatedStories },

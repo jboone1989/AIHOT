@@ -1,7 +1,7 @@
 // Public read layer, item level. Every exit (site API, v1, RSS, MCP, sitemap) reads
 // items through these columns and views; which rows are public is decided by scope.ts.
 import { CATEGORY_KEYS, toPublicApiCategory, type CategoryKey, type ChannelKey, type PublicApiCategoryKey } from "@aihot/contracts/taxonomy";
-import type { FeedItemSummary, ItemSummary, MediaView, SourceTier, XPostView } from "@aihot/contracts/site";
+import type { EnglishCopy, FeedItemSummary, ItemSummary, MediaView, SourceTier, XPostView } from "@aihot/contracts/site";
 import { POLICY } from "@aihot/site";
 import { sql, type Db } from "../db.ts";
 import { isEmptyOrLinkOnly } from "../content/posts.ts";
@@ -46,7 +46,14 @@ export interface ItemRow {
   zh_text: string | null;
   /** Chinese translation of the post an X post quotes. */
   quoted_zh: string | null;
+  /** English copy for the /en edition, when written from the current Chinese copy. */
+  en_title?: string | null;
+  en_summary?: string | null;
+  en_reason?: string | null;
 }
+
+/** What an English copy is written from (editorial/english.ts); a copy of other inputs is not shown. */
+export const ENGLISH_ITEM_INPUTS = sql`md5(concat_ws(chr(31), p.title, p.original_title, p.summary, p.reason))`;
 
 /** Columns every item listing selects. Internal judgement details never leave this layer. */
 export const ITEM_COLUMNS = sql`
@@ -56,7 +63,8 @@ export const ITEM_COLUMNS = sql`
   a.x_post, a.author, a.language,
   CASE WHEN s.kind = 'x_search' AND ${sourceOwnsPost(sql`s.name`, sql`a.x_post->>'handle'`)} THEN s.icon_url END AS author_avatar_url,
   st.public_id::text AS story_public_id, st.title AS story_title,
-  CASE WHEN p.channel = 'x' THEN tr.body_text END AS zh_text, qt.text_zh AS quoted_zh`;
+  CASE WHEN p.channel = 'x' THEN tr.body_text END AS zh_text, qt.text_zh AS quoted_zh,
+  ec.title AS en_title, ec.summary AS en_summary, ec.reason AS en_reason`;
 
 /** Public API listings never render article bodies, X media or story metadata. */
 export type ApiItemRow = Pick<ItemRow, "id" | "title" | "original_title" | "summary" | "source_name" | "url" | "published_at" | "discovered_at" | "category" | "score" | "selected" | "reason">;
@@ -73,7 +81,8 @@ export const ITEM_FROM = sql`
   JOIN articles a ON a.id = p.article_id
   LEFT JOIN stories st ON st.id = p.story_id AND st.merged_into IS NULL
   LEFT JOIN translations tr ON tr.article_id = p.article_id AND tr.lang = 'zh' AND tr.revision >= a.revision
-  LEFT JOIN quote_translations qt ON p.channel = 'x' AND qt.tweet_id = substring(a.x_post->'quoted'->>'url' from '/status/([0-9]+)')`;
+  LEFT JOIN quote_translations qt ON p.channel = 'x' AND qt.tweet_id = substring(a.x_post->'quoted'->>'url' from '/status/([0-9]+)')
+  LEFT JOIN english_copies ec ON ec.article_id = p.article_id AND ec.outcome = 'written' AND ec.inputs_hash = ${ENGLISH_ITEM_INPUTS}`;
 
 export function channelCondition(channel: ChannelKey | null | undefined) {
   if (!channel || channel === "all") return sql``;
@@ -152,6 +161,12 @@ export function showsPost(row: { channel: string; body_mode: string }): boolean 
 
 const PUBLIC_TIER: Record<string, SourceTier> = { T1: "first-party", T1_5: "official-account", T2: "media" };
 
+/** The English copy a row carries, if any. */
+export function englishCopy(row: { en_title?: string | null; en_summary?: string | null; en_reason?: string | null; selected?: boolean }): EnglishCopy | null {
+  if (!row.en_title || !row.en_summary) return null;
+  return { title: row.en_title, summary: row.en_summary, reason: row.selected === false ? null : row.en_reason ?? null };
+}
+
 /** The shared public article; its X post is added as each answer shows it. */
 export function toItemSummary(row: ItemRow): ItemSummary {
   return {
@@ -171,6 +186,7 @@ export function toItemSummary(row: ItemRow): ItemSummary {
     selected: row.selected,
     channel: row.channel,
     story: row.story_public_id ? { publicId: row.story_public_id, title: row.story_title ?? "" } : null,
+    english: englishCopy(row),
   };
 }
 
@@ -182,6 +198,7 @@ export function toFeedItemSummary(row: ItemRow): FeedItemSummary {
     id: item.id, title: item.title, originalTitle: item.originalTitle, summary: item.summary ?? (x?.text || null), reason: item.reason,
     source: item.source, links: item.links, publishedAt: item.publishedAt, timelineAt: item.timelineAt,
     category: item.category, tags: item.tags, score: item.score, selected: item.selected, channel: item.channel,
+    english: item.english,
     x: x ? {
       authorName: x.authorName, handle: x.handle, text: x.text, avatarUrl: x.avatarUrl,
       ...(x.avatarSrcSet ? { avatarSrcSet: x.avatarSrcSet } : {}), media: x.media,

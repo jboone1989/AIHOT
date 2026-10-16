@@ -8,6 +8,8 @@ import { sha256, stableJson } from "../lib/ids.ts";
 import { loadChangelog } from "../site/meta.ts";
 import { latestHotRanking } from "./hot.ts";
 import { ITEM_FROM } from "./items.ts";
+import { ENGLISH_STORY_INPUTS } from "./story-text.ts";
+import { INDEXED_MIN_REPORTS } from "./item-context.ts";
 import { sql } from "../db.ts";
 import { cached, SHARED_ONLY } from "../lib/cache.ts";
 import { escapeXml } from "../lib/text.ts";
@@ -85,13 +87,14 @@ export async function loadDiscoveryEntries(at = new Date(), limits?: { stories: 
   }
   // A story needs listed evidence of its own. Its identity follows current readable reports as well
   // as the digest, so a correction or regrouping is visible even when latest_at does not advance.
-  const stories = await sql<{ public_id: string; revision: string; english_titles: string[] | null }[]>`
+  const stories = await sql<{ public_id: string; revision: string; en_revision: string | null }[]>`
     SELECT st.public_id::text, md5(concat_ws('|', st.title, st.summary, st.digest, st.digest_updated_at::text,
-      st.version::text, members.revision)) AS revision, members.english_titles
-    FROM stories st JOIN LATERAL (
+      st.version::text, members.revision)) AS revision,
+      CASE WHEN en.title IS NOT NULL THEN md5(concat_ws('|', en.title, en.digest, members.revision)) END AS en_revision
+    FROM stories st LEFT JOIN story_english en ON en.story_id = st.id AND en.outcome = 'written' AND en.inputs_hash = ${ENGLISH_STORY_INPUTS}
+    JOIN LATERAL (
       SELECT md5(string_agg(concat_ws(':', p.article_id, p.revision::text, fa.role, f.updated_at::text, s.name),
-        ',' ORDER BY p.article_id, f.id)) AS revision,
-        array_agg(DISTINCT p.original_title) FILTER (WHERE p.original_title IS NOT NULL) AS english_titles
+        ',' ORDER BY p.article_id, f.id)) AS revision
       FROM facts f JOIN fact_articles fa ON fa.fact_id = f.id JOIN publications p ON p.article_id = fa.article_id
       JOIN sources s ON s.id = p.source_id
       WHERE f.story_id = st.id AND ${storyReportCondition(at)}
@@ -102,21 +105,30 @@ export async function loadDiscoveryEntries(at = new Date(), limits?: { stories: 
     ORDER BY st.latest_at DESC NULLS LAST, st.id DESC ${limits ? sql`LIMIT ${limits.stories}` : sql``}`;
   for (const s of stories) {
     entries.push({ loc: `/story/${s.public_id}`, revision: s.revision, changefreq: "daily", priority: 0.5 });
-    // Only published stories with an actual non-Chinese source headline have an indexable /en edition.
-    if (s.english_titles?.some((title) => title.trim() && !/[㐀-鿿]/u.test(title)))
-      entries.push({ loc: `/en/story/${s.public_id}`, revision: s.revision, changefreq: "daily", priority: 0.4 });
+    // The /en edition is indexed only with an English digest of its own (editorial/english.ts).
+    if (s.en_revision)
+      entries.push({ loc: `/en/story/${s.public_id}`, revision: s.en_revision, changefreq: "daily", priority: 0.4 });
   }
   for (const m of serverModules()) if (m.sitemap?.entries) entries.push(...(await m.sitemap.entries()));
   // Material/translation timestamps can also record a retry or a state repair. Hash the content;
   // without a dedicated public modification clock, omitting lastmod is more accurate than guessing.
-  const items = await sql<{ id: string; revision: string }[]>`
+  const items = await sql<{ id: string; revision: string; en_revision: string | null }[]>`
+    WITH story_sizes AS (
+      SELECT p.story_id, count(*) AS n FROM publications p JOIN sources s ON s.id = p.source_id
+      WHERE p.story_id IS NOT NULL AND ${storyReportCondition(at)} GROUP BY p.story_id)
     SELECT p.article_id AS id,
       md5(concat_ws('|', p.revision::text, a.content_hash, tr.title, tr.body_html, tr.body_text, tr.complete::text, qt.text_zh,
-        s.name, s.icon_url, st.public_id::text, st.title)) AS revision
+        s.name, s.icon_url, st.public_id::text, st.title)) AS revision,
+      -- An English page with English copy and an event of several reports (item-context.ts INDEXED_MIN_REPORTS).
+      CASE WHEN ec.title IS NOT NULL AND coalesce((SELECT z.n FROM story_sizes z WHERE z.story_id = p.story_id), 0) >= ${INDEXED_MIN_REPORTS}
+      THEN md5(concat_ws('|', p.revision::text, a.content_hash, ec.title, ec.summary, ec.reason, s.name)) END AS en_revision
     ${ITEM_FROM}
     WHERE ${storyReportCondition(at)} AND p.indexable
     ORDER BY p.timeline_at DESC, p.article_id DESC ${limits ? sql`LIMIT ${Math.max(0, limits.urls - entries.length)}` : sql``}`;
-  for (const it of items) entries.push({ loc: `/items/${it.id}`, revision: it.revision, changefreq: "monthly", priority: 0.5 });
+  for (const it of items) {
+    entries.push({ loc: `/items/${it.id}`, revision: it.revision, changefreq: "monthly", priority: 0.5 });
+    if (it.en_revision) entries.push({ loc: `/en/items/${it.id}`, revision: it.en_revision, changefreq: "monthly", priority: 0.4 });
+  }
   return limits ? entries.slice(0, limits.urls) : entries;
 }
 
