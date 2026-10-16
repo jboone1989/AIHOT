@@ -21,7 +21,7 @@ def read_env(path: Path) -> dict[str, str]:
         value = line.strip()
         if not value or value.startswith("#"):
             continue
-        match = re.match(r"^(?:export\\s+)?([A-Za-z_][A-Za-z_0-9]*)=(.*)$", value)
+        match = re.match(r"^(?:export\s+)?([A-Za-z_][A-Za-z_0-9]*)=(.*)$", value)
         if match:
             result[match.group(1)] = match.group(2).strip().strip('"').strip("'")
     return result
