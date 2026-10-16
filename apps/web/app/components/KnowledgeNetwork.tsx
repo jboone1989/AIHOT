@@ -33,8 +33,7 @@ function layout(edges: KnowledgeEdge[], centerKey?: string) {
     weights.set(node.key, { key: node.key, name: node.name, degree: (old?.degree ?? 0) + 1 });
   }
   const sorted = [...weights.values()].sort((a, b) => b.degree - a.degree || a.key.localeCompare(b.key));
-  const center = centerKey ? sorted.find(n => n.key === centerKey) : undefined;
-  const nodes = [...(center ? [center] : []), ...sorted.filter(n => n.key !== center?.key)].slice(0, 15);
+  const nodes = sorted.slice(0, 15);
   const coords = new Map(nodes.map((node, i) => {
     const orbit = i === 0 ? 0 : i < 6 ? 1 : 2;
     const index = orbit === 1 ? i - 1 : i - 6;
@@ -81,7 +80,8 @@ export function KnowledgeCanvas({ edges, activeId, compact = false, selectedNode
   if (selectedNodeKey) related.add(selectedNodeKey);
   const box = viewBox([...coords.values()]);
   const grid = gridId;
-  const focusBox = { x: box.x + (box.w - box.w / zoom) / 2, y: box.y + (box.h - box.h / zoom) / 2, w: box.w / zoom, h: box.h / zoom };
+  const target = (selectedNodeKey && coords.get(selectedNodeKey)) || { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+  const focusBox = { x: target.x - box.w / zoom / 2, y: target.y - box.h / zoom / 2, w: box.w / zoom, h: box.h / zoom };
   return (
     <div className={`lr-graph-canvas relative ${compact ? "lr-graph-compact" : ""}`}>
       <svg viewBox={`${focusBox.x} ${focusBox.y} ${focusBox.w} ${focusBox.h}`} role="group" aria-label={lang==="en"?`Knowledge network with ${nodes.length} entities and ${visibleEdges.length} relationships`:`知识关系网络，包含 ${nodes.length} 个可见实体、${visibleEdges.length} 条可见关系`}>
