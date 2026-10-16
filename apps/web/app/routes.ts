@@ -47,6 +47,7 @@ export default [
   route("en/knowledge", "routes/knowledge.tsx", { id: "en-knowledge" }),
   route("en/knowledge/entity/:key", "routes/knowledge-entity.tsx", { id: "en-knowledge-entity" }),
   route("en/story/:publicId", "routes/story.tsx", { id: "en-story" }),
+  route("en/items/:id", "routes/item-original.tsx", { id: "en-item" }),
   route("en/daily", "routes/report-latest.tsx", { id: "en-daily-latest" }),
   route("en/daily/:key", "routes/report-detail.tsx", { id: "en-daily-detail" }),
   route("en/topics", "routes/topics.tsx", { id: "en-topics" }),

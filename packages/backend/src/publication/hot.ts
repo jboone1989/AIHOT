@@ -53,7 +53,7 @@ async function queryLatestHotRanking(): Promise<HotRanking | null> {
 
 interface Extras {
   faces: Map<string, string | null>;
-  texts: Map<number, { summary: string | null; latest: string | null }>;
+  texts: Map<number, { summary: string | null; latest: string | null; english: { title: string; digest: string } | null }>;
 }
 
 const readExtras = cachedByKey((ranking: HotRanking) => String(ranking.id), queryExtras, { ...SHARED_ONLY, maxKeys: 4 });
@@ -73,7 +73,7 @@ async function queryExtras(ranking: HotRanking): Promise<Extras> {
   ]);
   return {
     faces: new Map(faces.map((f) => [f.name, f.icon_url ?? f.avatar])),
-    texts: new Map([...texts].map(([id, t]) => [id, { summary: t.digest ?? t.summary, latest: t.latest?.title ?? null }])),
+    texts: new Map([...texts].map(([id, t]) => [id, { summary: t.digest ?? t.summary, latest: t.latest?.title ?? null, english: t.english }])),
   };
 }
 
@@ -105,7 +105,7 @@ export async function rankingExtras(ranking: HotRanking) {
         return person;
       });
     },
-    text: (e: HotEntry) => texts.get(e.storyId) ?? { summary: null, latest: null },
+    text: (e: HotEntry) => texts.get(e.storyId) ?? { summary: null, latest: null, english: null },
   };
 }
 

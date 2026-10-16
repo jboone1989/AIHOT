@@ -5,7 +5,8 @@ import type { FeedItemSummary, SiteItemDetail } from "@aihot/contracts/site";
 import { ITEM_COPY, SITE } from "@aihot/site";
 import { cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { articleLd, breadcrumbLd, pageMeta, siteUrl, titled } from "../lib/seo";
+import { articleLd, breadcrumbLd, localized, pageMeta, siteUrl, titled } from "../lib/seo";
+import { isEnglishPath } from "../lib/edition";
 import { fullDateTime, relativeTime } from "../lib/format";
 import { markRead } from "../lib/local-state";
 import { SameEventBadge, SelectedBadge } from "../components/ui/Badge";
@@ -54,18 +55,23 @@ export async function clientLoader(args: ClientLoaderFunctionArgs) {
 }
 clientLoader.hydrate = true as const;
 
-export function meta({ loaderData }: Route.MetaArgs) {
+export function meta({ loaderData, location }: Route.MetaArgs) {
   if (!loaderData) return [{ title: titled("内容不存在") }, { name: "robots", content: "noindex" }];
   const { item } = loaderData;
   if (!item) return [{ title: titled(loaderData.preview.title) }];
-  return pageMeta({
+  // The English page is indexed only with English copy of its own (editorial/english.ts), never on a bare headline.
+  const english = item.english ?? null;
+  const onEnglish = isEnglishPath(location.pathname) && english;
+  return localized(pageMeta({
     title: item.title,
     description: item.summary ?? undefined,
     path: `/items/${item.id}`,
     image: `/og/items/${item.id}.png`,
     type: "article",
     noindex: !item.indexable,
-    jsonLd: [
+    jsonLd: onEnglish ? [
+      articleLd({ path: `/en/items/${item.id}`, headline: english.title, description: english.summary, publishedAt: item.publishedAt, image: `/og/items/${item.id}.png`, basedOn: item.links.original, inLanguage: "en" }),
+    ] : [
       articleLd({ path: `/items/${item.id}`, headline: item.title, description: item.summary, publishedAt: item.publishedAt, image: `/og/items/${item.id}.png`, basedOn: item.links.original }),
       breadcrumbLd([
         { name: SITE.name, path: "/" },
@@ -73,6 +79,10 @@ export function meta({ loaderData }: Route.MetaArgs) {
         { name: item.title, path: `/items/${item.id}` },
       ]),
     ],
+  }), location.pathname, {
+    title: english?.title ?? item.originalTitle ?? "Original report",
+    description: english?.summary ?? `Source record from ${item.source.name}, with a link to the original reporting.`,
+    noindex: !english || !item.indexable,
   });
 }
 

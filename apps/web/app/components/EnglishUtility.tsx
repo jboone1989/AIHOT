@@ -55,7 +55,7 @@ export function EnglishStarred({starred}:{starred:EnglishStar[]}) {
  <Header title="Saved reports" subtitle={"Your "+starred.length+" saved items are stored in this browser. Titles saved from the Chinese edition may not have an English translation."}/>
  {starred.length===0?<p className="rounded-xl border border-line p-6 text-[14px] text-ink-3">No saved reports yet. Open an article and bookmark it for later.</p>:<ol className="divide-y divide-line-soft rounded-xl border border-line bg-surface">
  {starred.map((s,i)=><li key={s.id} className="flex items-start justify-between gap-3 px-5 py-4"><div className="min-w-0"><div className="text-[11px] text-ink-4">Saved #{i+1} · {new Date(s.savedAt).toLocaleDateString("en-US")}</div>
- <Link to={"/items/"+s.id+"/original"} className="mt-1 block text-[14px] font-semibold hover:text-accent">{/[\u3400-\u9fff]/u.test(s.title)?"Open saved original report":s.title}</Link></div>
+ <Link to={"/en/items/"+s.id} className="mt-1 block text-[14px] font-semibold hover:text-accent">{/[\u3400-\u9fff]/u.test(s.title)?"Open saved original report":s.title}</Link></div>
  <button type="button" onClick={()=>removeStar(s.id)} className="text-[12px] text-accent" aria-label="Remove saved report">Remove</button></li>)}</ol>}
  <Link to="/all" className="lr-inline-link mt-5">Browse reports <IconArrowRight size={15}/></Link></main>;
 }

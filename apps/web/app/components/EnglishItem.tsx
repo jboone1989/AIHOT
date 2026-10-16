@@ -7,7 +7,9 @@ import { IconExternal, IconArrowLeft, IconClock } from "./icons";
 import { englishText } from "./EnglishStory";
 
 export function EnglishItem({item}: {item:SiteItemDetail}) {
-  const title=englishText(item.originalTitle) ?? englishText(item.title) ?? "Publisher's original report";
+  const english=item.english ?? null;
+  const title=english?.title ?? englishText(item.originalTitle) ?? englishText(item.title) ?? "Publisher's original report";
+  const publisherTitle=english && englishText(item.originalTitle) && item.originalTitle!.trim()!==english.title ? item.originalTitle : null;
   const source=englishText(item.source.name) ?? "Publisher";
   const body=item.body?.original ?? null;
   // No automatic translation is implied. A Chinese-only body remains available at the publisher.
@@ -19,8 +21,9 @@ export function EnglishItem({item}: {item:SiteItemDetail}) {
       <PhoneBar back={{to:"/all",label:"News"}} title={title} />
       <Link to="/all" className="hidden items-center gap-2 text-[13px] text-accent lg:inline-flex"><IconArrowLeft size={15}/> Back to news</Link>
       <header className="mt-5 border-b border-line pb-6">
-        <div className="lr-eyebrow">ORIGINAL REPORT / SOURCE RECORD</div>
+        <div className="lr-eyebrow">{english ? "BRIEFING / SOURCE-LINKED" : "ORIGINAL REPORT / SOURCE RECORD"}</div>
         <h1 data-page-title className="mt-3 text-[26px] font-bold leading-[1.45] text-ink lg:text-[36px]">{title}</h1>
+        {publisherTitle && <p className="mt-2.5 text-[14px] leading-relaxed text-ink-4">Publisher's headline: {publisherTitle}</p>}
         <div className="mt-4 flex flex-wrap items-center gap-4 text-[12px] text-ink-3">
           <span>{source}</span><span className="inline-flex items-center gap-1.5"><IconClock size={13}/>{date.format(new Date(timestamp))}</span>
         </div>
@@ -28,13 +31,25 @@ export function EnglishItem({item}: {item:SiteItemDetail}) {
           Read at publisher <IconExternal size={15}/>
         </a>
       </header>
+      {english && (
+        <section className="mt-6 space-y-5">
+          <p className="text-[16px] leading-[1.85] text-ink-2">{english.summary}</p>
+          {english.reason && (
+            <div className="rounded-xl border border-line bg-surface p-5">
+              <h2 className="text-[13px] font-semibold uppercase tracking-wide text-accent">Why it matters</h2>
+              <p className="mt-2 text-[14.5px] leading-[1.8] text-ink-2">{english.reason}</p>
+            </div>
+          )}
+          <p className="text-[12px] leading-[1.7] text-ink-4">Written by {SITE.name} with AI assistance from the publisher's report. Read the original for full details and quotes.</p>
+        </section>
+      )}
       {readableBody && body ? (
         <section className="mt-6">
           <div className="mb-3 text-[12px] font-semibold text-ink-4">Original article</div>
           <ArticleBody html={body}/>
           <p className="mt-6 text-[12px] text-ink-4">Original-language content. Reproduced only when the publisher's content policy allows it.</p>
         </section>
-      ) : (
+      ) : english ? null : (
         <section className="mt-7 rounded-xl border border-line bg-surface p-6">
           <h2 className="text-[18px] font-semibold text-ink">Original reporting</h2>
           <p className="mt-2 text-[13.5px] leading-[1.8] text-ink-3">

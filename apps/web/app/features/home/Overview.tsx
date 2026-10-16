@@ -18,7 +18,13 @@ const count = (n: number | undefined) => (n === undefined ? "—" : n.toLocaleSt
 /** The story's title for the reader's language: English mode never shows a Chinese headline as English. */
 export function useEventTitle() {
   const lang = useUiLanguage();
-  return (e: HotEntryView) => (lang === "en" ? (e.englishTitle ?? `Event #${e.rank} · See source reports`) : e.story.title);
+  return (e: HotEntryView) => (lang === "en" ? (e.english?.title ?? e.englishTitle ?? `Event #${e.rank} · See source reports`) : e.story.title);
+}
+
+/** The story's page in the reader's language. */
+export function useEventPath() {
+  const lang = useUiLanguage();
+  return (e: HotEntryView) => `${lang === "en" ? "/en" : ""}/story/${e.story.publicId}`;
 }
 
 export function PulseStrip({ site, graph }: { site: SiteStats | null; graph: KnowledgeStats }) {
@@ -72,6 +78,7 @@ export function LeadStory({ entry, storyGraph, overview }: { entry: HotEntryView
   const t = useText();
   const lang = useUiLanguage();
   const title = useEventTitle();
+  const eventPath = useEventPath();
   const own = storyGraph.edges.length > 0;
   const graph = own ? storyGraph : overview;
   const voices = (entry?.sourceNames ?? []).filter((n) => !hasHan(n)).slice(0, 3);
@@ -89,9 +96,9 @@ export function LeadStory({ entry, storyGraph, overview }: { entry: HotEntryView
               <Delta trend={entry.trend} pct={entry.trendPct} className="lr-lead-delta" />
             </div>
             <h1 id="lead-title" className="lr-lead-title">
-              <IntentLink viewTransition to={`/story/${entry.story.publicId}`}>{title(entry)}</IntentLink>
+              <IntentLink viewTransition to={eventPath(entry)}>{title(entry)}</IntentLink>
             </h1>
-            {lang === "zh" && entry.summary && <p className="lr-lead-sum">{entry.summary}</p>}
+            {lang === "zh" ? entry.summary && <p className="lr-lead-sum">{entry.summary}</p> : entry.english && <p className="lr-lead-sum">{entry.english.summary}</p>}
             {lang === "en" && voices.length > 0 && (
               <p className="lr-lead-voices">Reported by <b>{voices.join(", ")}</b>{entry.sourceCount > voices.length ? ` and ${entry.sourceCount - voices.length} more` : ""}</p>
             )}
@@ -106,7 +113,7 @@ export function LeadStory({ entry, storyGraph, overview }: { entry: HotEntryView
               <span><b className="mono">{entry.sourceCount}</b> {t("个来源", entry.sourceCount === 1 ? "source" : "sources")}</span>
               <span><b className="mono">{entry.participantCount}</b> {t("位参与者", "participants")}</span>
               {own && <span><b className="mono">{storyGraph.edges.length}</b> {t("条图谱关系", "graph relations")}</span>}
-              <IntentLink viewTransition to={`/story/${entry.story.publicId}`} className="lr-lead-more">{t("打开事件", "Open event")} <IconArrowRight size={14} /></IntentLink>
+              <IntentLink viewTransition to={eventPath(entry)} className="lr-lead-more">{t("打开事件", "Open event")} <IconArrowRight size={14} /></IntentLink>
             </div>
           </>
         ) : (
@@ -136,6 +143,7 @@ export function LeadStory({ entry, storyGraph, overview }: { entry: HotEntryView
 export function Trending({ entries }: { entries: HotEntryView[] }) {
   const t = useText();
   const title = useEventTitle();
+  const eventPath = useEventPath();
   if (!entries.length) return null;
   return (
     <section className="lr-trending" aria-labelledby="trending-title">
@@ -146,7 +154,7 @@ export function Trending({ entries }: { entries: HotEntryView[] }) {
       <ol className="lr-trend-list">
         {entries.map((e) => (
           <li key={e.story.publicId}>
-            <IntentLink viewTransition to={`/story/${e.story.publicId}`} className="lr-trend-row">
+            <IntentLink viewTransition to={eventPath(e)} className="lr-trend-row">
               <span className="lr-trend-rank numeral">{e.rank}</span>
               <span className="lr-trend-text">
                 <b>{title(e)}</b>

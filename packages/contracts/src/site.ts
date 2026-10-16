@@ -41,6 +41,14 @@ export interface StoryRef {
   title: string;
 }
 
+/** A report's English copy for the /en edition, written by the worker from the Chinese copy and the original. */
+export interface EnglishCopy {
+  title: string;
+  summary: string;
+  /** Why it matters; selected reports only. */
+  reason: string | null;
+}
+
 /** What every site answer about an article carries; a card and a page each add the X post in their own form. */
 export interface ItemSummary {
   id: string;
@@ -59,10 +67,12 @@ export interface ItemSummary {
   selected: boolean;
   channel: "news" | "x";
   story: StoryRef | null;
+  /** Absent in cached answers from before English copy existed. */
+  english?: EnglishCopy | null;
 }
 
 /** The fields rendered by a site feed card; full original text lives in the item detail. */
-export interface FeedItemSummary extends Pick<ItemSummary, "id" | "title" | "summary" | "reason" | "source" | "publishedAt" | "timelineAt" | "category" | "tags" | "score" | "selected" | "channel"> {
+export interface FeedItemSummary extends Pick<ItemSummary, "id" | "title" | "summary" | "reason" | "source" | "publishedAt" | "timelineAt" | "category" | "tags" | "score" | "selected" | "channel" | "english"> {
   /** Original publisher title when present, for the English/original reading mode. */
   originalTitle?: string | null;
   /** Present on fresh responses; optional for cached feed snapshots created before source links were displayed. */
@@ -193,6 +203,8 @@ export interface HotParticipant {
 export interface HotEntryView {
   /** Original English reporting title for reader language switching. */
   englishTitle?: string | null;
+  /** The story's English title and a card excerpt of its English digest, when written. */
+  english?: { title: string; summary: string } | null;
   rank: number;
   story: StoryRef;
   heat: number;
@@ -235,6 +247,7 @@ export interface StoryReportView {
   source: SourceRef & { firstParty: boolean };
   publishedAt: string;
   selected: boolean;
+  english?: EnglishCopy | null;
 }
 
 export interface StoryFactView {
@@ -247,6 +260,8 @@ export interface StoryFactView {
 
 export interface StoryDetail {
   englishTitle?: string | null;
+  /** The English title and digest, written from the current Chinese digest (shown only beside it). */
+  english?: { title: string; digest: string } | null;
   publicId: string;
   title: string;
   status: "active" | "watching" | "settled";
@@ -285,6 +300,8 @@ export type ReportKind = "daily" | "weekly" | "monthly";
 
 export interface ReportCitation {
   originalTitle?: string | null;
+  /** The cited report's current English copy, read when the issue is served. */
+  english?: EnglishCopy | null;
   itemId: string | null;
   title: string;
   summary: string | null;

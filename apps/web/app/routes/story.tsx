@@ -8,7 +8,7 @@ import { apiGet, cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
 import { breadcrumbLd, localized, pageMeta, storyLd, titled } from "../lib/seo";
 import { beijingDate, beijingTime } from "@aihot/contracts/time";
-import { monthDay, monthDayTime, relativeTime } from "../lib/format";
+import { localizedMonthDayTime, monthDay, relativeTime } from "../lib/format";
 import { HeatChart } from "../features/story/HeatChart";
 import { EventPrices, type StoryMarket } from "../features/story/EventPrices";
 import { KnowledgeExplorer, type KnowledgeGraph } from "../components/KnowledgeNetwork";
@@ -44,7 +44,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 export function meta({ loaderData, location }: Route.MetaArgs) {
   if (!loaderData) return [{ title: titled("事件不存在") }, { name: "robots", content: "noindex" }];
   const s = loaderData.story;
-  const english = s.englishTitle && !/[㐀-鿿]/u.test(s.englishTitle) ? s.englishTitle : null;
+  const english = s.english ?? null;
   return localized(pageMeta({
     title: s.title,
     description: (s.digest ?? s.summary ?? s.excerpt?.text)?.slice(0, 150) ?? `${s.sourceCount} 个报道来源 ${s.reportCount} 篇报道，完整时间线与最新进展。`,
@@ -57,9 +57,9 @@ export function meta({ loaderData, location }: Route.MetaArgs) {
       breadcrumbLd([{ name: SITE.name, path: "/" }, ...(inNav("/hot") ? [{ name: "热点榜", path: "/hot" }] : []), { name: s.title, path: `/story/${s.publicId}` }]),
     ],
   }), location.pathname, {
-    title: english ?? "Event timeline",
-    description: `${english ?? "This event"}: ${s.reportCount} reports from ${s.sourceCount} sources, with the full timeline, knowledge-graph relations and links to the original reporting.`,
-    // Without a publisher's English headline the English page has nothing of its own to index.
+    title: english?.title ?? englishText(s.englishTitle) ?? "Event timeline",
+    description: english ? english.digest.slice(0, 160) : `${s.reportCount} reports from ${s.sourceCount} sources, with the full timeline, knowledge-graph relations and links to the original reporting.`,
+    // Without an English digest of its own (editorial/english.ts) the English page is headlines only and is not indexed.
     noindex: !english,
   });
 }
@@ -158,7 +158,8 @@ function useActiveSection(keys: SectionKey[]): [SectionKey, (k: SectionKey) => v
 function TimelineRow({ r }: { r: StoryReportView }) {
   const lang = useUiLanguage();
   const t = useText();
-  const title = lang === "en" ? (englishText(r.originalTitle) ?? englishText(r.title) ?? "Original-language report — open source") : r.title;
+  const title = lang === "en" ? (r.english?.title ?? englishText(r.originalTitle) ?? englishText(r.title) ?? "Original-language report — open source") : r.title;
+  const summary = lang === "en" ? (r.english?.summary ?? englishText(r.summary)) : r.summary;
   const [open, setOpen] = useState(false);
   const [clamped, setClamped] = useState(false);
   const ref = useRef<HTMLParagraphElement>(null);
@@ -176,13 +177,13 @@ function TimelineRow({ r }: { r: StoryReportView }) {
           <span className="min-w-0 truncate">{r.source.name}</span>
           {r.selected && <SelectedBadge />}
         </div>
-        <IntentLink viewTransition to={`/items/${r.id}${lang === "en" ? "/original" : ""}`} className="mt-1 block text-[16px] font-[650] leading-[1.6] text-ink transition-colors hover:text-accent lg:text-[15.5px]">
+        <IntentLink viewTransition to={lang === "en" ? `/en/items/${r.id}` : `/items/${r.id}`} className="mt-1 block text-[16px] font-[650] leading-[1.6] text-ink transition-colors hover:text-accent lg:text-[15.5px]">
           {title}
         </IntentLink>
-        {(lang === "zh" ? r.summary : englishText(r.summary)) && (
+        {summary && (
           <>
             <p ref={ref} className={`mt-1 text-[14px] leading-[1.75] text-ink-3 ${open ? "" : "line-clamp-2"}`}>
-              {lang === "en" ? englishText(r.summary) : r.summary}
+              {summary}
             </p>
             {(clamped || open) && (
               <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="mt-1 text-[12.5px] text-note transition-colors hover:text-accent">
@@ -206,6 +207,7 @@ export default function StoryPage() {
   const { story, graph, market } = useLoaderData<typeof loader>();
   const t=useText();
   const uiLang=useUiLanguage();
+  const when = (iso: string) => localizedMonthDayTime(iso, uiLang);
   const entry = useLocation().key;
   const [filter, setFilter] = useState<Filter>(() => viewCache.peek(entry)?.filter ?? "all");
   const [order, setOrder] = useState<Order>(() => viewCache.peek(entry)?.order ?? "desc");
@@ -222,10 +224,10 @@ export default function StoryPage() {
     if (filter !== "all" || order !== "desc" || viewCache.peek(entry)) viewCache.set(entry, { savedAt: Date.now(), filter, order });
   }, [entry, filter, order]);
   const status = STATUS[story.status];
-  const displayTitle = uiLang === "en" ? (englishText(story.englishTitle) ?? englishText(story.title) ?? "Event timeline") : story.title;
-  const reportTitle = (r: StoryReportView) => uiLang === "en" ? (englishText(r.originalTitle) ?? englishText(r.title) ?? "Original-language report — open source") : r.title;
-  const visibleSummary = (text: string | null | undefined) => uiLang === "zh" ? text : englishText(text);
-  const reportPath = (id: string) => `/items/${id}${uiLang === "en" ? "/original" : ""}`;
+  const displayTitle = uiLang === "en" ? (story.english?.title ?? englishText(story.englishTitle) ?? englishText(story.title) ?? "Event timeline") : story.title;
+  const reportTitle = (r: StoryReportView) => uiLang === "en" ? (r.english?.title ?? englishText(r.originalTitle) ?? englishText(r.title) ?? "Original-language report — open source") : r.title;
+  const visibleSummary = (text: string | null | undefined, r?: StoryReportView) => uiLang === "zh" ? text : (r?.english?.summary ?? englishText(text));
+  const reportPath = (id: string) => uiLang === "en" ? `/en/items/${id}` : `/items/${id}`;
   // A settled story nobody watched (history pages) has no heat to explain or chart.
   const observed = story.status !== "settled" || story.heat.length > 0 || story.whyHot.participants48h > 0 || story.whyHot.rank !== null;
   const sectionKeys: SectionKey[] = observed ? ["overview", "reports", "heat"] : ["overview", "reports"];
@@ -251,8 +253,11 @@ export default function StoryPage() {
     order === "desc" ? Date.parse(b.firstReportAt) - Date.parse(a.firstReportAt) : Date.parse(a.firstReportAt) - Date.parse(b.firstReportAt)
   ), [story.developments, order]);
   const newest = story.latestReport;
+  const latestText = uiLang === "en" ? (story.timeline.find((r) => r.id === newest?.id)?.english?.title ?? englishText(story.latest)) : story.latest;
   const overview = uiLang === "en"
-    ? (englishText(story.digest) ?? englishText(story.summary) ?? englishText(story.excerpt?.text)
+    ? story.english
+      ? { label: "AI overview", text: story.english.digest, note: story.digestUpdatedAt ? `Written with AI from the reporting · updated ${new Date(story.digestUpdatedAt).toLocaleDateString("en-US", { timeZone: "UTC" })}` : "Written with AI from the reporting" }
+      : (englishText(story.digest) ?? englishText(story.summary) ?? englishText(story.excerpt?.text)
       ? { label: "Source summary", text: englishText(story.digest) ?? englishText(story.summary) ?? englishText(story.excerpt?.text) ?? "", note: null }
       : null)
     : story.digest
@@ -334,15 +339,15 @@ export default function StoryPage() {
             ) : (
               <p className="text-[13.5px] text-ink-4">{t("还没有综述，先看下面的报道时间线。","No English summary yet; use the source timeline below.")}</p>
             )}
-            {visibleSummary(story.latest) && (
+            {latestText && (
               <div className="-mx-5 mt-5 border-t border-line-soft px-5 pt-4 lg:-mx-6 lg:px-6">
                 <div className="flex items-center gap-2.5 text-[12px]">
                   <span className="font-semibold text-ink">{t("最新进展","Latest development")}</span>
-                  {story.latestAt && <span className="num text-ink-4">{monthDayTime(story.latestAt)}</span>}
+                  {story.latestAt && <span className="num text-ink-4">{when(story.latestAt)}</span>}
                 </div>
                 {newest ? (
                   <Link viewTransition to={reportPath(newest.id)} className="group mt-1.5 inline text-[14px] leading-[1.7] text-ink-2 transition-colors hover:text-accent">
-                    {visibleSummary(story.latest)}
+                    {latestText}
                     <IconChevronRight size={14} className="ml-0.5 inline -translate-y-px text-ink-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 ) : (
@@ -373,9 +378,9 @@ export default function StoryPage() {
                     <ul className="mt-2 divide-y divide-line-soft">
                       {group.rows.slice(0, 4).map(report => (
                         <li key={report.id} className="py-3">
-                          <div className="text-[11.5px] text-ink-4">{report.source.name} · {monthDayTime(report.publishedAt)}</div>
+                          <div className="text-[11.5px] text-ink-4">{report.source.name} · {when(report.publishedAt)}</div>
                           <Link to={reportPath(report.id)} className="mt-1 block text-[13.5px] font-semibold leading-[1.55] text-ink hover:text-accent">{reportTitle(report)}</Link>
-                          {visibleSummary(report.summary) && <p className="mt-1 line-clamp-3 text-[12.5px] leading-[1.7] text-ink-3">{visibleSummary(report.summary)}</p>}
+                          {visibleSummary(report.summary, report) && <p className="mt-1 line-clamp-3 text-[12.5px] leading-[1.7] text-ink-3">{visibleSummary(report.summary, report)}</p>}
                           {report.originalUrl && /^https?:\/\//i.test(report.originalUrl) &&
                             <a href={report.originalUrl} target="_blank" rel="noopener noreferrer" data-analytics-event="source_open"
                               className="mt-2 inline-block text-[12.5px] font-medium text-accent hover:underline">{t("核对原始报道","Read original source")} ↗</a>}
@@ -403,7 +408,7 @@ export default function StoryPage() {
                   <li key={d.factId} className="relative">
                     <span className={`absolute -left-5 top-[7px] size-[7px] rounded-full ring-4 ring-surface ${d.factId === story.developments[0]?.factId ? "bg-accent" : "bg-line-strong"}`} aria-hidden="true" />
                     <div className="num text-[12px] text-ink-4">
-                      {monthDayTime(d.firstReportAt)} · {d.reportCount} {t("篇报道","reports")}
+                      {when(d.firstReportAt)} · {d.reportCount} {t("篇报道","reports")}
                     </div>
                     <Link viewTransition to={reportPath(d.representative.id)} className="mt-0.5 block text-[15px] font-semibold leading-snug text-ink transition-colors hover:text-accent">
                       {d.title}
@@ -545,7 +550,7 @@ export default function StoryPage() {
                 <div className="flex justify-between gap-3">
                   <dt className="text-ink-4">{t("最早报道","First report")}</dt>
                   <dd className="num text-ink-2">
-                    <time dateTime={story.firstReportAt}>{monthDayTime(story.firstReportAt)}</time>
+                    <time dateTime={story.firstReportAt}>{when(story.firstReportAt)}</time>
                   </dd>
                 </div>
               )}
@@ -553,7 +558,7 @@ export default function StoryPage() {
                 <div className="flex justify-between gap-3">
                   <dt className="text-ink-4">{t("最近更新","Last updated")}</dt>
                   <dd className="num text-ink-2">
-                    <time dateTime={story.latestAt}>{monthDayTime(story.latestAt)}</time>
+                    <time dateTime={story.latestAt}>{when(story.latestAt)}</time>
                   </dd>
                 </div>
               )}

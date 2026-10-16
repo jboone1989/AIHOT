@@ -1,6 +1,6 @@
 // Reports through the public read layer: website DTOs and the v1 shapes. Only real reports are
 // listed; a missing date is a 404, never another day. Withdrawn citations are marked, not shown.
-import type { ReportCitation, ReportDetail, ReportIndexEntry, ReportNavigationEntry, ReportKind } from "@aihot/contracts/site";
+import type { EnglishCopy, ReportCitation, ReportDetail, ReportIndexEntry, ReportNavigationEntry, ReportKind } from "@aihot/contracts/site";
 import { REPORTS, SITE, withSubject } from "@aihot/site";
 import { sql } from "../db.ts";
 import { cached, type Cached } from "../lib/cache.ts";
@@ -9,6 +9,7 @@ import { isoWeekRange, monthRange } from "@aihot/contracts/time";
 import { dailyUrl, itemUrl, periodUrl, siteUrl } from "./links.ts";
 import { publicSourceName } from "./rules.ts";
 import { listedCondition } from "./scope.ts";
+import { ENGLISH_ITEM_INPUTS, englishCopy } from "./items.ts";
 
 export type { ReportKind };
 
@@ -31,15 +32,17 @@ interface Availability {
   sourceIcon: string | null;
   originalTitle: string | null;
   publishedAt: Date | null;
+  english: EnglishCopy | null;
 }
 
 async function availability(ids: string[]): Promise<Map<string, Availability>> {
   const out = new Map<string, Availability>();
   if (ids.length === 0) return out;
-  const rows = await sql<{ id: string; available: boolean; summary: string | null; first_party: boolean; source_id: string; source_name: string | null; icon_url: string | null; original_title: string | null; at: Date | null }[]>`
+  const rows = await sql<{ id: string; available: boolean; summary: string | null; first_party: boolean; source_id: string; source_name: string | null; icon_url: string | null; original_title: string | null; at: Date | null; selected: boolean; en_title: string | null; en_summary: string | null; en_reason: string | null }[]>`
     SELECT p.article_id AS id, (${listedCondition(new Date())}) AS available, p.summary, (s.tier = 'T1') AS first_party, p.source_id, s.name AS source_name, s.icon_url, p.original_title,
-      coalesce(p.published_at, p.discovered_at) AS at
+      coalesce(p.published_at, p.discovered_at) AS at, p.selected, ec.title AS en_title, ec.summary AS en_summary, ec.reason AS en_reason
     FROM publications p LEFT JOIN sources s ON s.id = p.source_id
+    LEFT JOIN english_copies ec ON ec.article_id = p.article_id AND ec.outcome = 'written' AND ec.inputs_hash = ${ENGLISH_ITEM_INPUTS}
     WHERE p.article_id IN ${sql(ids)}`;
   for (const r of rows) {
     out.set(r.id, {
@@ -51,6 +54,7 @@ async function availability(ids: string[]): Promise<Map<string, Availability>> {
       sourceIcon: r.icon_url,
       originalTitle: r.original_title,
       publishedAt: r.at,
+      english: englishCopy(r),
     });
   }
   return out;
@@ -233,6 +237,7 @@ function citationFrom(raw: Record<string, any>, avail: Map<string, Availability>
     itemId: id,
     title: String(raw.title ?? ""),
     originalTitle: a?.originalTitle ?? null,
+    english: a?.english ?? null,
     ...metadata,
     sourceName: publicSourceName(metadata.sourceName),
     sourceIconUrl: a?.sourceIcon ? proxiedImage(a.sourceIcon, "avatar") : null,

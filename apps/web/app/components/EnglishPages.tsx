@@ -47,12 +47,14 @@ export function EnglishTopic({data}:{data:TopicPage}){
  <Pagination page={page} pageCount={pageCount} href={href}/></main>;
 }
 function Citation({c,i}:{c:ReportCitation;i:number}){
- const title=englishOnly(c.originalTitle)??englishOnly(c.title)??"Source report "+(i+1)+" — view original";
+ const title=c.english?.title??englishOnly(c.originalTitle)??englishOnly(c.title)??"Source report "+(i+1)+" — view original";
  if(!c.available)return <li className="px-5 py-4 text-[12px] text-ink-4">Withdrawn report</li>;
- const link=c.itemId?"/items/"+c.itemId+"/original":null;
+ const link=c.itemId?"/en/items/"+c.itemId:null;
  return <li className="border-b border-line-soft px-5 py-4 last:border-0">
  <div className="text-[11px] text-ink-4">{englishOnly(c.sourceName)??"Publisher"}{c.publishedAt?" · "+enDate(c.publishedAt):""}</div>
  {link?<Link to={link} className="mt-1 block text-[14px] font-semibold leading-[1.7] hover:text-accent">{title}</Link>:<div className="mt-1 text-[14px] font-semibold">{title}</div>}
+ {c.english&&<p className="mt-1.5 text-[13px] leading-[1.75] text-ink-3">{c.english.summary}</p>}
+ {c.english?.reason&&<p className="mt-1.5 text-[12.5px] leading-[1.7] text-ink-4"><span className="font-semibold text-ink-3">Why it matters: </span>{c.english.reason}</p>}
  {/^[Hh][Tt][Tt][Pp][Ss]?:\/\//.test(c.sourceUrl)&&<a href={c.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-[11px] text-accent">Publisher source <IconExternal size={12}/></a>}
  </li>;
 }
@@ -61,9 +63,10 @@ export function EnglishReport({report,kind="daily",graph}:{report:ReportDetail|n
  const name=kindName(report?.kind??kind);
  const raw=report?[...report.highlights,...report.sections.flatMap(s=>s.items),...report.flashes]:[];
  const uniq=raw.filter((c,i)=>raw.findIndex(x=>x.itemId?x.itemId===c.itemId:x.title===c.title)===i);
+ const written=uniq.filter(c=>c.english).length;
  return <main className="pb-12"><PhoneBar back={{to:"/daily",label:"Daily"}} title={name+" Brief"}/>
  <Header eyebrow="SOURCE DIGEST / ENGLISH" title={name+" Brief"+(report?" · "+report.key:"")}
- description={report?"Issue #"+report.issueNumber+" · "+uniq.length+" source-linked reports. This English digest uses publisher headlines. The original Chinese editorial commentary has not been translated.":"No issue published yet."}/>
+ description={report?"Issue #"+report.issueNumber+" · "+uniq.length+" source-linked reports"+(written?". Summaries are written by "+SITE.name+" with AI assistance from each publisher's report; follow the links for the original reporting.":". English summaries for this issue are not written yet; publisher headlines and links are shown."):"No issue published yet."}/>
  {report&&<><div className="mb-5 flex flex-wrap gap-4 text-[12px]">{report.prev&&<Link to={"/"+report.kind+"/"+report.prev} className="lr-inline-link">← Previous</Link>}{report.next&&<Link to={"/"+report.kind+"/"+report.next} className="lr-inline-link">Next →</Link>}<Link to="/daily/archive" className="lr-inline-link">Archive <IconArrowRight size={14}/></Link></div>
  <h2 className="mb-3 text-[19px] font-semibold">Source coverage</h2><ol className="overflow-hidden rounded-xl border border-line bg-surface">{uniq.length?uniq.map((c,i)=><Citation key={c.itemId??c.title} c={c} i={i}/>):<li className="p-5 text-ink-3">No public citations available.</li>}</ol></>}{graph}</main>;
 }

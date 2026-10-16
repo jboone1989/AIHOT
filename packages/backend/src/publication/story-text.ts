@@ -12,12 +12,17 @@ export interface StoryText {
   summary: string | null;
   /** Its title, link and time come from the one report. */
   latest: { id: string; title: string; at: Date } | null;
+  /** The English title and digest, written from the current title and digest (editorial/english.ts); only beside a shown digest. */
+  english: { title: string; digest: string } | null;
 }
+
+/** What a story's English copy is written from; a copy of other inputs is not shown. */
+export const ENGLISH_STORY_INPUTS = sql`md5(concat_ws(chr(31), st.title, st.digest))`;
 
 export async function storyTexts(storyIds: number[], now = new Date()): Promise<Map<number, StoryText>> {
   if (storyIds.length === 0) return new Map();
-  const rows = await sql<{ id: number; digest: string | null; digest_updated_at: Date | null; article_ids: string[] | null; inputs_hash: string | null; current: boolean; summary: string | null; latest_id: string | null; latest_title: string; latest_at: Date }[]>`
-    SELECT st.id, st.digest, st.digest_updated_at, saved.article_ids, saved.inputs_hash,
+  const rows = await sql<{ id: number; digest: string | null; digest_updated_at: Date | null; article_ids: string[] | null; inputs_hash: string | null; current: boolean; summary: string | null; latest_id: string | null; latest_title: string; latest_at: Date; en_title: string | null; en_digest: string | null }[]>`
+    SELECT st.id, st.digest, en.title AS en_title, en.digest AS en_digest, st.digest_updated_at, saved.article_ids, saved.inputs_hash,
       CASE WHEN EXISTS (
         SELECT 1 FROM facts f JOIN fact_articles fa ON fa.fact_id = f.id JOIN publications p ON p.article_id = fa.article_id
         WHERE f.story_id = st.id AND p.summary = st.summary AND ${evidenceCondition()} AND ${listedCondition(now)}
@@ -36,6 +41,7 @@ export async function storyTexts(storyIds: number[], now = new Date()): Promise<
       WHERE f.story_id = st.id AND ${evidenceCondition()} AND ${listedCondition(now)}
       ORDER BY coalesce(p.published_at, p.discovered_at) DESC, p.article_id LIMIT 1
     ) latest ON true
+    LEFT JOIN story_english en ON en.story_id = st.id AND en.outcome = 'written' AND en.inputs_hash = ${ENGLISH_STORY_INPUTS}
     WHERE st.id = ANY(${storyIds}::bigint[])`;
   const reports = await digestReports(sql, rows.filter((r) => r.current && r.digest && r.inputs_hash).map((r) => Number(r.id)), now);
   return new Map(rows.map((r) => {
@@ -48,6 +54,7 @@ export async function storyTexts(storyIds: number[], now = new Date()): Promise<
       digestUpdatedAt: current ? r.digest_updated_at : null,
       summary: r.summary,
       latest: r.latest_id ? { id: r.latest_id, title: r.latest_title, at: r.latest_at } : null,
+      english: current && r.en_title && r.en_digest ? { title: r.en_title, digest: r.en_digest } : null,
     }];
   }));
 }

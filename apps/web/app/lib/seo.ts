@@ -233,7 +233,7 @@ export function itemListLd(path: string, name: string, titles: string[]) {
 }
 
 /** An item page: the site's reading of a third-party report, based on (not claiming) the original. */
-export function articleLd(input: { path: string; headline: string; description?: string | null; publishedAt?: string | null; modifiedAt?: string | null; image?: string | null; basedOn?: string | null; section?: string[] }) {
+export function articleLd(input: { path: string; headline: string; description?: string | null; publishedAt?: string | null; modifiedAt?: string | null; image?: string | null; basedOn?: string | null; section?: string[]; inLanguage?: string }) {
   const base = siteUrl();
   const url = `${base}${input.path}`;
   const description = input.description?.trim();
@@ -246,7 +246,7 @@ export function articleLd(input: { path: string; headline: string; description?:
     url,
     headline: input.headline.slice(0, 110),
     ...(description ? { description: description.slice(0, 300) } : {}),
-    inLanguage: SITE.locale,
+    inLanguage: input.inLanguage ?? SITE.locale,
     ...(input.publishedAt ? { datePublished: input.publishedAt } : {}),
     ...(input.modifiedAt ? { dateModified: input.modifiedAt } : {}),
     ...(input.image ? { image: new URL(input.image, base).href } : {}),
