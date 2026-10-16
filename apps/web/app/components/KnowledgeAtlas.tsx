@@ -10,7 +10,7 @@ import { trackAnalytics } from "../lib/analytics.client";
 const empty: AtlasNetwork = { nodes: [], links: [], truncated: false };
 export function KnowledgeAtlas({ initialKey = null }: { initialKey?: string | null }) {
   const t = useText();
-  const [selected, setSelected] = useState<string | null>(() => typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("entity") ?? initialKey);
+  const [selected, setSelected] = useState<string | null>(initialKey);
   const [hasNetwork, setHasNetwork] = useState(false);
   const [query, setQuery] = useState("");
   const [centers, setCenters] = useState<AtlasNode[]>([]);
@@ -25,7 +25,11 @@ export function KnowledgeAtlas({ initialKey = null }: { initialKey?: string | nu
   const current = useRef<string | null>(selected);
   current.current = selected;
   useEffect(() => {
-    const onPop = () => setSelected(new URLSearchParams(window.location.search).get("entity") ?? initialKey);
+    const sharedKey = new URLSearchParams(window.location.search).get("entity");
+    if (sharedKey) setSelected(sharedKey);
+  }, []);
+  useEffect(() => {
+    const onPop = () setSelected(new URLSearchParams(window.location.search).get("entity") ?? initialKey);
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [initialKey]);
