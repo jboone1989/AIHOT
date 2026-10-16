@@ -1,7 +1,7 @@
 import { SITE } from "../site.ts";
 
 /** Unique EventGraph constellation mark, independent of the upstream engine's trademarks. */
-export function NetworkMark({ className = "", spinning = false, size }: { className?: string; spinning?: boolean; size?: number }) {
+export function RingMark({ className = "", spinning = false, size }: { className?: string; spinning?: boolean; size?: number }) {
   return (
     <svg viewBox="0 0 512 512" className={className} style={size ? { width: size, height: size } : undefined} aria-hidden="true" focusable="false">
       <rect width="512" height="512" rx="115" fill="#0f1424" />
@@ -25,15 +25,10 @@ export function Wordmark({ size = 24, className = "", title = SITE.name }: { siz
   const [, head = SITE.name, tail = ""] = /^([A-Z][a-z]+)([A-Z].*)?$/.exec(SITE.name) ?? [];
   return (
     <span className={`inline-flex items-center gap-2.5 leading-none ${className}`} aria-label={title} role="img">
-      <NetworkMark size={size} className="shrink-0 rounded-[6px]" />
+      <RingMark size={size} className="shrink-0 rounded-[6px]" />
       <span aria-hidden="true" className="font-display tracking-[-0.01em]" style={{ fontSize: Math.round(size * 0.88) }}>
         {head}{tail && <em className="text-accent">{tail}</em>}
       </span>
     </span>
   );
-}
-
-/** Keep compatibility with the existing skeleton and loading components. */
-export function RingMark({ className = "", spinning = false }: { className?: string; spinning?: boolean }) {
-  return <NetworkMark className={className} spinning={spinning} />;
 }

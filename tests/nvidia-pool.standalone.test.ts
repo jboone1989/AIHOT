@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { isTextModel,chooseModel,nextProbe,healthyModels,type Pool } from "@aihot/backend/providers/nvidia-pool";
+import { chooseModel,nextProbe,healthyModels,type Pool } from "@aihot/backend/providers/nvidia-pool";
+import { isNvidiaTextModel } from "@aihot/backend/providers/llm";
 const at=new Date("2026-10-14T12:00:00Z").getTime();
 const pool=():Pool=>({
  catalogAt:null,catalogCount:80,candidates:["openai/gpt-oss-20b","nvidia/nemotron-3.5-lightning-30b-a3b","google/gemma-4-31b-it"],probes:2,
@@ -8,10 +9,10 @@ const pool=():Pool=>({
  "nvidia/nemotron-3.5-lightning-30b-a3b":{model:"nvidia/nemotron-3.5-lightning-30b-a3b",ok:true,checkedAt:new Date(at-180000).toISOString(),lastOk:new Date(at-180000).toISOString(),latencyMs:1800,samples:1}}
 });
 test("catalog is not all chat models",()=>{
- assert.ok(isTextModel("openai/gpt-oss-20b"));
- assert.ok(!isTextModel("nvidia/nv-embed-qa"));
- assert.ok(!isTextModel("meta/llama-guard-4-12b"));
- assert.ok(!isTextModel("google/gemma-3-vision"));
+ assert.ok(isNvidiaTextModel("openai/gpt-oss-20b"));
+ assert.ok(!isNvidiaTextModel("nvidia/nv-embed-qa"));
+ assert.ok(!isNvidiaTextModel("meta/llama-guard-4-12b"));
+ assert.ok(!isNvidiaTextModel("google/gemma-3-vision"));
 });
 test("capability preference with verified low-latency fallback",()=>{
  const s=pool();

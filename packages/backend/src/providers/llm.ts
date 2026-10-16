@@ -126,14 +126,16 @@ function isConnectFailure(error: unknown): boolean {
   return ["ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "UND_ERR_CONNECT_TIMEOUT", "CERT_HAS_EXPIRED"].includes(code ?? "");
 }
 
+/** A text model ID on NVIDIA's hosted catalogue (not an embedding, safety, vision or code model). */
+export const isNvidiaTextModel = (id: string) => /^[a-z0-9._-]+\/[a-z0-9._-]+$/i.test(id)
+  && /gpt-oss|nemotron|glm-|gemma-|llama-|deepseek|mistral|qwen|kimi|granite/i.test(id)
+  && !/embed|rerank|retriev|audio|speech|video|image|diffusion|safety|guard|moderation|ocr|vlm|vision|detector|coder|codegemma|codellama|reward/i.test(id);
+
 export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): Promise<ChatJsonResult<z.infer<S>>> {
   // A healthy model chosen by the NVIDIA monitor can be addressed directly by ID.
   // Dynamic routing only accepts compatible text model IDs on our NVIDIA endpoint.
   const dynamicId = opts.model.startsWith("nvidia:") ? opts.model.slice(7) : "";
-  const dynamicAllowed = /^[a-z0-9._-]+\/[a-z0-9._-]+$/i.test(dynamicId)
-    && /gpt-oss|nemotron|glm-|gemma-|llama-|deepseek|mistral|qwen|kimi|granite/i.test(dynamicId)
-    && !/embed|rerank|retriev|audio|speech|video|image|diffusion|safety|guard|moderation|ocr|vlm|vision|detector|coder|codegemma|codellama|reward/i.test(dynamicId);
-  const spec: ModelSpec | undefined = MODELS[opts.model] ?? (dynamicAllowed ? {
+  const spec: ModelSpec | undefined = MODELS[opts.model] ?? (isNvidiaTextModel(dynamicId) ? {
     key: opts.model, service: "nvidia", model: dynamicId, baseUrlEnv: "NVIDIA_BASE_URL",
     apiKeyEnv: "NVIDIA_API_KEY", jsonMode: false,
     extra: dynamicId.startsWith("nvidia/nemotron-3.5-lightning")

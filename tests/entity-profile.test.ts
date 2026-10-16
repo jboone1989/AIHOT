@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import http from 'node:http';
 import { after, test } from 'node:test';
 import { sql, closeDb } from '@aihot/backend/db';
-import { citedReports, entityProfile, publicEntityProfile } from '@aihot/backend/publication/knowledge';
+import { citedReports, entityProfile } from '@aihot/backend/publication/knowledge';
 
 after(closeDb);
 
@@ -62,13 +62,10 @@ test('cited reports keep only public ones, newest first, grouped into live stori
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   process.env.GRAPHITI_API_URL = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
   try {
-    const site = await entityProfile('profile-filter-check');
-    const mcp = await publicEntityProfile('profile-filter-check');
-    for (const profile of [site, mcp]) {
-      assert.deepEqual(profile.edges.map((e) => e.id), ['shared']);
-      assert.deepEqual(profile.edges[0]!.evidence.map((e) => e.articleId), ['ep-old']);
-      assert.deepEqual(profile.reports.map((r) => r.id), ['ep-old']);
-    }
+    const profile = await entityProfile('profile-filter-check');
+    assert.deepEqual(profile.edges.map((e) => e.id), ['shared']);
+    assert.deepEqual(profile.edges[0]!.evidence.map((e) => e.articleId), ['ep-old']);
+    assert.deepEqual(profile.reports.map((r) => r.id), ['ep-old']);
   } finally {
     delete process.env.GRAPHITI_API_URL;
     server.closeAllConnections();

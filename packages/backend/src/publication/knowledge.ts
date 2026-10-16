@@ -68,24 +68,27 @@ export async function citedReports(articleIds: string[], now = new Date()) {
 /** One entity's Graphiti relations, kept a minute: profiles, follows and feeds ask for the same entities. */
 export const entityGraph = cachedByKey((key: string) => key, graphForEntity, { freshMs: 60_000, maxStaleMs: 60_000, maxKeys: 500 });
 
-/** The articles an entity's relations cite, as evidence ids. */
-export const citedArticleIds = (graph: Awaited<ReturnType<typeof graphForEntity>>) =>
+type Edge = GraphChanges["added"]["edges"][number];
+
+/** The articles the relations cite, as evidence ids. */
+export const citedArticleIds = (graph: { edges: Edge[] }) =>
   [...new Set(graph.edges.flatMap((e) => e.evidence.map((ev) => ev.articleId)).filter(Boolean))];
 
-/** The relations around one Graphiti entity, with the public reports and events behind them. */
+/** Relations with only the evidence among `publicIds`; a relation left with none is dropped. */
+function withPublicEvidence(edges: Edge[], publicIds: Set<string>) {
+  return edges
+    .map((e) => ({ ...e, evidence: e.evidence.filter((ev) => publicIds.has(ev.articleId)) }))
+    .filter((e) => e.evidence.length > 0);
+}
+
+/** The relations around one Graphiti entity, with the public reports and events behind them; the site and MCP share it.
+ * A withdrawn or unreleased article cannot remain as an edge or as one of its visible citations. */
 export async function entityProfile(key: string, now = new Date()) {
   const graph = await entityGraph(key);
   const { reports, stories } = await citedReports(citedArticleIds(graph), now);
-  // The public site must apply the same evidence filter as MCP: a withdrawn or unreleased
-  // article cannot remain as an edge or as one of its visible citations.
-  const publicIds = new Set(reports.map((r) => r.id));
-  const edges = graph.edges
-    .map((e) => ({ ...e, evidence: e.evidence.filter((ev) => publicIds.has(ev.articleId)) }))
-    .filter((e) => e.evidence.length > 0);
+  const edges = withPublicEvidence(graph.edges, new Set(reports.map((r) => r.id)));
   return { ...graph, edges, reports: reports.slice(0, 30), stories: stories.slice(0, 12) };
 }
-
-type Edge = GraphChanges["added"]["edges"][number];
 
 /** What changed in the graph during a daily issue's window, or null when there is no such issue. */
 async function readDailyChanges(key: string, now: Date) {
@@ -96,13 +99,9 @@ async function readDailyChanges(key: string, now: Date) {
   // Not kept: the next reader asks Graphiti again.
   if (changes.status === "unavailable") throw new Error("Graphiti unavailable");
   // Examples are shown only with a report that is public now; the counts are the graph's own.
-  const cited = (edges: Edge[]) => edges.flatMap((e) => e.evidence.map((ev) => ev.articleId)).filter(Boolean);
-  const { reports } = await citedReports([...new Set([...cited(changes.added.edges), ...cited(changes.ended.edges)])], now);
+  const { reports } = await citedReports(citedArticleIds({ edges: [...changes.added.edges, ...changes.ended.edges] }), now);
   const isPublic = new Set(reports.map((r) => r.id));
-  const shown = (edges: Edge[]) => edges
-    .map((e) => ({ ...e, evidence: e.evidence.filter((ev) => isPublic.has(ev.articleId)) }))
-    .filter((e) => e.evidence.length > 0)
-    .slice(0, 8);
+  const shown = (edges: Edge[]) => withPublicEvidence(edges, isPublic).slice(0, 8);
   return {
     key,
     windowStart: report.window_start.toISOString(),
@@ -121,22 +120,9 @@ export async function dailyGraphChanges(key: string, now?: Date) {
   return now ? readDailyChanges(key, now) : dailyChanges(key);
 }
 
-/** Relations with only the evidence that is public now; a relation left with none is dropped. */
-async function publicRelations(edges: Edge[], now: Date) {
-  const { reports } = await citedReports([...new Set(edges.flatMap((e) => e.evidence.map((ev) => ev.articleId)).filter(Boolean))], now);
-  const isPublic = new Set(reports.map((r) => r.id));
-  return edges
-    .map((e) => ({ ...e, evidence: e.evidence.filter((ev) => isPublic.has(ev.articleId)) }))
-    .filter((e) => e.evidence.length > 0);
-}
-
-/** A public story's relations for agents (MCP): Graphiti's, each with evidence that is public now. */
+/** A public story's relations (site and MCP): Graphiti's, each with evidence that is public now. */
 export async function publicStoryGraph(publicId: string, now = new Date()) {
   const graph = await graphForStory(publicId);
-  return { ...graph, status: graph.status ?? "ok", edges: await publicRelations(graph.edges, now) };
-}
-
-/** Site and MCP share the same public-only entity profile, including a consistent time boundary. */
-export async function publicEntityProfile(key: string, now = new Date()) {
-  return entityProfile(key, now);
+  const { reports } = await citedReports(citedArticleIds(graph), now);
+  return { ...graph, status: graph.status ?? "ok", edges: withPublicEvidence(graph.edges, new Set(reports.map((r) => r.id))) };
 }

@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { sql } from "../db.ts";
 import { credential } from "../config.ts";
-import { chatJson, ModelOutputError } from "./llm.ts";
+import { chatJson, isNvidiaTextModel, ModelOutputError, MODELS } from "./llm.ts";
 import { BudgetExceededError, ProviderRejectedError, ReceiptUnknownError } from "./receipts.ts";
 
 const KEY="nvidia.model_pool.v1";
@@ -14,9 +14,6 @@ const preferred=[
  "mistralai/mistral-nemotron","nvidia/nemotron-3-super-120b-a12b",
  "meta/llama-3.3-70b-instruct","openai/gpt-oss-120b"
 ];
-export const isTextModel=(id:string)=>/^[a-z0-9._-]+\/[a-z0-9._-]+$/i.test(id)
- && /gpt-oss|nemotron|glm-|gemma-|llama-|deepseek|mistral|qwen|kimi|granite/i.test(id)
- && !/embed|rerank|retriev|audio|speech|video|image|diffusion|safety|guard|moderation|ocr|vlm|vision|detector|coder|codegemma|codellama|reward/i.test(id);
 export type Health={model:string;ok:boolean;checkedAt:string;lastOk?:string;latencyMs?:number;reason?:string;samples:number};
 export type Pool={catalogVersion?:number;catalogAt:string|null;catalogCount:number;candidates:string[];health:Record<string,Health>;probes:number};
 const empty=():Pool=>({catalogAt:null,catalogCount:0,candidates:preferred,health:{},probes:0});
@@ -27,13 +24,11 @@ export function healthyModels(s:Pool,now=Date.now()):Health[]{
 }
 export function chooseModel(s:Pool,preferredModel:string,now=Date.now()):string|null{
  const ok=healthyModels(s,now);if(!ok.length)return null;
- const wanted=preferredModel==="nvidia-gpt-oss-20b"?"openai/gpt-oss-20b":
- preferredModel==="nvidia-nemotron-lightning"?"nvidia/nemotron-3.5-lightning-30b-a3b":
- preferredModel==="nvidia-glm-5.3-flash"?"z-ai/glm-5.3-flash":"";
- return ok.some(h=>h.model===wanted)?wanted:ok[0]!.model;
+ const wanted=MODELS[preferredModel]?.model;
+ return ok.find(h=>h.model===wanted)?.model??ok[0]!.model;
 }
 export function nextProbe(s:Pool,now=Date.now()):string|null{
- const list=s.candidates.filter(isTextModel);
+ const list=s.candidates.filter(isNvidiaTextModel);
  const recheck=list.filter(id=>s.health[id]?.ok&&age(s.health[id]!.checkedAt,now)>=50*60_000);
  if(recheck.length)return recheck.sort((a,b)=>age(s.health[b]?.checkedAt,now)-age(s.health[a]?.checkedAt,now))[0]!;
  const due=list.filter(id=>!s.health[id]||age(s.health[id]!.checkedAt,now)>=20*60_000);
@@ -75,7 +70,7 @@ async function catalog(s:Pool){
  if(!response.ok)throw Error("NVIDIA catalog HTTP "+response.status);
  const data=await response.json() as {data?:Array<{id?:string}>};
  const all=(data.data??[]).map(x=>x.id??"").filter(Boolean);
- const ids=[...new Set(all.filter(isTextModel))];
+ const ids=[...new Set(all.filter(isNvidiaTextModel))];
  s.catalogVersion=2;s.catalogCount=all.length;s.catalogAt=new Date().toISOString();
  s.candidates=[...preferred.filter(x=>ids.includes(x)),...ids.filter(x=>!preferred.includes(x))].slice(0,MAX);
 }
@@ -88,7 +83,7 @@ async function mergeLiveSuccesses(s:Pool):Promise<void>{
      AND updated_at > now() - interval '4 hours'
    GROUP BY model`;
  for(const r of rows){
-   if(!isTextModel(r.model)||!s.candidates.includes(r.model))continue;
+   if(!isNvidiaTextModel(r.model)||!s.candidates.includes(r.model))continue;
    const at=new Date(r.last_ok).toISOString();
    const old=s.health[r.model];
    if(old && Date.parse(old.checkedAt)>=Date.parse(at))continue;
