@@ -103,7 +103,7 @@ export function KnowledgeAtlas({ initialKey = null }: { initialKey?: string | nu
     </div>
     <div className="lr-atlas-body">
       <div className="lr-atlas-main">
-        {selected&&hasNetwork&&network.nodes.length?<><KnowledgeAtlasCanvas network={network} selectedKey={selected} onNode={focus} onRelation={id=>{setRelationId(id);trackAnalytics("graph_relation_select");}}/>
+        {selected&&hasNetwork&&network.nodes.length?<><KnowledgeAtlasCanvas network={network} selectedKey={selected} homeKey={initialKey} onNode={focus} onRelation={id=>{setRelationId(id);trackAnalytics("graph_relation_select");}}/>
             <div className="lr-atlas-caption" role="status" aria-live="polite" style={{minHeight:"1.5em"}}>
               {error?<>{t("邻近关系读取失败","Unable to update neighbors")} <button type="button" onClick={()=>setAttempt(v=>v+1)}>{t("重试","Retry")}</button></>:loading?t("正在补充邻近关系…","Updating nearby relations…"):"\u00a0"}
             </div></>
