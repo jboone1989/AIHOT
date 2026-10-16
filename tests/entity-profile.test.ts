@@ -2,9 +2,10 @@
 import './setup.ts';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import http from 'node:http';
 import { after, test } from 'node:test';
 import { sql, closeDb } from '@aihot/backend/db';
-import { citedReports } from '@aihot/backend/publication/knowledge';
+import { citedReports, entityProfile, publicEntityProfile } from '@aihot/backend/publication/knowledge';
 
 after(closeDb);
 
@@ -41,4 +42,36 @@ test('cited reports keep only public ones, newest first, grouped into live stori
   assert.equal(stories[0]!.reportCount, 2, 'only the cited reports of the story are counted');
   assert.equal(stories[0]!.englishTitle, 'Older report', 'a Chinese original title is never offered as English');
   assert.deepEqual(await citedReports([]), { reports: [], stories: [] });
+
+  // Graphiti can still hold a relationship after every report supporting it was withdrawn.
+  // Neither the website's entity API nor MCP may expose that relation.
+  const evidence = (articleId: string) => ({ articleId, url: '', source: 'src', quote: 'text', publishedAt: null });
+  const edge = (id: string, articleIds: string[]) => ({
+    id, subject: { key: 'profile-filter-check', name: 'Entity A', kind: 'entity' },
+    object: { key: 'another', name: 'Entity B', kind: 'entity' },
+    predicate: 'CONNECTED_TO', fact: id, validAt: null, invalidAt: null,
+    evidence: articleIds.map(evidence),
+  });
+  const server = http.createServer((_req, res) => {
+    res.setHeader('content-type', 'application/json');
+    res.end(JSON.stringify({
+      entity: { key: 'profile-filter-check', name: 'Entity A', kind: 'entity' },
+      edges: [edge('shared', ['ep-old', 'ep-withdrawn']), edge('withdrawn-only', ['ep-withdrawn'])],
+    }));
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  process.env.GRAPHITI_API_URL = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+  try {
+    const site = await entityProfile('profile-filter-check');
+    const mcp = await publicEntityProfile('profile-filter-check');
+    for (const profile of [site, mcp]) {
+      assert.deepEqual(profile.edges.map((e) => e.id), ['shared']);
+      assert.deepEqual(profile.edges[0]!.evidence.map((e) => e.articleId), ['ep-old']);
+      assert.deepEqual(profile.reports.map((r) => r.id), ['ep-old']);
+    }
+  } finally {
+    delete process.env.GRAPHITI_API_URL;
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
 });
