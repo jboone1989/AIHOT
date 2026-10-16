@@ -4,6 +4,7 @@
 // (site/models.ts).
 import type { z } from "zod";
 import { PRESETS } from "@aihot/site/models";
+import { classifyNvidiaModel } from "./nvidia-capabilities.ts";
 import { config, credential } from "../config.ts";
 import { sha256 } from "../lib/ids.ts";
 import { assertAccepted, paidRequest, ProviderRejectedError, rejectReceivedResponse } from "./receipts.ts";
@@ -127,9 +128,8 @@ function isConnectFailure(error: unknown): boolean {
 }
 
 /** A text model ID on NVIDIA's hosted catalogue (not an embedding, safety, vision or code model). */
-export const isNvidiaTextModel = (id: string) => /^[a-z0-9._-]+\/[a-z0-9._-]+$/i.test(id)
-  && /gpt-oss|nemotron|glm-|gemma-|llama-|deepseek|mistral|qwen|kimi|granite/i.test(id)
-  && !/embed|rerank|retriev|audio|speech|video|image|diffusion|safety|guard|moderation|ocr|vlm|vision|detector|coder|codegemma|codellama|reward/i.test(id);
+export const isNvidiaTextModel = (id: string) =>
+  classifyNvidiaModel({id})?.capabilities.includes("text") === true;
 
 export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): Promise<ChatJsonResult<z.infer<S>>> {
   // A healthy model chosen by the NVIDIA monitor can be addressed directly by ID.
@@ -138,6 +138,7 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
   const spec: ModelSpec | undefined = MODELS[opts.model] ?? (isNvidiaTextModel(dynamicId) ? {
     key: opts.model, service: "nvidia", model: dynamicId, baseUrlEnv: "NVIDIA_BASE_URL",
     apiKeyEnv: "NVIDIA_API_KEY", jsonMode: false,
+    vision: classifyNvidiaModel({id:dynamicId})?.capabilities.includes("vision") ?? false,
     extra: dynamicId.startsWith("nvidia/nemotron-3.5-lightning")
       ? { chat_template_kwargs: { enable_thinking: false } }
       : dynamicId.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : undefined,
