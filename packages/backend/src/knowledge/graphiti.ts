@@ -166,3 +166,16 @@ export async function graphRelation(key: string): Promise<Graph> {
   try { return await graphiti<Graph>("/relations/" + encodeURIComponent(key)); }
   catch (error) { console.error("graphiti_relation_failed", error); return emptyGraph("unavailable"); }
 }
+
+/** Lightweight entity candidates from Neo4j (not the full graph). */
+export async function graphAtlasCenters(q: string, limit = 30) {
+  if (!process.env.GRAPHITI_API_URL) return { nodes: [] as Array<{key:string;name:string;articleIds:string[]}>, status: "disabled" };
+  try {
+    return await graphiti<{nodes:Array<{key:string;name:string;articleIds:string[]}>;status?:string}>(
+      "/atlas/centers?q=" + encodeURIComponent(q) + "&limit=" + limit, {timeoutMs: 5000});
+  } catch (error) {
+    console.error("graphiti_atlas_centers_failed", error);
+    return {nodes: [], status: "unavailable"};
+  }
+}
+
