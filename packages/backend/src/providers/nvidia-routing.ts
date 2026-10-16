@@ -18,3 +18,9 @@ export function trafficFailureRate(s: ModelTraffic): number {
 export function eligibleFallback(model: string, wanted: string): boolean {
   return model === wanted || VERIFIED_FALLBACKS.some(approved => model === approved);
 }
+
+/** Bayesian smoothed risk prevents an unobserved model scoring better than 35 known successes. */
+export function conservativeFailureRisk(s:ModelTraffic):number {
+  const attempts=s.completed+s.received+s.unknown+s.failed;
+  return (s.unknown+s.failed+1)/(attempts+4);
+}
