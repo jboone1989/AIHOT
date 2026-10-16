@@ -62,6 +62,12 @@ handle() {
       return
     fi
     git checkout -q -B "$branch" "origin/$branch"
+    # Reviews and inline review comments live outside the issue thread; fold them in by time.
+    comments="$(jq -s 'add | sort_by(.created_at)' <(printf '%s' "$comments") \
+      <(gh api --paginate "repos/$REPO/pulls/$n/reviews" \
+          --jq '.[] | select(.body != "") | .created_at = .submitted_at | .body = "（评审，\(.state)）\n\(.body)"' | jq -s .) \
+      <(gh api --paginate "repos/$REPO/pulls/$n/comments" \
+          --jq '.[] | .body = "（行内评审 `\(.path):\(.line // .original_line)`）\n\(.body)"' | jq -s .))"
   else
     branch="codex/issue-$n"
     if git rev-parse -q --verify "origin/$branch" >/dev/null; then
@@ -85,7 +91,7 @@ handle() {
     "## 正文（\($item | who)）",
     ($item.body // ""),
     "",
-    "## 最近的评论",
+    "## 最近的评论（PR 的评审和行内评审也在里面）",
     ($c[-15:][] | "### \(. | who) · \(.created_at)\n\(.body)\n")
   ')"
   out="$(mktemp)"
