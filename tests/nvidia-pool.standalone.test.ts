@@ -12,7 +12,7 @@ test("catalog is not all chat models",()=>{
  assert.ok(isNvidiaTextModel("openai/gpt-oss-20b"));
  assert.ok(!isNvidiaTextModel("nvidia/nv-embed-qa"));
  assert.ok(!isNvidiaTextModel("meta/llama-guard-4-12b"));
- assert.ok(!isNvidiaTextModel("google/gemma-3-vision"));
+ assert.ok(isNvidiaTextModel("google/gemma-3-vision"));
 });
 test("capability preference with verified low-latency fallback",()=>{
  const s=pool();
