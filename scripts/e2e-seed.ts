@@ -20,9 +20,9 @@ for (const [id, label] of SOURCES) {
 }
 
 const ARTICLES = [
-  { source: "e2e-lab", slug: "model-release", original: "E2E Lab releases an open reasoning model", zh: "E2E 实验室发布开源推理模型", en: "E2E Lab releases an open reasoning model for long documents" },
-  { source: "e2e-wire", slug: "model-release-report", original: "E2E Lab's new model tops two benchmarks", zh: "E2E 实验室新模型登顶两项评测", en: "E2E Lab's new reasoning model tops two public benchmarks" },
-  { source: "e2e-lab", slug: "agent-toolkit", original: "An agent toolkit for browser testing", zh: "面向浏览器测试的智能体工具包", en: "A new agent toolkit automates browser testing for web teams" },
+  { source: "e2e-lab", slug: "model-release", category: "ai", original: "E2E Lab releases an open reasoning model", zh: "E2E 实验室发布开源推理模型", en: "E2E Lab releases an open reasoning model for long documents" },
+  { source: "e2e-wire", slug: "model-release-report", category: "ai", original: "E2E Lab's new model tops two benchmarks", zh: "E2E 实验室新模型登顶两项评测", en: "E2E Lab's new reasoning model tops two public benchmarks" },
+  { source: "e2e-lab", slug: "agent-toolkit", category: "research", original: "An agent toolkit for browser testing", zh: "面向浏览器测试的智能体工具包", en: "A new agent toolkit automates browser testing for web teams" },
 ];
 const ids: string[] = [];
 for (const a of ARTICLES) {
@@ -31,7 +31,7 @@ for (const a of ARTICLES) {
     sourceId: a.source, url: `https://example.com/e2e/${a.slug}`, title: a.original, bodyText: body, bodyHtml: `<p>${body}</p>`, bodyStatus: "ok", via: "fetch", publishedAt: new Date(Date.now() - 3 * 3600_000),
   });
   await sql`INSERT INTO analyses (article_id, input_revision, origin, relevance, category, title_zh, summary_zh, reason_zh, score, selected)
-            VALUES (${articleId}, 1, 'rule', 'pass', 'guide', ${a.zh}, ${`${a.zh}。这是端到端测试用的示例摘要，用来检查文章页、事件页和热榜是否正常显示。`}, '用于端到端测试。', 90, true)
+            VALUES (${articleId}, 1, 'rule', 'pass', ${a.category}, ${a.zh}, ${`${a.zh}。这是端到端测试用的示例摘要，用来检查文章页、事件页和热榜是否正常显示。`}, '用于端到端测试。', 90, true)
             ON CONFLICT DO NOTHING`;
   await sql`UPDATE articles SET grouping_status = 'complete', grouped_at = now() WHERE id = ${articleId}`;
   ids.push(articleId);
