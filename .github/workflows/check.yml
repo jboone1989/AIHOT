@@ -63,6 +63,11 @@ jobs:
           echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
           /usr/lib/postgresql/17/bin/pg_dump --version
           /usr/lib/postgresql/17/bin/pg_restore --version
+      - name: Release shell and environment syntax
+        run: |
+          bash -n scripts/deploy-prod.sh
+          node --check scripts/check-environment.mjs
+          node --check scripts/split-environment.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Build web
