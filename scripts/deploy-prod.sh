@@ -34,13 +34,13 @@ for path in "${CHANGED[@]}"; do
   apps/web/*) WEB=1;app_files+=("$path");;
   packages/backend/*) API=1;WORKER=1;app_files+=("$path");;
   packages/contracts/*|site/*|industry/*|modules/*) API=1;WORKER=1;WEB=1;app_files+=("$path");;
+  knowledge_service/requirements.txt|knowledge_service/Dockerfile) KNOW_FULL=1;KNOWLEDGE=1;;
   knowledge_service/*) KNOWLEDGE=1;know_files+=("$path");;
   scripts/migrate.ts|database/migrations/*) SETUP=1;app_files+=("$path");;
   docker-compose.yml|docker-compose.production.yml|docker-compose.release.yml)
     API=1;WORKER=1;WEB=1;;
   Dockerfile|package-lock.json|package.json|packages/*/package.json|apps/*/package.json)
     APP_FULL=1;API=1;WORKER=1;WEB=1;;
-  knowledge_service/requirements.txt|knowledge_service/Dockerfile) KNOW_FULL=1;KNOWLEDGE=1;;
   config/*|tests/*|scripts/*|.github/*|README*|docs/*) ;;
   *) APP_FULL=1;API=1;WORKER=1;WEB=1;;
  esac
@@ -61,10 +61,9 @@ DEV="ubuntu@43.142.127.40"
 SSH=(ssh -o BatchMode=yes -o ConnectTimeout=12 -o ServerAliveInterval=15 "$DEV")
 if ((API||WORKER||WEB||SETUP));then
  if ((APP_FULL));then
-  echo "Application dependency/build change: building only application image on cn-dev"
-  "${SSH[@]}" "git -C /home/ubuntu/livingruntime-aihot fetch origin main && git -C /home/ubuntu/livingruntime-aihot archive '$SHA' | tar -xf - -C /tmp" >/dev/null
-  echo "Full application build requires reviewed image pipeline";exit 2
- fi
+  echo "Dependency change: build only application image on cn-dev, transfer via existing SSH"
+  "${SSH[@]}" "set -e; ROOT=/home/ubuntu/livingruntime-aihot; git -C \"\$ROOT\" fetch https://github.com/jboone1989/AIHOT.git main; test \"\$(git -C \"\$ROOT\" rev-parse FETCH_HEAD)\" = '$SHA'; TMP=\$(mktemp -d); trap 'rm -rf \"\$TMP\"' EXIT; git -C \"\$ROOT\" archive '$SHA' | tar -xf - -C \"\$TMP\"; docker build -t livingruntime-app:$TAG -f \"\$TMP/Dockerfile\" \"\$TMP\" >&2; docker save livingruntime-app:$TAG | gzip -1" | gzip -dc | docker load
+ else
  BASE_TAG="$(sed -n 's/^LRSITE_RELEASE_API=//p' "$ENV_FILE"|head -n1)"
  BASE_TAG="${BASE_TAG:-$(sed -n 's/^LRSITE_RELEASE=//p' "$ENV_FILE"|head -n1)}"
  docker image inspect "livingruntime-app:$BASE_TAG" >/dev/null
@@ -76,9 +75,13 @@ if ((API||WORKER||WEB||SETUP));then
   printf 'COPY --chown=node:node %s /app/%s\n' "$path" "$path" >> "$TMP/Dockerfile"
  done
  docker build --network none --pull=false -q -f "$TMP/Dockerfile" -t "livingruntime-app:$TAG" .
+ fi
 fi
 if ((KNOWLEDGE));then
- if ((KNOW_FULL));then echo "Graphiti dependency change needs its own full image build";exit 2;fi
+ if ((KNOW_FULL));then
+  echo "Graphiti dependency change: build only Graphiti image on cn-dev"
+  "${SSH[@]}" "set -e; ROOT=/home/ubuntu/livingruntime-aihot; git -C \"\$ROOT\" fetch https://github.com/jboone1989/AIHOT.git main; TMP=\$(mktemp -d); trap 'rm -rf \"\$TMP\"' EXIT; git -C \"\$ROOT\" archive '$SHA' | tar -xf - -C \"\$TMP\"; docker build -t livingruntime-knowledge:$TAG -f \"\$TMP/knowledge_service/Dockerfile\" \"\$TMP\" >&2; docker save livingruntime-knowledge:$TAG | gzip -1" | gzip -dc | docker load
+ else
  OLD_KNOW="$(sed -n 's/^LRSITE_RELEASE_KNOWLEDGE=//p' "$ENV_FILE"|head -n1)"
  OLD_KNOW="${OLD_KNOW:-$(sed -n 's/^LRSITE_RELEASE=//p' "$ENV_FILE"|head -n1)}"
  docker image inspect "livingruntime-knowledge:$OLD_KNOW" >/dev/null
@@ -90,6 +93,7 @@ if ((KNOWLEDGE));then
   printf 'COPY %s /app/%s\n' "$path" "${path#knowledge_service/}" >> "$TMP_K/Dockerfile"
  done
  docker build --network none --pull=false -q -f "$TMP_K/Dockerfile" -t "livingruntime-knowledge:$TAG" .
+ fi
 fi
 # Pin only changed services, retaining existing image tags for untouched containers.
 python3 - "$ENV_FILE" "$TAG" "$SHA" "$API" "$WORKER" "$WEB" "$KNOWLEDGE" "$SETUP" <<'PY'
