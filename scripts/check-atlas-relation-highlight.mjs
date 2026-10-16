@@ -54,7 +54,7 @@ try {
       zoomUnchanged: Math.abs(cy.zoom() - snap.zoom) < 0.0001,
       layoutCalls: snap.layoutCalls,
       cameraAnimations: snap.cameraAnimations,
-      routeUnchanged: location.pathname === "/knowledge/entity/" + omi,
+      routeUnchanged: location.pathname === "/knowledge/entity/37d059b4-e30a-4378-bee9-9be0c71ff372",
     };
   }, link.id);
   assert.equal(state.sameInstance, true);
