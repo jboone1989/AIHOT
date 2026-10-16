@@ -1,5 +1,6 @@
 // Aggregated, non-identifying site metrics for the authenticated admin.
 import { sql } from "../db.ts";
+import { cloudflareReport } from "./cloudflare-analytics.ts";
 
 export async function analyticsOverview() {
   const [totals, daily, events, content, languages, referrers, performance, effective, ingestion] = await Promise.all([
@@ -47,6 +48,7 @@ export async function analyticsOverview() {
     sql`SELECT COUNT(*)::int AS total_events, MAX(occurred_at)::text AS last_event_at FROM product_analytics_events`,
   ]);
   return {
+    cloudflare: await cloudflareReport(),
     periodDays: 30, asOf: new Date().toISOString(),
     ingestion: ingestion[0] ?? {total_events: 0, last_event_at: null},
     totals: totals[0] ?? {},
