@@ -44,5 +44,5 @@ test("vision-required capability never changes to text-only GPT-OSS",()=>{
 test("approved models are probed before unknown catalog entries",()=>{
  const state=pool();
  state.health={};
- assert.equal(nextProbe(state,now),"nvidia/nemotron-3.5-lightning-30b-a3b");
+ assert.equal(nextProbe(state,now),"openai/gpt-oss-20b");
 });
