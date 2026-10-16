@@ -169,14 +169,14 @@ export async function publicGraphRelation(key: string, now = new Date()) {
 }
 
 /** Only publicly sourced neighbors are returned; no full-network serialization. */
-export async function publicAtlasNeighborhood(key: string, limit = 40, now = new Date()) {
+export async function publicAtlasNeighborhood(key: string, now = new Date()) {
   const graph = await entityGraph(key);
   if (graph.status === "unavailable" || graph.status === "disabled")
     return {nodes: [], links: [], truncated: false, status: graph.status};
   if (!graph.entity) return {nodes: [], links: [], truncated: false, status: "not_found"};
   const {reports} = await citedReports(citedArticleIds(graph), now);
   const publicEdges = withPublicEvidence(graph.edges, new Set(reports.map(r => r.id)));
-  const edges = publicEdges.slice(0, limit);
+  const edges = publicEdges;
   const nodes = new Map<string, {key:string;name:string;degree:number}>();
   nodes.set(graph.entity.key, {key:graph.entity.key,name:graph.entity.name,degree:publicEdges.length});
   const links = edges.map(e => {
@@ -184,7 +184,7 @@ export async function publicAtlasNeighborhood(key: string, limit = 40, now = new
       if (!nodes.has(item.key)) nodes.set(item.key, {key:item.key,name:item.name,degree:1});
     return {id:e.id,source:e.subject.key,target:e.object.key,predicate:e.predicate,invalidAt:e.invalidAt};
   });
-  return {nodes:[...nodes.values()],links,truncated:publicEdges.length>limit,status:graph.status??"ok"};
+  return {nodes:[...nodes.values()],links,truncated:false,status:graph.status??"ok"};
 }
 
 export async function publicAtlasCenters(q: string, now = new Date()) {
