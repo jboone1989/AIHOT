@@ -52,14 +52,15 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
       instance.on("mouseover", "node", e => { e.target.addClass("hovered"); readableLabels(instance, network.nodes.length > 120); });
       instance.on("mouseout", "node", e => { e.target.removeClass("hovered"); readableLabels(instance, network.nodes.length > 120); });
       instance.fit(undefined, 35);
+      if (selectedKey && instance.getElementById(selectedKey).length) instance.center(instance.getElementById(selectedKey));
       setReady(true);
       instance.on("tap", "node", e => callbacks.current.onNode(e.target.id()));
       instance.on("tap", "edge", e => callbacks.current.onRelation(e.target.data("key")));
-      resize = new ResizeObserver(() => { instance.resize(); instance.fit(undefined, 35); });
+      resize = new ResizeObserver(() => { instance.resize(); instance.fit(undefined, 35); if (selectedKey) instance.center(instance.getElementById(selectedKey)); });
       resize.observe(container.current);
     }).catch(() => { if (!disposed) setFailed(true); });
     return () => { disposed = true; resize?.disconnect(); cy.current?.destroy(); cy.current = null; };
-  }, [network]);
+  }, [network, selectedKey]);
   useEffect(() => {
     const instance = cy.current;
     if (!instance) return;
