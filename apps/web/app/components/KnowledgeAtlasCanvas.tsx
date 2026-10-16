@@ -37,13 +37,25 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, homeKey, onNode, on
   desiredFocus.current = selectedKey;
 
   // Only camera movements respond to focus. New data never triggers another pan.
+  // Animate only the viewport, with an exact world-to-screen center.
+  const panToNode = (instance: Core, key: string) => {
+    const node = instance.getElementById(key);
+    if (!node.length) return;
+    const point = node.position();
+    const zoom = instance.zoom();
+    instance.stop();
+    instance.animate({
+      pan: { x: instance.width() / 2 - point.x * zoom, y: instance.height() / 2 - point.y * zoom },
+      duration: 320, easing: "ease-in-out",
+    });
+  };
   const centerOnce = (instance: Core, key: string, animated: boolean) => {
     const target = instance.getElementById(key);
     if (!target.length || focused.current === key) return;
     instance.nodes().removeClass("chosen");
     target.addClass("chosen");
     instance.stop();
-    if (animated) instance.animate({ center: { eles: target }, duration: 320, easing: "ease-in-out" });
+    if (animated) panToNode(instance, key);
     else instance.center(target);
     focused.current = key;
   };
@@ -143,8 +155,7 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, homeKey, onNode, on
     const instance = cy.current;
     const target = instance?.getElementById(homeKey);
     if (!instance || !target?.length) return;
-    instance.stop();
-    instance.animate({ center: { eles: target }, duration: 320, easing: "ease-in-out" });
+    panToNode(instance, homeKey);
   };
   const zoom = (factor: number) => { const instance = cy.current; if (instance) instance.zoom({ level: instance.zoom() * factor, renderedPosition: { x: instance.width() / 2, y: instance.height() / 2 } }); };
   return <div className="lr-atlas-map">
