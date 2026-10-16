@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { findEntities, mergeAtlasNetworks, neighborhood, type AtlasNetwork } from "../apps/web/app/lib/knowledge-atlas.ts";
+import { atlasPairKey, findEntities, groupAtlasPairs, uniqueAtlasFacts, mergeAtlasNetworks, neighborhood, type AtlasNetwork } from "../apps/web/app/lib/knowledge-atlas.ts";
 
 const network: AtlasNetwork = {
   nodes: Array.from({ length: 2300 }, (_, i) => ({ key: String(i), name: i === 2299 ? "远处的公司 Remote Corp" : `Entity ${i}`, degree: i === 0 ? 2 : 1 })),
@@ -45,4 +45,37 @@ test("exploration preserves hundreds of source-backed relations without trimming
   assert.equal(joined.nodes.length, 221);
   assert.equal(joined.links.length, 220);
   assert.equal(mergeAtlasNetworks(joined, two).links.length, 220);
+});
+
+test("one visual edge represents both directions while keeping every original fact", () => {
+  const links = [
+    {id:"a",source:"MSCI",target:"Strategy",predicate:"IDENTIFIED_FOR_EXCLUSION",invalidAt:null},
+    {id:"b",source:"Strategy",target:"MSCI",predicate:"OPPOSED",invalidAt:null},
+    {id:"c",source:"MSCI",target:"Strategy",predicate:"IDENTIFIES_FOR_DELETION",invalidAt:null},
+    {id:"d",source:"Omi",target:"MSCI",predicate:"TRACKS",invalidAt:null},
+  ];
+  const pairs = groupAtlasPairs(links);
+  assert.equal(pairs.length, 2);
+  const msci = pairs.find(p=>p.key===atlasPairKey("MSCI","Strategy"));
+  assert.ok(msci);
+  assert.deepEqual(msci.links.map(l=>l.id), ["a","b","c"]);
+  assert.equal(atlasPairKey("Strategy","MSCI"),atlasPairKey("MSCI","Strategy"));
+  assert.equal(pairs.find(p=>p.key===atlasPairKey("Omi","MSCI"))?.links.length,1);
+  assert.deepEqual(groupAtlasPairs(mergeAtlasNetworks({nodes:[],links:links.slice(0,2),truncated:false},
+    {nodes:[],links:links.slice(1),truncated:false}).links).find(p=>p.key===msci.key)?.links.map(l=>l.id),["a","b","c"]);
+});
+
+test("identical statements combine sources, distinct predicates and directions do not", () => {
+  const base = {subject:{key:"Strategy"},object:{key:"MSCI"},predicate:"OPPOSED",fact:"Opposed the rule",
+    invalidAt:null,evidence:[{articleId:"a",url:"https://a"}]};
+  const result = uniqueAtlasFacts([
+    {...base,id:"a"},
+    {...base,id:"b",fact:"  Opposed   the rule ",evidence:[{articleId:"b",url:"https://b"}]},
+    {...base,id:"c",object:{key:"Other"}},
+    {...base,id:"d",predicate:"ACCEPTED"},
+  ]);
+  assert.equal(result.length,3);
+  assert.deepEqual(result[0].evidence.map(e=>e.articleId),["a","b"]);
+  assert.equal(result[1].object.key,"Other");
+  assert.equal(result[2].predicate,"ACCEPTED");
 });
