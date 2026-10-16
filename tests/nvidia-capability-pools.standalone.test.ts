@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import {test} from "node:test";
 import {nvidiaCapability,nvidiaInventory} from "@aihot/backend/providers/nvidia-catalog";
-import {chooseModel,nextProbe,type Pool} from "@aihot/backend/providers/nvidia-pool";
+import {chooseModel,nextProbe,updateProbeHealth,type Pool} from "@aihot/backend/providers/nvidia-pool";
 const now=Date.parse("2026-10-17T01:00:00Z");
-const h=(model:string,visionVerified=false)=>({model,ok:true,checkedAt:new Date(now-1000).toISOString(),lastOk:new Date(now-1000).toISOString(),latencyMs:900,samples:2,visionVerified});
+const h=(model:string,visionVerified=false)=>({model,ok:true,checkedAt:new Date(now-1000).toISOString(),lastOk:new Date(now-1000).toISOString(),latencyMs:900,samples:2,visionVerified,visionLastOk:visionVerified?new Date(now-1000).toISOString():undefined});
 test("catalogue keeps every capability without treating embeddings/images as chat",()=>{
  const data=["openai/gpt-oss-20b","meta/llama-3.3-70b-instruct","nvidia/nv-embed-qa","nvidia/nv-rerank-qa","stabilityai/stable-diffusion-xl","meta/llama-guard-4-12b","z-ai/glm-5.3-flash","unknown/new-service"].map(id=>({id}));
  const groups=nvidiaInventory(data);
@@ -35,5 +35,21 @@ test("vision task cannot use text evidence or a text-only fallback",()=>{
  const state:Pool={catalogAt:null,catalogCount:80,candidates:[vision,text],probes:0,health:{[vision]:h(vision),[text]:h(text)}};
  assert.equal(chooseModel(state,"nvidia-glm-5.3-flash",now),null);
  state.health[vision]!.visionVerified=true;
+ state.health[vision]!.visionLastOk=new Date(now-1000).toISOString();
  assert.equal(chooseModel(state,"nvidia-glm-5.3-flash",now),vision);
+});
+
+test("failed image probe preserves proven text route without claiming vision",()=>{
+ const model="z-ai/glm-5.3-flash";
+ const old=h(model);
+ const failure=updateProbeHealth(old,model,"vision",false,"upstream_http",new Date(now).toISOString(),250);
+ const state:Pool={catalogAt:null,catalogCount:81,candidates:[model],probes:4,health:{[model]:failure}};
+ assert.equal(failure.ok,true);
+ assert.equal(failure.lastOk,old.lastOk);
+ assert.equal(failure.visionVerified,false);
+ assert.equal(chooseModel(state,"nvidia-gpt-oss-20b",now),model);
+ assert.equal(chooseModel(state,"nvidia-glm-5.3-flash",now),null);
+ const restored=updateProbeHealth(failure,model,"text",true,"ok",new Date(now+1000).toISOString(),800);
+ assert.equal(restored.visionVerified,false);
+ assert.equal(restored.visionCheckedAt,failure.visionCheckedAt);
 });
