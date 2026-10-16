@@ -16,7 +16,7 @@ const preferred=[
  "mistralai/mistral-nemotron","nvidia/nemotron-3-super-120b-a12b",
  "meta/llama-3.3-70b-instruct","openai/gpt-oss-120b"
 ];
-export type Health={model:string;ok:boolean;checkedAt:string;lastOk?:string;latencyMs?:number;reason?:string;samples:number};
+export type Health={model:string;ok:boolean;checkedAt:string;lastOk?:string;latencyMs?:number;reason?:string;samples:number;visionVerified?:boolean};
 export type Pool={catalogVersion?:number;catalogAt:string|null;catalogCount:number;candidates:string[];health:Record<string,Health>;probes:number;
  catalog?:CatalogModel[];pools?:CapabilityPools};
 const empty=():Pool=>({catalogAt:null,catalogCount:0,candidates:preferred,health:{},probes:0});
@@ -35,7 +35,7 @@ export function chooseModel(s:Pool,preferredModel:string,now=Date.now(),traffic:
    return !!guessed?.capabilities.includes(spec?.vision?"vision":"text");
  };
  const candidates=healthyModels(s,now).filter(h=>
-   inPool(h.model)&&!modelCircuitOpen(traffic[h.model]??EMPTY_TRAFFIC));
+   inPool(h.model)&&(!spec?.vision||h.visionVerified===true)&&!modelCircuitOpen(traffic[h.model]??EMPTY_TRAFFIC));
  // Keep the user's configured model unless actual telemetry has opened its circuit.
  if(candidates.some(h=>h.model===wanted))return wanted;
  // Among verified backups, favor observed success rather than one fast synthetic ping.
@@ -140,6 +140,7 @@ async function mergeLiveSuccesses(s:Pool):Promise<void>{
  }
 }
 const schema=z.object({label:z.literal("PASS"),titleZh:z.string().min(4),summaryZh:z.string().min(6)});
+const visionTile='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAALUlEQVR4nGOsWHCJgZaAiaamj1owasGoBaMWjFowasGoBaMWjFowasGoBVQEAMKaAiompwYkAAAAAElFTkSuQmCC';
 const prompt='模拟消息：An AI research lab publishes an open-source model with reduced energy use in translation tests. 返回JSON对象：label固定为PASS，titleZh为中文标题，summaryZh为中文简短摘要。不允许添加未给出的事实。';
 export async function probeNvidiaPool(){
  if(process.env.NVIDIA_MODEL_POOL_ENABLED!=="true"||process.env.MODEL_CALLS_ENABLED!=="true")return {state:"disabled"};
@@ -148,6 +149,7 @@ export async function probeNvidiaPool(){
  await mergeLiveSuccesses(s);
  const model=nextProbe(s);
  if(!model){await save(s);return {state:"no_candidate",catalogCount:s.catalogCount};}
+ const vision=s.pools?.vision.includes(model)===true;
  let reason="ok",ok=false;const started=Date.now();
  try {
    const result=await chatJson({model:"nvidia:"+model,purpose:"nvidia_model_probe",
@@ -155,7 +157,8 @@ export async function probeNvidiaPool(){
      // subject is audit-only; attemptTag is part of the durable logical key.
      // Without this a year-old successful probe is reused in 3ms as false proof of health.
      attemptTag:probeAttemptTag(new Date()),
-     promptVersion:"nvidia-probe.v1",system:"Return JSON only.",user:prompt,
+     promptVersion:vision?"nvidia-probe.vision.v1":"nvidia-probe.text.v1",system:"Return JSON only.",
+     user:vision?[{type:"text",text:"观察蓝色图像，返回中文标题和一句中文描述的JSON。"},{type:"image_url",image_url:{url:visionTile}}]:prompt,
      schema,temperature:0,maxTokens:512,timeoutMs:18000});
    ok=/[\u4e00-\u9fff]/.test(result.data.titleZh+result.data.summaryZh);
    if(!ok)reason="non_chinese";
@@ -168,7 +171,7 @@ export async function probeNvidiaPool(){
  }
  const old=s.health[model];s.health[model]={model,ok,checkedAt:new Date().toISOString(),
    lastOk:ok?new Date().toISOString():old?.lastOk,latencyMs:ok?Date.now()-started:old?.latencyMs,
-   reason,samples:(old?.samples??0)+1};
+   reason,samples:(old?.samples??0)+1,visionVerified:vision?ok:old?.visionVerified};
  s.probes++;await save(s);
  return {state:reason,model,latencyMs:Date.now()-started,healthy:healthyModels(s).length,catalogCount:s.catalogCount,candidates:s.candidates.length};
 }
