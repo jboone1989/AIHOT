@@ -40,14 +40,15 @@ To manually import one news item after Graphiti reaches healthy status:
 ```sh
 docker compose -f docker-compose.yml -f docker-compose.knowledge.yml \
   --profile knowledge up -d --build knowledge
-docker compose exec -T api node scripts/graphiti-sync.ts
+docker compose exec -T -e GRAPHITI_INGEST_ENABLED=true -e MODEL_CALLS_ENABLED=true \
+  api node scripts/graphiti-verify.ts ingest
 ```
 
-`knowledge_sync` holds only the AIHot document revision and Graphiti episode
-identifier. The older `knowledge_entities/knowledge_claims` prototype is
-**read-only legacy data** while migration is verified. Disable
-`KNOWLEDGE_GRAPH_ENABLED` (old extraction scheduler); do not wipe the old
-tables or misrepresent their data as Graphiti records.
+`graphiti_ingestions` holds only the AIHot document revision and Graphiti episode
+identifier; the worker's `knowledge.graphiti.ingest` uses the same records. The
+tables of the earlier prototype (`knowledge_entities`, `knowledge_claims`,
+`knowledge_extractions`, `knowledge_sync`) are no longer read or written by any
+code; their rows are kept as historical data, not Graphiti records.
 
 ## Acceptance
 

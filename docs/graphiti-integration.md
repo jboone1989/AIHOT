@@ -37,8 +37,7 @@ docker compose -f docker-compose.yml -f docker-compose.knowledge.yml --profile k
 ```
 
 The `setup` service applies `0093_graphiti_ingestions.sql` before the
-worker ingests an article. Never enable both the retired
-`KNOWLEDGE_GRAPH_ENABLED` scheduler and the Graphiti scheduler.
+worker ingests an article.
 
 ## Acceptance
 

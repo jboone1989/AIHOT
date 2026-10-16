@@ -28,9 +28,6 @@ export async function compactOrdinaryNews(
   now = new Date(),
   retentionDays = newsBodyDays(process.env.NEWS_BODY_RETENTION_DAYS),
 ): Promise<CompactionResult> {
-  if (!Number.isInteger(retentionDays) || retentionDays < MIN_NEWS_BODY_DAYS || retentionDays > MAX_NEWS_BODY_DAYS) {
-    throw new Error("invalid news retention period");
-  }
   const cutoff = new Date(now.getTime() - retentionDays * 86_400_000);
   let total = 0;
   let batches = 0;
