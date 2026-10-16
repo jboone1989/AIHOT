@@ -129,7 +129,7 @@ export default function KnowledgeEntity() {
       </header>
       {name && (
         <>
-          <div className="mt-7"><KnowledgeAtlas initialKey={data.entity!.key} /></div>
+          <div className="mt-7"><KnowledgeAtlas key={data.entity!.key} initialKey={data.entity!.key} /></div>
           <div className="lr-entity-grid mt-8">
             <section aria-labelledby="entity-timeline">
               <div className="lr-section-head"><h2 id="entity-timeline">{t("关系变化", "Relation timeline")}</h2><small className="mono text-[11px] text-ink-4">{t("按生效时间", "BY VALID-FROM DATE")}</small></div>
