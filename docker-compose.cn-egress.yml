@@ -1,0 +1,13 @@
+# Optional: reach an existing host proxy at 127.0.0.1:18123 from the app network.
+# Set EGRESS_BRIDGE_BIND to the aihot_default gateway and EGRESS_PROXY_URL to
+# http://<that-gateway>:18124. Include this file when starting the cn-dev stack.
+services:
+  egress-bridge:
+    image: eventgraph-app
+    command: ["node", "deploy/loopback-egress-bridge.mjs"]
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      EGRESS_BRIDGE_BIND: ${EGRESS_BRIDGE_BIND:?Set the private Docker gateway address}
+    mem_limit: 96m
+    cpus: 0.25

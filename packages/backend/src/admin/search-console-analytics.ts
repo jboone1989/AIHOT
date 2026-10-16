@@ -1,5 +1,6 @@
 import { GoogleAuth } from "google-auth-library";
 import { cachedReport, providerJson, ProviderError, type Report } from "./external-report.ts";
+import { guardedFetch } from "../lib/http-fetch.ts";
 
 type Row = { keys?: string[]; clicks: number; impressions: number; ctr: number; position: number };
 export type SearchConsoleData = {
@@ -11,6 +12,17 @@ export type SearchConsoleData = {
 };
 const cached = cachedReport<SearchConsoleData>();
 
+// Google OAuth and reporting must share the site's configured egress route.
+const googleFetch: typeof fetch = async (input, init) => {
+  const request = new Request(input, init);
+  const response = await guardedFetch(request.url, {
+    method: request.method, headers: Object.fromEntries(request.headers),
+    body: request.body ? await request.text() : undefined,
+    timeoutMs: 8000, maxBytes: 1024 * 1024, maxRedirects: 0,
+  });
+  return new Response(response.text(), { status: response.status, headers: response.headers });
+};
+
 export async function searchConsoleReport(): Promise<Report<SearchConsoleData>> {
   const property = process.env.GOOGLE_SEARCH_CONSOLE_PROPERTY;
   const credentials = process.env.GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON;
@@ -21,7 +33,7 @@ export async function searchConsoleReport(): Promise<Report<SearchConsoleData>> 
     if (parsed.type !== "service_account" || !parsed.client_email || !parsed.private_key)
       throw new ProviderError("Search Console 需要有效的服务账号 JSON 凭据。");
     const auth = new GoogleAuth({ credentials: parsed, scopes: ["https://www.googleapis.com/auth/webmasters.readonly"],
-      clientOptions: { transporterOptions: { timeout: 8000, retry: false } } });
+      clientOptions: { transporterOptions: { timeout: 8000, retry: false, fetchImplementation: googleFetch } } });
     const accessToken = await auth.getAccessToken();
     if (!accessToken) throw new ProviderError("Google 未返回访问令牌。");
     // Search Console dates use Pacific time. Request the last 30 completed dates, final data only.
@@ -34,7 +46,7 @@ export async function searchConsoleReport(): Promise<Report<SearchConsoleData>> 
           method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
           body: JSON.stringify({ startDate, endDate, dimensions, type: "web", dataState: "final",
             rowLimit: dimensions.length ? (dimensions[0] === "date" ? 31 : 10) : 1 }),
-        });
+        }, googleFetch);
       if (result.rows !== undefined && !Array.isArray(result.rows)) throw new ProviderError("Search Console 报表格式无效。");
       if (result.rows?.some(r => !r || ![r.clicks, r.impressions, r.ctr, r.position].every(n => typeof n === "number" && Number.isFinite(n) && n >= 0)))
         throw new ProviderError("Search Console 返回了无效指标。");

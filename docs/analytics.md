@@ -38,6 +38,10 @@
 
 Search Console：在 Google Cloud 项目中启用 Search Console API，创建服务账号，把其邮箱添加为目标 Search Console 资源的受限用户。将服务账号 JSON 压成一行并用单引号包住，写入上述环境变量。运行时使用官方 `google-auth-library` 获取 `webmasters.readonly` 令牌。网域 DNS 验证只证明所有权，不授予服务器读取报表的权限。新验证的资源首批数据可能仍在处理；报表请求最近30个完整太平洋日期，使用 Google 的最终数据。搜索总量单独查询，不能相加关键词 Top 10 代替。
 
+Google OAuth 换令牌和 Search Console 报表请求都使用站点现有的出站通道；配置 `EGRESS_PROXY_URL` 后，两者一起通过该代理，并保留地址检查、响应大小限制和超时。修改代理或凭据后重建 API 容器使配置生效。
+
+cn-dev 已有的代理通过 SSH 转发到主机 `127.0.0.1:18123`，容器不能直接使用该回环地址。可叠加 `docker-compose.cn-egress.yml`，将 `EGRESS_BRIDGE_BIND` 设为 `aihot_default` 的私网网关地址，`EGRESS_PROXY_URL` 设为 `http://<网关地址>:18124`，一起启动 `egress-bridge`、`api`、`web`。桥接进程仅绑定指定私网地址，复用已有代理，不增加公网监听。
+
 PostHog：公开 `POSTHOG_PROJECT_TOKEN` 负责采集，Personal API Key 负责读取，需分别配置。采集将站内 `page_view` 映射到 PostHog `$pageview`，把 `distinct_id` 放在 `properties` 中，并禁用 person profile；只发无查询参数的页面 URL 和已知行为属性。报表只读取 `source=eventgraph` 且 `site_host` 与 `SITE_URL` 域名一致的数据，避免混入开发或其他项目数据；部署前的无标记事件不计入该口径。匿名会话仍非独立用户。
 
 配置后在**目标部署目录**执行原有 Compose 启动命令重建 Web 并重建 API 容器，使其读取新配置。保留该环境原有的 Compose 覆盖文件和 profiles。Cloudflare 已自动注入时不要再填公开 Beacon token，避免双重采集。首次验收依次检查：API 授权成功、实际页面产生一条正常浏览、平台收到事件、后台报表可读取。API 返回成功不保证平台立即完成摄取。
