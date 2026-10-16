@@ -1,0 +1,1383 @@
+{
+  "schema": "nvidia-development-audit.v1",
+  "catalogue_count": 81,
+  "observed_at": "2026-10-16T18:26:53.278Z",
+  "environment": "cn-dev",
+  "baseline_counts": {
+    "endpoint_404": 54,
+    "not_tested_adapter_unknown": 1,
+    "verified_response": 13,
+    "timeout_or_network": 10,
+    "other_http_failure": 2,
+    "payload_or_adapter_rejected": 1
+  },
+  "models": [
+    {
+      "id": "01-ai/yi-large",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 372,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "adept/fuyu-8b",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 364,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "ai21labs/jamba-1.5-large-instruct",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 489,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "aisingapore/sea-lion-7b-instruct",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 156,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "bigcode/starcoder2-15b",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 130,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "databricks/dbrx-instruct",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 157,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "deepseek-ai/deepseek-coder-6.7b-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 144,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "deepseek-ai/deepseek-v4.1-flash",
+      "original_family": "text",
+      "first_verdict": "timeout_or_network",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": null,
+          "latency_ms": 26003,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "google/codegemma-1.1-7b",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 147,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "google/codegemma-7b",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 145,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "google/deplot",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 156,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "google/diffusiongemma-26b-a4b-it",
+      "original_family": "image",
+      "first_verdict": "not_tested_adapter_unknown",
+      "first_probes": [],
+      "documented_recheck": {
+        "endpoint": "/v1/chat/completions",
+        "documentation": "https://docs.api.nvidia.com/nim/reference/diffusiongemma-26b-a4b-it-infer",
+        "http": 200,
+        "latency_ms": 17585,
+        "text_output": true,
+        "embedding_dimensions": null,
+        "finish": "stop"
+      }
+    },
+    {
+      "id": "google/gemma-2b",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 146,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "google/gemma-3-12b-it",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 147,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "google/gemma-3-4b-it",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 144,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "google/gemma-4-31b-it",
+      "original_family": "text",
+      "first_verdict": "timeout_or_network",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": null,
+          "latency_ms": 26001,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "google/recurrentgemma-2b",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 371,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "ibm/granite-3.0-3b-a800m-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 156,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "ibm/granite-3.0-8b-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 153,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "ibm/granite-34b-code-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 157,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "ibm/granite-8b-code-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 164,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "meta/codellama-70b",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 155,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "meta/llama-3.2-11b-vision-instruct",
+      "original_family": "vision",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 200,
+          "latency_ms": 1458,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        },
+        {
+          "mode": "vision",
+          "http": 200,
+          "latency_ms": 998,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "meta/llama-3.2-90b-vision-instruct",
+      "original_family": "vision",
+      "first_verdict": "timeout_or_network",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": null,
+          "latency_ms": 26001,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "meta/llama-guard-4-12b",
+      "original_family": "safety",
+      "first_verdict": "timeout_or_network",
+      "first_probes": [
+        {
+          "mode": "safety",
+          "http": null,
+          "latency_ms": 26001,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "meta/llama2-70b",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 153,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "meta/muse-glimmer-30b",
+      "original_family": "unknown",
+      "first_verdict": "timeout_or_network",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": null,
+          "latency_ms": 26002,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": {
+        "endpoint": "/v1/chat/completions",
+        "documentation": "https://docs.api.nvidia.com/nim/reference/meta-muse-glimmer-30b-infer",
+        "http": 200,
+        "latency_ms": 48825,
+        "text_output": true,
+        "embedding_dimensions": null,
+        "finish": "stop"
+      }
+    },
+    {
+      "id": "microsoft/kosmos-2",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 158,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "microsoft/phi-3-vision-128k-instruct",
+      "original_family": "vision",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 153,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "microsoft/phi-3.5-moe-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 155,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "mistralai/codestral-22b-instruct-v0.1",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 153,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "mistralai/mistral-7b-instruct-v0.3",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 155,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "mistralai/mistral-large",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 155,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "mistralai/mistral-large-2-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 152,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "mistralai/mixtral-8x22b-v0.1",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 152,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "moonshotai/kimi-k2.6",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 153,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nv-mistralai/mistral-nemo-12b-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 153,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/ai-synthetic-video-detector",
+      "original_family": "unknown",
+      "first_verdict": "other_http_failure",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 500,
+          "latency_ms": 301,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/cosmos-reason2-8b",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 161,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/embed-qa-4",
+      "original_family": "embedding",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "embedding",
+          "http": 404,
+          "latency_ms": 156,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/ising-calibration-1.5-31b",
+      "original_family": "unknown",
+      "first_verdict": "timeout_or_network",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": null,
+          "latency_ms": 26000,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": {
+        "endpoint": "/v1/chat/completions",
+        "documentation": "https://docs.api.nvidia.com/nim/reference/nvidia-ising-calibration-1-5-31b-infer",
+        "http": 200,
+        "latency_ms": 22192,
+        "text_output": true,
+        "embedding_dimensions": null,
+        "finish": "stop"
+      }
+    },
+    {
+      "id": "nvidia/llama-3.1-nemoguard-8b-content-safety",
+      "original_family": "safety",
+      "first_verdict": "timeout_or_network",
+      "first_probes": [
+        {
+          "mode": "safety",
+          "http": null,
+          "latency_ms": 26001,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/llama-3.1-nemoguard-8b-topic-control",
+      "original_family": "safety",
+      "first_verdict": "other_http_failure",
+      "first_probes": [
+        {
+          "mode": "safety",
+          "http": 500,
+          "latency_ms": 281,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/llama-3.1-nemotron-51b-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 451,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/llama-3.1-nemotron-70b-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 157,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+      "original_family": "safety",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "safety",
+          "http": 200,
+          "latency_ms": 693,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 148,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
+      "original_family": "embedding",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "embedding",
+          "http": 404,
+          "latency_ms": 149,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/llama-3.2-nv-embedqa-1b-v1",
+      "original_family": "embedding",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "embedding",
+          "http": 404,
+          "latency_ms": 161,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/llama-nemotron-embed-vl-1b-v2",
+      "original_family": "embedding",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "embedding",
+          "http": 200,
+          "latency_ms": 553,
+          "valid": true,
+          "finish": null,
+          "embedding_dimensions": 2048
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/llama3-chatqa-1.5-70b",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 149,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/mistral-nemo-minitron-8b-8k-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 150,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nemotron-3-embed-1b",
+      "original_family": "embedding",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "embedding",
+          "http": 200,
+          "latency_ms": 433,
+          "valid": true,
+          "finish": null,
+          "embedding_dimensions": 2048
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      "original_family": "vision",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 200,
+          "latency_ms": 829,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        },
+        {
+          "mode": "vision",
+          "http": 200,
+          "latency_ms": 22253,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nemotron-3-super-120b-a12b",
+      "original_family": "text",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 200,
+          "latency_ms": 1010,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nemotron-3-ultra-550b-a55b",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 128,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nemotron-3.5-content-safety",
+      "original_family": "safety",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "safety",
+          "http": 200,
+          "latency_ms": 440,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "original_family": "text",
+      "first_verdict": "timeout_or_network",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": null,
+          "latency_ms": 26001,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "original_family": "vision",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 200,
+          "latency_ms": 653,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        },
+        {
+          "mode": "vision",
+          "http": 200,
+          "latency_ms": 11447,
+          "valid": true,
+          "finish": "length",
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nemotron-4-340b-instruct",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 359,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nemotron-4-340b-reward",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 153,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nemotron-nano-3-30b-a3b",
+      "original_family": "text",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 158,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nemotron-parse",
+      "original_family": "document",
+      "first_verdict": "payload_or_adapter_rejected",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 400,
+          "latency_ms": 284,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": {
+        "endpoint": "/v1/chat/completions",
+        "documentation": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-parse-infer",
+        "http": 200,
+        "latency_ms": 711,
+        "text_output": false,
+        "embedding_dimensions": null,
+        "finish": "stop"
+      }
+    },
+    {
+      "id": "nvidia/nemotron-parse-2.0",
+      "original_family": "document",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 200,
+          "latency_ms": 575,
+          "valid": true,
+          "finish": "length",
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": {
+        "endpoint": "/v1/chat/completions",
+        "documentation": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-parse-2_0",
+        "http": 400,
+        "latency_ms": 287,
+        "text_output": false,
+        "embedding_dimensions": null,
+        "finish": null
+      }
+    },
+    {
+      "id": "nvidia/neva-22b",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 154,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": {
+        "endpoint": "/v1/vlm/nvidia/neva-22b",
+        "documentation": "https://docs.api.nvidia.com/nim/reference/nvidia-neva-22b-infer",
+        "http": 404,
+        "latency_ms": 405,
+        "text_output": false,
+        "embedding_dimensions": null,
+        "finish": null
+      }
+    },
+    {
+      "id": "nvidia/nv-embedqa-mistral-7b-v2",
+      "original_family": "embedding",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "embedding",
+          "http": 404,
+          "latency_ms": 152,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/nvclip",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 134,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": {
+        "endpoint": "/v1/embeddings",
+        "documentation": "https://docs.api.nvidia.com/nim/reference/nvidia-nvclip-infer",
+        "http": 404,
+        "latency_ms": 380,
+        "text_output": false,
+        "embedding_dimensions": null,
+        "finish": null
+      }
+    },
+    {
+      "id": "nvidia/riva-translate-4b-instruct",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 154,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/riva-translate-4b-instruct-v2",
+      "original_family": "unknown",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 200,
+          "latency_ms": 429,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "nvidia/vila",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 157,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "original_family": "text",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 200,
+          "latency_ms": 1499,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "poolside/laguna-xs-2.1",
+      "original_family": "unknown",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 200,
+          "latency_ms": 3753,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "snowflake/arctic-embed-l",
+      "original_family": "embedding",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "embedding",
+          "http": 404,
+          "latency_ms": 158,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "stepfun-ai/step-5-preview",
+      "original_family": "unknown",
+      "first_verdict": "verified_response",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 200,
+          "latency_ms": 1848,
+          "valid": true,
+          "finish": "stop",
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "writer/palmyra-creative-122b",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 144,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "writer/palmyra-fin-70b-32k",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 153,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "writer/palmyra-med-70b",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 143,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "writer/palmyra-med-70b-32k",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 151,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "z-ai/glm-5.3",
+      "original_family": "text",
+      "first_verdict": "timeout_or_network",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": null,
+          "latency_ms": 26001,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "z-ai/glm-5.3-flash",
+      "original_family": "vision",
+      "first_verdict": "timeout_or_network",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": null,
+          "latency_ms": 26001,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    },
+    {
+      "id": "zyphra/zamba2-7b-instruct",
+      "original_family": "unknown",
+      "first_verdict": "endpoint_404",
+      "first_probes": [
+        {
+          "mode": "text",
+          "http": 404,
+          "latency_ms": 147,
+          "valid": false,
+          "finish": null,
+          "embedding_dimensions": null
+        }
+      ],
+      "documented_recheck": null
+    }
+  ]
+}
