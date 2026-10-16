@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {test} from "node:test";
 import { chooseModel, nextProbe, type Pool } from "@aihot/backend/providers/nvidia-pool";
-import { modelCircuitOpen, trafficFailureRate, eligibleFallback, type ModelTraffic } from "@aihot/backend/providers/nvidia-routing";
+import { modelCircuitOpen, trafficFailureRate, eligibleFallback, conservativeFailureRisk, type ModelTraffic } from "@aihot/backend/providers/nvidia-routing";
 
 const now = Date.parse("2026-10-16T15:00:00Z");
 const health = (model: string, latencyMs=2000) => ({
@@ -27,7 +27,8 @@ test("unsafe primary is replaced only by a verified approved fallback",()=>{
   "openai/gpt-oss-20b":counts(35,1),
   "z-ai/glm-5.3-flash":counts(10,0),
  };
- assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now,traffic),"z-ai/glm-5.3-flash");
+ assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now,traffic),"openai/gpt-oss-20b");
+ assert.ok(conservativeFailureRisk(traffic["openai/gpt-oss-20b"]!)<conservativeFailureRisk(traffic["z-ai/glm-5.3-flash"]!));
  assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now),"nvidia/nemotron-3.5-lightning-30b-a3b");
  assert.equal(eligibleFallback("meta/llama-3.3-70b-instruct","nvidia/nemotron-3.5-lightning-30b-a3b"),false);
  state.health["openai/gpt-oss-20b"]!.ok=false;
@@ -40,6 +41,9 @@ test("vision-required capability never changes to text-only GPT-OSS",()=>{
  assert.equal(chooseModel(state,"nvidia-glm-5.3-flash",now,{
   "z-ai/glm-5.3-flash":counts(1,15)
  }),null);
+});
+test("unobserved models are not preferred over strongly verified successes",()=>{
+ assert.ok(conservativeFailureRisk(counts(0,0))>conservativeFailureRisk(counts(35,1)));
 });
 test("approved models are probed before unknown catalog entries",()=>{
  const state=pool();
