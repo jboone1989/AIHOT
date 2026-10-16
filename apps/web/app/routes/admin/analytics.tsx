@@ -8,6 +8,7 @@ type Metric = { name: string; count: number; sessions: number };
 type Day = { day: string; page_views: number; sessions: number; graph_sessions: number };
 type Overview = {
   periodDays: number; asOf: string; weeklyEffectiveExplorers: number;
+  ingestion: {total_events: number; last_event_at: string | null};
   totals: { page_views?: number; sessions?: number; story_sessions?: number; graph_sessions?: number; source_sessions?: number; search_sessions?: number };
   daily: Day[]; events: Metric[];
   content: Array<{ page_type: string; content_id: string; count: number }>;
@@ -35,18 +36,21 @@ const links = [
 ];
 export default function AnalyticsAdmin({ loaderData: a }: Route.ComponentProps) {
   const totals = a.totals;
+  const hasData = a.ingestion.total_events > 0;
+  const metric = (value: number | null | undefined) => hasData ? n(value) : "—";
   const max = Math.max(1, ...a.daily.map(d => d.page_views));
   return (
     <AdminPage title="流量与行为" subtitle={<>最近 {a.periodDays} 天 · 更新于 {a.asOf.slice(0,16).replace("T", " ") + " UTC"} · 匿名会话统计，不等于独立访客数（UV）</>}>
+      <div role="status" className="mb-5 rounded-panel border border-line bg-bg-sunk p-4 text-[13px] text-ink-2">{!hasData ? "尚未收到任何真实访问事件。数据采集未得到验证，所有指标暂不显示；不会使用模拟数据。" : `已收到 ${n(a.ingestion.total_events)} 条真实入库事件。最近一次：${a.ingestion.last_event_at ?? "未知"}。访客数不等于匿名会话数。`}</div>
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="7 天有效知识探索" value={n(a.weeklyEffectiveExplorers)} hint="同一匿名会话：打开事件后选择 Graph 节点或访问原文"/>
-        <Stat label="页面浏览 PV" value={n(totals.page_views)} hint="仅站内匿名事件，非 CDN 请求数"/>
-        <Stat label="匿名会话" value={n(totals.sessions)} hint="本标签页会话 ID，非 UV"/>
-        <Stat label="事件打开会话" value={n(totals.story_sessions)} hint={pct(totals.story_sessions, totals.sessions) + " / 会话"} />
-        <Stat label="Graph 使用会话" value={n(totals.graph_sessions)} hint={pct(totals.graph_sessions, totals.sessions) + " / 会话"} />
-        <Stat label="来源跳转会话" value={n(totals.source_sessions)} />
-        <Stat label="搜索会话" value={n(totals.search_sessions)} />
-        <Stat label="页面切换耗时 P75" value={a.performance.p75_ms == null ? "—" : a.performance.p75_ms + "ms"} hint={n(a.performance.samples) + " 次客户端样本"}/>
+        <Stat label="7 天有效知识探索" value={metric(a.weeklyEffectiveExplorers)} hint="同一匿名会话：打开事件后选择 Graph 节点或访问原文"/>
+        <Stat label="页面浏览 PV" value={metric(totals.page_views)} hint="仅站内匿名事件，非 CDN 请求数"/>
+        <Stat label="匿名会话" value={metric(totals.sessions)} hint="本标签页会话 ID，非 UV"/>
+        <Stat label="事件打开会话" value={metric(totals.story_sessions)} hint={hasData ? pct(totals.story_sessions, totals.sessions) + " / 会话" : "尚无样本"} />
+        <Stat label="Graph 使用会话" value={metric(totals.graph_sessions)} hint={hasData ? pct(totals.graph_sessions, totals.sessions) + " / 会话" : "尚无样本"} />
+        <Stat label="来源跳转会话" value={metric(totals.source_sessions)} />
+        <Stat label="搜索会话" value={metric(totals.search_sessions)} />
+        <Stat label="页面切换耗时 P75" value={a.performance.p75_ms == null ? "—" : a.performance.p75_ms + "ms"} hint={hasData ? n(a.performance.samples) + " 次客户端样本" : "尚无样本"}/>
         <Stat label="切换平均耗时" value={a.performance.mean_ms == null ? "—" : a.performance.mean_ms + "ms"} />
       </div>
       <div className="grid gap-5 xl:grid-cols-2">
