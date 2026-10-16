@@ -8,6 +8,7 @@ import { sql } from "../db.ts";
 import { serverModules } from "../modules.ts";
 import { MODELS } from "../providers/llm.ts";
 import { availableModel } from "../providers/nvidia-pool.ts";
+import { classifyNvidiaModel } from "../providers/nvidia-capabilities.ts";
 
 export interface Capability {
   /** The step's name on the admin page, with an explanation in full-width brackets if it needs one; alerts use the name alone. */
@@ -75,7 +76,7 @@ export function modelSupportsVision(model: string): boolean {
   if (MODELS[model]) return MODELS[model].vision === true;
   // The healthy NVIDIA pool resolves a preset to its concrete service model ID.
   const dynamicId=model.startsWith("nvidia:")?model.slice(7):"";
-  return !!dynamicId && Object.values(MODELS).some(m=>m.service==="nvidia"&&m.model===dynamicId&&m.vision===true);
+  return !!dynamicId && classifyNvidiaModel({id:dynamicId})?.capabilities.includes("vision")===true;
 }
 
 /** Whether a step can use a registered model. A model that reads images writes text as well. */
