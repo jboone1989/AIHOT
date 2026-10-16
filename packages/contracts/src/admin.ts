@@ -344,6 +344,14 @@ export interface AdminModelUsage {
 
 export interface AdminModels {
   days: number;
+  nvidiaPool: {
+    catalogCount: number;
+    catalogAt: string | null;
+    candidates: number;
+    probes: number;
+    inventory: Record<string, { total: number; healthy: number }>;
+    models: Array<{ model: string; capability: string; status: string; latencyMs: number | null; reason: string | null; checkedAt: string | null }>;
+  };
   capabilities: Array<{ key: string; label: string; env: string; defaultModel: string; vision: boolean; current: { model: string; source: "admin" | "env" | "default" }; usage: AdminModelUsage[] }>;
   choices: Array<{ key: string; service: string; vision: boolean }>;
   history: Array<{ at: Timestamp; actor: string; subject: string; reason: string | null; before: { model: string; source: string } | null; after: { model: string; source: string } | null }>;

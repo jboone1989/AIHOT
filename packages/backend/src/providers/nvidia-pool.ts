@@ -101,6 +101,13 @@ export async function poolOverview(){
    circuitOpen:modelCircuitOpen(traffic[h.model]??EMPTY_TRAFFIC),
    failureRate:trafficFailureRate(traffic[h.model]??EMPTY_TRAFFIC),
    last2h:traffic[h.model]??EMPTY_TRAFFIC})),
+ models:Object.entries(s.inventory??nvidiaInventory(s.candidates.map(id=>({id})))).flatMap(([capability,ids])=>
+   ids.map(id=>{
+     const h=s.health[id];
+     const current=!!h?.ok&&age(h.lastOk,Date.now())<TTL&&(capability!=="vision"||h.visionVerified===true);
+     return {model:id,capability,status:current?"healthy":!h?"untested":h.ok?"stale":"failed",
+       latencyMs:h?.latencyMs??null,reason:h?.reason??null,checkedAt:h?.checkedAt??null};
+   })),
  lastChecks:Object.values(s.health).map(h=>({model:h.model,ok:h.ok,reason:h.reason,checkedAt:h.checkedAt}))};
 }
 async function catalog(s:Pool){
