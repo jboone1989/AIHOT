@@ -5,7 +5,7 @@ import { sql } from "../db.ts";
 import { credential } from "../config.ts";
 import { chatJson, isNvidiaTextModel, ModelOutputError, MODELS } from "./llm.ts";
 import { BudgetExceededError, ProviderRejectedError, ReceiptUnknownError } from "./receipts.ts";
-import { eligibleFallback, modelCircuitOpen, trafficFailureRate, EMPTY_TRAFFIC, type ModelTraffic } from "./nvidia-routing.ts";
+import { eligibleFallback, modelCircuitOpen, trafficFailureRate, EMPTY_TRAFFIC, VERIFIED_FALLBACKS, type ModelTraffic } from "./nvidia-routing.ts";
 
 const KEY="nvidia.model_pool.v1";
 const TTL=4*3600_000, CATALOG_TTL=2*3600_000, MAX=100;
@@ -36,8 +36,13 @@ export function chooseModel(s:Pool,preferredModel:string,now=Date.now(),traffic:
    (a.latencyMs??99999)-(b.latencyMs??99999))[0]?.model??null;
 }
 export function nextProbe(s:Pool,now=Date.now()):string|null{
- const list=s.candidates.filter(isNvidiaTextModel);
+ // Check approved alternatives before the other dozens of catalog models, otherwise the
+ // first usable fallback might not get its initial probe for hours.
+ const approved=VERIFIED_FALLBACKS.filter(id=>s.candidates.includes(id));
+ const list=[...approved,...s.candidates.filter(id=>!approved.includes(id as typeof approved[number]))].filter(isNvidiaTextModel);
  const recheck=list.filter(id=>s.health[id]?.ok&&age(s.health[id]!.checkedAt,now)>=50*60_000);
+ const approvedDue=approved.filter(id=>!s.health[id]||age(s.health[id]!.checkedAt,now)>=20*60_000);
+ if(approvedDue.length)return approvedDue.sort((a,b)=>age(s.health[b]?.checkedAt,now)-age(s.health[a]?.checkedAt,now))[0]!;
  if(recheck.length)return recheck.sort((a,b)=>age(s.health[b]?.checkedAt,now)-age(s.health[a]?.checkedAt,now))[0]!;
  const due=list.filter(id=>!s.health[id]||age(s.health[id]!.checkedAt,now)>=20*60_000);
  return due.sort((a,b)=>{
