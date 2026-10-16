@@ -146,3 +146,23 @@ export async function graphOverview(): Promise<Graph> {
     return emptyGraph("unavailable");
   }
 }
+
+export type GraphNetwork = {
+  nodes: Array<{ key: string; name: string; articleIds: string[] }>;
+  links: Array<{ id: string; source: string; target: string; predicate: string; invalidAt: string | null; articleIds: string[] }>;
+  truncated: boolean;
+  status?: string;
+};
+
+export async function graphNetwork(): Promise<GraphNetwork> {
+  const empty = (status: string): GraphNetwork => ({ nodes: [], links: [], truncated: false, status });
+  if (!process.env.GRAPHITI_API_URL) return empty("disabled");
+  try { return await graphiti<GraphNetwork>("/network"); }
+  catch (error) { console.error("graphiti_network_failed", error); return empty("unavailable"); }
+}
+
+export async function graphRelation(key: string): Promise<Graph> {
+  if (!process.env.GRAPHITI_API_URL) return emptyGraph("disabled");
+  try { return await graphiti<Graph>("/relations/" + encodeURIComponent(key)); }
+  catch (error) { console.error("graphiti_relation_failed", error); return emptyGraph("unavailable"); }
+}
