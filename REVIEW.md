@@ -8,6 +8,7 @@ Use `AGENTS.md` as the authoritative repository-wide engineering instructions. R
 - Public pages must obtain analytics from real event pipelines and persisted data; never silently substitute hardcoded or simulated metrics. Verify collection, ingestion, aggregation, API and UI end to end.
 - Changes to shared navigation, graph interactions, or published content must preserve functionality in both Chinese and English.
 - Frontend reads the API over HTTP; credentials and database access stay on the server. Reader requests must not trigger model calls.
+- Public outputs read only through `packages/backend/src/publication/`; paid model calls go through receipts and the budget breaker; safety valves (`COLLECT_ENABLED`, `MODEL_CALLS_ENABLED`, `FEISHU_*_ENABLED`, `INDEXNOW_SUBMIT_ENABLED`) open only when set to `true`.
 - Investigate N+1 queries, unbounded scans, expensive graph expansion, and deployment/worker configuration drift.
 - Database changes must respect the migration rules in AGENTS.md; do not alter applied migration files.
 - Keep the established architecture and avoid redundant abstractions, flags and compatibility layers without demonstrated need.
