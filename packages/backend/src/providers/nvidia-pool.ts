@@ -35,11 +35,13 @@ export function chooseModel(s:Pool,preferredModel:string,now=Date.now(),traffic:
    conservativeFailureRisk(traffic[b.model]??EMPTY_TRAFFIC)||
    (a.latencyMs??99999)-(b.latencyMs??99999))[0]?.model??null;
 }
-export function nextProbe(s:Pool,now=Date.now()):string|null{
- // Check approved alternatives before the other dozens of catalog models, otherwise the
- // first usable fallback might not get its initial probe for hours.
+export function nextProbe(s:Pool,now=Date.now(),discover=false):string|null{
+ // Only probe models that can actually be routed to real tasks. The hosted catalog
+ // contains dozens of unrelated or costly options; discovering those is opt-in.
  const approved=VERIFIED_FALLBACKS.filter(id=>s.candidates.includes(id));
- const list=[...approved,...s.candidates.filter(id=>!approved.includes(id as typeof approved[number]))].filter(isNvidiaTextModel);
+ const list=(discover
+   ? [...approved,...s.candidates.filter(id=>!approved.includes(id as typeof approved[number]))]
+   : approved).filter(isNvidiaTextModel);
  const recheck=list.filter(id=>s.health[id]?.ok&&age(s.health[id]!.checkedAt,now)>=50*60_000);
  const approvedDue=approved.filter(id=>!s.health[id]||age(s.health[id]!.checkedAt,now)>=20*60_000);
  if(approvedDue.length)return approvedDue.sort((a,b)=>age(s.health[b]?.checkedAt,now)-age(s.health[a]?.checkedAt,now))[0]!;
@@ -136,7 +138,7 @@ export async function probeNvidiaPool(){
  const s=structuredClone(await read());
  try{await catalog(s);}catch(e){console.warn("NVIDIA catalogue refresh skipped",String(e).slice(0,120));}
  await mergeLiveSuccesses(s);
- const model=nextProbe(s);
+ const model=nextProbe(s,Date.now(),process.env.NVIDIA_MODEL_DISCOVERY_PROBES_ENABLED==="true");
  if(!model){await save(s);return {state:"no_candidate",catalogCount:s.catalogCount};}
  let reason="ok",ok=false;const started=Date.now();
  try {
