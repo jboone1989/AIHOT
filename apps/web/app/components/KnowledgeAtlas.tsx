@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link } from "react-router";
 import { KnowledgeAtlasCanvas } from "./KnowledgeAtlasCanvas";
 import { RelationEvidence, type KnowledgeEdge } from "./KnowledgeNetwork";
 import { useText } from "./LanguageSwitch";
@@ -10,8 +10,8 @@ import { trackAnalytics } from "../lib/analytics.client";
 const empty: AtlasNetwork = { nodes: [], links: [], truncated: false };
 export function KnowledgeAtlas() {
   const t = useText();
-  const [params, setParams] = useSearchParams();
-  const selected = params.get("entity");
+  const [selected, setSelected] = useState<string | null>(() => typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("entity"));
+  const [hasNetwork, setHasNetwork] = useState(false);
   const [query, setQuery] = useState("");
   const [centers, setCenters] = useState<AtlasNode[]>([]);
   const [network, setNetwork] = useState<AtlasNetwork>(empty);
@@ -26,6 +26,17 @@ export function KnowledgeAtlas() {
   const current = useRef<string | null>(selected);
   current.current = selected;
   useEffect(() => {
+    const onPop = () => setSelected(new URLSearchParams(window.location.search).get("entity"));
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  const choose = (key: string | null) => {
+    const url = new URL(window.location.href);
+    if (key) url.searchParams.set("entity", key); else url.searchParams.delete("entity");
+    window.history.pushState(null, "", url);
+    setSelected(key);
+  };
+  useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
       fetch("/api/site/knowledge/centers?q=" + encodeURIComponent(query.trim()), {signal:controller.signal})
@@ -35,12 +46,12 @@ export function KnowledgeAtlas() {
     return () => {clearTimeout(timer);controller.abort();};
   }, [query]);
   useEffect(() => {
-    if(!selected) {setNetwork(empty);setLoading(false);setError(false);return;}
+    if(!selected) {setNetwork(empty);setHasNetwork(false);setLoading(false);setError(false);return;}
     const controller = new AbortController();
     setLoading(true);setError(false);setRelationId(null);
     fetch("/api/site/knowledge/neighborhood/" + encodeURIComponent(selected) + "?limit=" + limit, {signal:controller.signal})
       .then(r => {if(!r.ok) throw Error("neighborhood failed");return r.json() as Promise<AtlasNetwork>;})
-      .then(v => {if(!controller.signal.aborted) setNetwork(v);})
+      .then(v => {if(!controller.signal.aborted) {setNetwork(v);setHasNetwork(true);}})
       .catch(() => {if(!controller.signal.aborted) setError(true);})
       .finally(() => {if(!controller.signal.aborted) setLoading(false);});
     return () => controller.abort();
@@ -66,13 +77,13 @@ export function KnowledgeAtlas() {
   const focus=(key:string)=>{
     if(current.current===key)return;
     if(current.current)setHistory(v=>[...v.slice(-19),current.current!]);
-    setParams(p=>{const next=new URLSearchParams(p);next.set("entity",key);return next;});
+    choose(key);
     setLimit(40);setQuery("");setRelationId(null);
     trackAnalytics("graph_node_select");
   };
   const back=()=>setHistory(v=>{
     const next=[...v], key=next.pop();
-    if(key)setParams(p=>{const n=new URLSearchParams(p);n.set("entity",key);return n;});
+    if(key)choose(key);
     return next;
   });
   const center=network.nodes.find(n=>n.key===selected);
@@ -83,7 +94,7 @@ export function KnowledgeAtlas() {
       <span className="lr-atlas-count">{selected?t(`${network.nodes.length} 个实体 · ${network.links.length} 条关系`,`${network.nodes.length} entities · ${network.links.length} relations`):t("按实体探索","Explore by entity")}</span></div>
       <div className="lr-atlas-actions">
         {history.length>0&&<button type="button" onClick={back}>{t("返回上一实体","Previous entity")}</button>}
-        {selected&&<button type="button" onClick={()=>{setParams(p=>{const n=new URLSearchParams(p);n.delete("entity");return n;});setHistory([]);}}>{t("实体目录","Directory")}</button>}
+        {selected&&<button type="button" onClick={()=>{choose(null);setHistory([]);}}>{t("实体目录","Directory")}</button>}
         {network.truncated&&<button type="button" disabled={loading||limit>=80} onClick={()=>setLimit(80)}>{t("更多关系","More links")}</button>}
         <button type="button" aria-pressed={expanded} onClick={()=>setExpanded(v=>!v)}>{expanded?t("退出大图","Close expanded view"):t("大图浏览","Expand view")}</button>
       </div>
@@ -91,8 +102,8 @@ export function KnowledgeAtlas() {
     <div className="lr-atlas-body">
       <div className="lr-atlas-main">
         {error?<div className="lr-atlas-state" role="alert"><p>{t("实体关系暂时无法读取","Unable to load entity relationships")}</p><button type="button" onClick={()=>setAttempt(v=>v+1)}>{t("重试","Retry")}</button></div>
+          :selected&&hasNetwork&&network.nodes.length?<><KnowledgeAtlasCanvas network={network} selectedKey={selected} onNode={focus} onRelation={id=>{setRelationId(id);trackAnalytics("graph_relation_select");}}/>{loading&&<div className="lr-atlas-caption" role="status">{t("正在补充邻近关系…","Updating nearby relations…")}</div>}</>
           :loading?<div className="lr-atlas-state" role="status">{t("正在读取邻近关系…","Loading nearby relationships…")}</div>
-          :selected&&network.nodes.length?<KnowledgeAtlasCanvas network={network} selectedKey={selected} onNode={focus} onRelation={id=>{setRelationId(id);trackAnalytics("graph_relation_select");}}/>
           :<div className="lr-atlas-state" role="status">{selected?t("暂无可公开的邻近关系","No public neighbors yet"):t("从右侧搜索或选择一个实体开始探索","Search or select an entity to begin")}</div>}
         <div className="lr-atlas-caption">{t("仅加载当前实体周围有证据的关系，不加载整个知识库。","Only sourced relationships near the current entity are loaded.")}</div>
       </div>
