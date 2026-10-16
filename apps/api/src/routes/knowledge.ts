@@ -1,5 +1,5 @@
 import type {FastifyInstance} from "fastify";
-import {dailyGraphChanges,entityProfile,publicGraphOverview,publicGraphStats,publicStoryGraph,searchGraph} from "@aihot/backend/publication/knowledge";
+import {dailyGraphChanges,entityProfile,publicGraphNetwork,publicGraphOverview,publicGraphRelation,publicGraphStats,publicStoryGraph,searchGraph} from "@aihot/backend/publication/knowledge";
 import {timingSafeEqual} from "node:crypto";
 
 export function registerKnowledge(app:FastifyInstance){
@@ -17,6 +17,18 @@ export function registerKnowledge(app:FastifyInstance){
   });
   app.get("/api/site/knowledge/overview",async(_req,reply)=>
     reply.header("Cache-Control","public, max-age=60").send(await publicGraphOverview()));
+  app.get("/api/site/knowledge/network",async(_req,reply)=>{
+    const graph=await publicGraphNetwork();
+    if(graph.status==="unavailable") return reply.code(503).header("Cache-Control","no-store").send(graph);
+    return reply.header("Cache-Control","public, max-age=60").send(graph);
+  });
+  app.get<{Params:{key:string}}>("/api/site/knowledge/relations/:key",async(req,reply)=>{
+    if(req.params.key.length>180)return reply.code(400).send({error:"invalid_relation"});
+    const graph=await publicGraphRelation(req.params.key);
+    if(graph.status==="unavailable")return reply.code(503).header("Cache-Control","no-store").send(graph);
+    if(!graph.edges.length)return reply.code(404).header("Cache-Control","no-store").send({error:"not_found"});
+    return reply.header("Cache-Control","public, max-age=60").send(graph);
+  });
   app.get("/api/site/knowledge/stats",async(_req,reply)=>
     reply.header("Cache-Control","public, max-age=60").send(await publicGraphStats()));
   app.get<{Params:{publicId:string}}>("/api/site/knowledge/stories/:publicId",async(req,reply)=>{
