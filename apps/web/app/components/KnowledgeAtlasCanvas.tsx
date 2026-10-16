@@ -31,8 +31,6 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const t = useText();
-  const focusRef = useRef(selectedKey);
-  focusRef.current = selectedKey;
   // Keep one Cytoscape instance for the lifetime of the explorer. Recreating it
   // on every selection discards node coordinates, zoom and user orientation.
   useEffect(() => {
@@ -61,7 +59,6 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
     const instance = cy.current;
     if (!instance || !ready) return;
     const existing = new Set(instance.nodes().map(n => n.id()));
-    const desired = new Set(network.nodes.map(n => n.key));
     const centerNode = selectedKey ? instance.getElementById(selectedKey) : null;
     const anchor = centerNode && centerNode.length ? centerNode.position() : { x: 0, y: 0 };
     // Place only genuinely new neighbors. Existing nodes NEVER change coordinates.
@@ -86,15 +83,12 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
           color: n.degree >= 8 ? "#8baff8" : "#69d8c2",
         }, position });
       });
-      const edgeIds = new Set(network.links.map(l => "r:" + l.id));
-      instance.edges().filter(e => !edgeIds.has(e.id())).remove();
       for (const l of network.links) {
         const id = "r:" + l.id;
         if (!instance.getElementById(id).length && instance.getElementById(l.source).length && instance.getElementById(l.target).length) {
           instance.add({ group: "edges", data: { id, key: l.id, source: l.source, target: l.target, expired: !!l.invalidAt } });
         }
       }
-      instance.nodes().filter(n => !desired.has(n.id())).remove();
     });
     instance.nodes().removeClass("chosen");
     if (selectedKey) {

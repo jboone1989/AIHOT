@@ -26,24 +26,24 @@ export interface KnowledgeStats {
   episodes: number; entities: number; relations: number; status?: string;
 }
 
-function layout(edges: KnowledgeEdge[], centerKey?: string) {
+function layout(edges: KnowledgeEdge[]) {
   const weights = new Map<string, { name: string; key: string; degree: number }>();
   for (const edge of edges) for (const node of [edge.subject, edge.object]) {
     const old = weights.get(node.key);
     weights.set(node.key, { key: node.key, name: node.name, degree: (old?.degree ?? 0) + 1 });
   }
   const sorted = [...weights.values()].sort((a, b) => b.degree - a.degree || a.key.localeCompare(b.key));
-  const nodes = sorted.slice(0, 15);
+  const nodes = sorted;
   const coords = new Map(nodes.map((node, i) => {
-    const orbit = i === 0 ? 0 : i < 6 ? 1 : 2;
-    const index = orbit === 1 ? i - 1 : i - 6;
-    const count = orbit === 1 ? Math.min(5, nodes.length - 1) : Math.max(1, nodes.length - 6);
-    const angle = -Math.PI / 2 + 2 * Math.PI * index / count + (orbit === 2 ? 0.19 : 0);
-    const radiusX = orbit === 1 ? 160 : orbit === 2 ? 320 : 0;
-    const radiusY = orbit === 1 ? 112 : orbit === 2 ? 176 : 0;
+    const orbit = i === 0 ? 0 : Math.floor((i - 1) / 12) + 1;
+    const index = i === 0 ? 0 : (i - 1) % 12;
+    const count = Math.min(12, nodes.length - 1 - (orbit - 1) * 12);
+    const angle = -Math.PI / 2 + 2 * Math.PI * index / Math.max(1, count) + orbit * 0.17;
+    const radiusX = orbit * 195;
+    const radiusY = orbit * 135;
     return [node.key, { x: 390 + Math.cos(angle) * radiusX, y: 225 + Math.sin(angle) * radiusY }] as const;
   }));
-  return { nodes, coords, visibleEdges: edges.filter(e => coords.has(e.subject.key) && coords.has(e.object.key)).slice(0, 30) };
+  return { nodes, coords, visibleEdges: edges.filter(e => coords.has(e.subject.key) && coords.has(e.object.key)) };
 }
 
 function shortName(value: string) {
@@ -65,7 +65,7 @@ export function KnowledgeCanvas({ edges, activeId, compact = false, selectedNode
 }) {
   const gridId = `lr-grid-${useId().replaceAll(":", "")}`;
   const [zoom, setZoom] = useState(1);
-  const { nodes, coords, visibleEdges } = useMemo(() => layout(edges, selectedNodeKey), [edges, selectedNodeKey]);
+  const { nodes, coords, visibleEdges } = useMemo(() => layout(edges), [edges]);
   const t=useText();
   const lang=useUiLanguage();
   if (!nodes.length) return (

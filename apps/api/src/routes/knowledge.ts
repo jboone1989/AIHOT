@@ -37,11 +37,9 @@ export function registerKnowledge(app:FastifyInstance){
     if(result.status==="unavailable")return reply.code(503).header("Cache-Control","no-store").send(result);
     return reply.header("Cache-Control","public, max-age=60").send(result);
   });
-  app.get<{Params:{key:string};Querystring:{limit?:string}}>("/api/site/knowledge/neighborhood/:key",async(req,reply)=>{
+  app.get<{Params:{key:string}}>("/api/site/knowledge/neighborhood/:key",async(req,reply)=>{
     if(req.params.key.length>180)return reply.code(400).send({error:"invalid_entity"});
-    const limit=Number(req.query.limit??40);
-    if(!Number.isInteger(limit)||limit<1||limit>80)return reply.code(400).send({error:"invalid_limit"});
-    const result=await publicAtlasNeighborhood(req.params.key,limit);
+    const result=await publicAtlasNeighborhood(req.params.key);
     if(result.status==="unavailable")return reply.code(503).header("Cache-Control","no-store").send(result);
     if(result.status==="not_found")return reply.code(404).send(result);
     return reply.header("Cache-Control","public, max-age=60").send(result);
