@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""LivingRuntime production acceptance: real content + knowledge graph, not just HTTP 200."""
+"""EventGraph production acceptance: real content + knowledge graph, not just HTTP 200."""
 import json
 import os
 import sys
@@ -11,7 +11,7 @@ pages=["/","/all","/hot","/knowledge","/topics","/daily","/daily/archive","/feed
 failure=[]
 def get(path):
     try:
-        with urllib.request.urlopen(urllib.request.Request(base+path,headers={"User-Agent":"LivingRuntime-Production-Smoke/1.0"}),timeout=18) as response:
+        with urllib.request.urlopen(urllib.request.Request(base+path,headers={"User-Agent":"EventGraph-Production-Smoke/1.0"}),timeout=18) as response:
             return response.status,response.read(250000),response.headers.get("content-type","")
     except urllib.error.HTTPError as err:
         return err.code,err.read(250000),err.headers.get("content-type","")
@@ -23,7 +23,7 @@ for path in pages:
     if status!=200 or not html:failure.append(path+" status="+str(status))
     print(path,status,len(html))
 status,home,_=get("/")
-if b"LivingRuntime" not in home or b"adsbygoogle.js" in home or b"google-adsense-account" in home:
+if b"EventGraph" not in home or b"adsbygoogle.js" in home or b"google-adsense-account" in home:
     failure.append("Home title or AdSense verification is incorrect")
 for path,key in [("/api/site/hot","entries"),("/api/site/timeline","cards")]:
     status,raw,_=get(path)
