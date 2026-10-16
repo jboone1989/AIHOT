@@ -150,7 +150,7 @@ export function RelationEvidence({ edge }: { edge: KnowledgeEdge }) {
       </div>
       <div className="mt-4 border-t border-line-soft pt-3">
         <div className="lr-eyebrow mb-2">SOURCE TRAIL / {t("证据来源","EVIDENCE")}</div>
-        {edge.evidence.length ? edge.evidence.slice(0, 5).map((source, i) => (
+        {edge.evidence.length ? edge.evidence.map((source, i) => (
           <div key={source.articleId + i} className="flex items-start justify-between gap-2 py-2">
             <div>
               <div className="text-[13px] font-medium text-ink">{lang==="en" ? (source.source&&!hasHan(source.source)?source.source:"Publisher") : (source.source||"未命名来源")}</div>

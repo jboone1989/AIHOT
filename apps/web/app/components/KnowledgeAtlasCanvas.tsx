@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { Core, StylesheetJson } from "cytoscape";
-import type { AtlasNetwork } from "../lib/knowledge-atlas";
+import { groupAtlasPairs, type AtlasNetwork } from "../lib/knowledge-atlas";
 import { useText } from "./LanguageSwitch";
 
 function createStyles(): StylesheetJson {
   return [
     { selector: "node", style: { label: "data(name)", width: "data(size)", height: "data(size)", "background-color": "data(color)", color: "#e6edf5", "font-size": 11, "min-zoomed-font-size": 8, "text-valign": "bottom", "text-margin-y": 5, "text-outline-color": "#111c2d", "text-outline-width": 2, "text-wrap": "ellipsis", "text-max-width": "140px" } },
-    { selector: "edge", style: { width: 0.7, "line-color": "#698a9c", opacity: 0.3, "curve-style": "haystack" } },
+    { selector: "edge", style: { width: 0.7, "line-color": "#698a9c", opacity: 0.3, "curve-style": "straight", label: "data(label)", "font-size": 10, color: "#dce5f2", "text-outline-color": "#111c2d", "text-outline-width": 2 } },
     { selector: "edge[?expired]", style: { "line-style": "dashed", opacity: 0.15 } },
     { selector: "node[?hub]", style: { "font-size": 22, "min-zoomed-font-size": 0, "font-weight": "bold", color: "#f3f6ff" } },
     { selector: ".chosen", style: { "background-color": "#fff1af", "border-width": 3, "border-color": "#ffffff", "font-size": 16, "font-weight": "bold", "z-index": 10 } },
@@ -23,14 +23,14 @@ function readableLabels(instance: Core, dense: boolean) {
   instance.edges(".traversed-edge").style("width", Math.min(20, 4 / zoom));
 }
 
-export function KnowledgeAtlasCanvas({ network, selectedKey, activeLinkId, homeKey, onNode, onRelation }: {
-  network: AtlasNetwork; selectedKey: string | null; activeLinkId?: string | null; homeKey?: string | null;
-  onNode: (key: string) => void; onRelation: (key: string) => void;
+export function KnowledgeAtlasCanvas({ network, selectedKey, activePairKey, homeKey, onNode, onPair }: {
+  network: AtlasNetwork; selectedKey: string | null; activePairKey?: string | null; homeKey?: string | null;
+  onNode: (key: string) => void; onPair: (key: string) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const cy = useRef<Core | null>(null);
-  const callbacks = useRef({ onNode, onRelation });
-  callbacks.current = { onNode, onRelation };
+  const callbacks = useRef({ onNode, onPair });
+  callbacks.current = { onNode, onPair };
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const t = useText();
@@ -65,7 +65,7 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, activeLinkId, homeK
       instance.on("mouseover", "node", e => { e.target.addClass("hovered"); readableLabels(instance, false); });
       instance.on("mouseout", "node", e => { e.target.removeClass("hovered"); readableLabels(instance, false); });
       instance.on("tap", "node", e => callbacks.current.onNode(e.target.id()));
-      instance.on("tap", "edge", e => callbacks.current.onRelation(e.target.data("key")));
+      instance.on("tap", "edge", e => callbacks.current.onPair(e.target.id()));
       resize = new ResizeObserver(() => instance.resize());
       resize.observe(container.current);
       setReady(true);
@@ -95,8 +95,9 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, activeLinkId, homeK
     const rootIsNew = !!selected && newcomers.some(n => n.key === selected);
     const root = rootIsNew ? (firstLoad ? { x: 0, y: 0 } : { x: center.x + 230, y: center.y }) : center;
     const ordered = [...newcomers.filter(n => n.key === selected), ...newcomers.filter(n => n.key !== selected)];
-    const edges = network.links.filter(l => !instance.getElementById("r:" + l.id).length);
-    if (!ordered.length && !edges.length) return;
+    const pairs = groupAtlasPairs(network.links);
+    const newPairs = pairs.filter(p => !instance.getElementById(p.key).length);
+    if (!ordered.length && !newPairs.length && !pairs.some(p => instance.getElementById(p.key).data("count") !== p.links.length)) return;
     instance.batch(() => {
       let index = 0;
       for (const n of ordered) {
@@ -113,10 +114,16 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, activeLinkId, homeK
           color: n.degree >= 8 ? "#8baff8" : "#69d8c2",
         }, position });
       }
-      for (const l of edges) {
-        if (instance.getElementById(l.source).length && instance.getElementById(l.target).length) {
+      for (const pair of pairs) {
+        const existingEdge = instance.getElementById(pair.key);
+        const count = pair.links.length;
+        if (existingEdge.length) {
+          existingEdge.data({ count, label: count > 1 ? String(count) : "" });
+        } else if (instance.getElementById(pair.a).length && instance.getElementById(pair.b).length) {
           instance.add({ group: "edges", data: {
-            id: "r:" + l.id, key: l.id, source: l.source, target: l.target, expired: !!l.invalidAt,
+            id: pair.key, source: pair.a, target: pair.b, count,
+            label: count > 1 ? String(count) : "",
+            expired: pair.links.every(l => !!l.invalidAt),
           } });
         }
       }
@@ -133,18 +140,17 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, activeLinkId, homeK
     if (!ready || !instance || !selectedKey) return;
     centerOnce(instance, selectedKey, focused.current !== null);
   }, [selectedKey, ready]);
-  // The clicked row identifies one specific factual relation (not all edges
-  // between the same pair). Apply a class without changing coordinates or pan.
+  // Highlight one visible pair. The underlying directed facts remain separate.
   useEffect(() => {
     const instance = cy.current;
     if (!ready || !instance) return;
     instance.edges(".traversed-edge").removeClass("traversed-edge");
-    if (activeLinkId) {
-      const edge = instance.getElementById("r:" + activeLinkId);
+    if (activePairKey) {
+      const edge = instance.getElementById(activePairKey);
       if (edge.length) edge.addClass("traversed-edge");
     }
     readableLabels(instance, false);
-  }, [activeLinkId, network, ready]);
+  }, [activePairKey, network, ready]);
 
   const returnHome = () => {
     if (!homeKey) return;
