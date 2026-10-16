@@ -5,7 +5,7 @@ import { sql } from "../db.ts";
 import { credential } from "../config.ts";
 import { chatJson, isNvidiaTextModel, ModelOutputError, MODELS } from "./llm.ts";
 import { BudgetExceededError, ProviderRejectedError, ReceiptUnknownError } from "./receipts.ts";
-import { eligibleFallback, modelCircuitOpen, trafficFailureRate, conservativeFailureRisk, EMPTY_TRAFFIC, VERIFIED_FALLBACKS, type ModelTraffic } from "./nvidia-routing.ts";
+import { eligibleFallback, modelCircuitOpen, trafficFailureRate, conservativeFailureRisk, EMPTY_TRAFFIC, VERIFIED_FALLBACKS, probeAttemptTag, type ModelTraffic } from "./nvidia-routing.ts";
 
 const KEY="nvidia.model_pool.v1";
 const TTL=4*3600_000, CATALOG_TTL=2*3600_000, MAX=100;
@@ -144,7 +144,7 @@ export async function probeNvidiaPool(){
      subject:"nvidia:"+model+":"+new Date().toISOString().slice(0,16),
      // subject is audit-only; attemptTag is part of the durable logical key.
      // Without this a year-old successful probe is reused in 3ms as false proof of health.
-     attemptTag:new Date().toISOString().slice(0,16),
+     attemptTag:probeAttemptTag(new Date()),
      promptVersion:"nvidia-probe.v1",system:"Return JSON only.",user:prompt,
      schema,temperature:0,maxTokens:512,timeoutMs:18000});
    ok=/[\u4e00-\u9fff]/.test(result.data.titleZh+result.data.summaryZh);
