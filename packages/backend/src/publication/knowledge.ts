@@ -2,7 +2,7 @@
 // events (stories) those reports belong to. Graphiti owns the relations; this database owns what is
 // public, so a cited report that was withdrawn, held back or never published is left out here.
 import { sql } from "../db.ts";
-import { graphChanges, graphForEntity, type GraphChanges } from "../knowledge/graphiti.ts";
+import { graphChanges, graphForEntity, graphForStory, type GraphChanges } from "../knowledge/graphiti.ts";
 import { cachedByKey } from "../lib/cache.ts";
 import { publicSourceName } from "./rules.ts";
 import { storyReportCondition } from "./scope.ts";
@@ -114,4 +114,25 @@ const dailyChanges = cachedByKey((key: string) => key, (key: string) => readDail
 /** The graph's changes for a daily issue, rule-based from Graphiti's own records (no model call). */
 export async function dailyGraphChanges(key: string, now?: Date) {
   return now ? readDailyChanges(key, now) : dailyChanges(key);
+}
+
+/** Relations with only the evidence that is public now; a relation left with none is dropped. */
+async function publicRelations(edges: Edge[], now: Date) {
+  const { reports } = await citedReports([...new Set(edges.flatMap((e) => e.evidence.map((ev) => ev.articleId)).filter(Boolean))], now);
+  const isPublic = new Set(reports.map((r) => r.id));
+  return edges
+    .map((e) => ({ ...e, evidence: e.evidence.filter((ev) => isPublic.has(ev.articleId)) }))
+    .filter((e) => e.evidence.length > 0);
+}
+
+/** A public story's relations for agents (MCP): Graphiti's, each with evidence that is public now. */
+export async function publicStoryGraph(publicId: string, now = new Date()) {
+  const graph = await graphForStory(publicId);
+  return { status: graph.status ?? "ok", edges: await publicRelations(graph.edges, now) };
+}
+
+/** An entity's profile for agents (MCP): as the site's, with only publicly evidenced relations. */
+export async function publicEntityProfile(key: string, now = new Date()) {
+  const profile = await entityProfile(key);
+  return { ...profile, edges: await publicRelations(profile.edges, now) };
 }

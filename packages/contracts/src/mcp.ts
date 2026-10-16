@@ -13,6 +13,8 @@ export const MCP_TOOL_NAMES = {
   daily: mcpToolName("get_daily"),
   weekly: mcpToolName("get_weekly"),
   monthly: mcpToolName("get_monthly"),
+  storyGraph: mcpToolName("get_story_graph"),
+  entity: mcpToolName("get_entity"),
 } as const;
 
 /** The engine's tools, in the order the server lists them. */
