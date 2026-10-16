@@ -21,6 +21,7 @@ import { recoverStaleWork } from "@aihot/backend/operations/recover";
 import { forwardPendingFeedback } from "@aihot/backend/operations/feedback";
 import { backupConfigured, runBackup } from "@aihot/backend/operations/backup";
 import { sourceHealthWeekly } from "@aihot/backend/operations/reports";
+import { snapshotMarkets } from "@aihot/backend/market-snapshots";
 
 const collecting = process.env.COLLECT_ENABLED === "true";
 
@@ -61,6 +62,8 @@ const ENGINE_SCHEDULES: Scheduled[] = [
         { name: "sources.adapt-intervals", cron: "20 4 * * *", run: adaptIntervals },
         // Icons are read from the sources' own sites, so they stop with collection.
         { name: "sources.icons", cron: "40 4 * * *", missed: "once" as const, run: () => refreshSourceIcons() },
+        // Exchange prices for event pages (Binance, else OKX); read from outside, so it stops with collection.
+        { name: "market.snapshot", cron: "*/15 * * * *", run: () => snapshotMarkets() },
       ]
     : []),
   // WeChat official accounts through Dajiala (paid), each once per its interval; only with its key.

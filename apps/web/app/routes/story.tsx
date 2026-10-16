@@ -10,6 +10,7 @@ import { breadcrumbLd, pageMeta, storyLd, titled } from "../lib/seo";
 import { beijingDate, beijingTime } from "@aihot/contracts/time";
 import { monthDay, monthDayTime, relativeTime } from "../lib/format";
 import { HeatChart } from "../features/story/HeatChart";
+import { EventPrices, type StoryMarket } from "../features/story/EventPrices";
 import { KnowledgeExplorer, type KnowledgeGraph } from "../components/KnowledgeNetwork";
 import { englishText } from "../components/EnglishStory";
 import { sessionCache } from "../lib/session-cache";
@@ -35,8 +36,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       if (request.signal.aborted) throw error;
       return { entities: 0, edges: [], status: "unavailable" };
     });
-  const [story, graph] = await Promise.all([storyPromise, graphPromise]);
-  return cachedPage(120, { story, graph });
+  const marketPromise = apiGet<StoryMarket>(`/api/market/stories/${encodeURIComponent(params.publicId)}`, { signal: request.signal, timeoutMs: 1_500 }).catch(() => null);
+  const [story, graph, market] = await Promise.all([storyPromise, graphPromise, marketPromise]);
+  return cachedPage(120, { story, graph, market });
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -195,7 +197,7 @@ type Order = "desc" | "asc";
 const viewCache = sessionCache<{ savedAt: number; filter: Filter; order: Order }>("aihot:story-view:", 30 * 60 * 1000);
 
 export default function StoryPage() {
-  const { story, graph } = useLoaderData<typeof loader>();
+  const { story, graph, market } = useLoaderData<typeof loader>();
   const t=useText();
   const uiLang=useUiLanguage();
   const entry = useLocation().key;
@@ -478,6 +480,7 @@ export default function StoryPage() {
         </div>
 
         <aside className="order-2 flex min-w-0 flex-col gap-4 lg:order-none lg:gap-5">
+          <EventPrices market={market} />
           {observed && (
             <RailCard title={t("为什么热","Why trending")}>
               <p className="text-[12.5px] leading-[1.75] text-ink-3">

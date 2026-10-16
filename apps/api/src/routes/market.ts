@@ -1,5 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { getSpot, SPOT_ASSETS, type SpotAsset } from "@aihot/backend/market-spot";
+import { storyMarket } from "@aihot/backend/publication/market";
+import { resolveStory } from "@aihot/backend/publication/stories";
 
 /** Public read-only snapshot, separate from article processing. */
 export function registerMarket(app: FastifyInstance) {
@@ -14,5 +16,13 @@ export function registerMarket(app: FastifyInstance) {
     reply.header("Cache-Control", "public, max-age=30, s-maxage=60");
     if (!result.observations.length) return reply.code(503).send(result);
     return reply.send(result);
+  });
+  // Prices around one public event, from the worker's snapshots; an empty list when it names no asset or none was priced.
+  app.get<{ Params: { publicId: string } }>("/api/market/stories/:publicId", async (req, reply) => {
+    const found = await resolveStory(req.params.publicId);
+    const market = found.kind === "found" ? await storyMarket(found.storyId) : null;
+    if (!market) return reply.code(404).header("Cache-Control", "public, max-age=60").send({ error: "not_found" });
+    reply.header("Cache-Control", "public, max-age=300, s-maxage=300");
+    return reply.send(market);
   });
 }
