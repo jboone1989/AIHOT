@@ -214,9 +214,13 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
   }, [navigation.state, navigation.location, historyKey]);
   useSaveOnLeave(historyKey, () => stateRef.current);
 
+  // The list a page was last added to. Until React renders the new state, stateRef still holds that
+  // list and its old cursor, so a call in between (the sentinel or the unread filter) would fetch the
+  // same page again and count an extra batch.
+  const pagedFrom = useRef<ListState | null>(null);
   const loadMore = useCallback(async () => {
     const s = stateRef.current;
-    if (!s.nextCursor || pageRequest.current) return;
+    if (!s.nextCursor || pageRequest.current || pagedFrom.current === s) return;
     const key = listPath("/api/site/timeline", filterParams(filters));
     const controller = new AbortController();
     pageRequest.current = controller;
@@ -235,6 +239,7 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
       if (!res.ok) throw new Error(String(res.status));
       const page = (await res.json()) as TimelineResponse;
       if (!current()) return;
+      pagedFrom.current = stateRef.current;
       setState((prev) => {
         const seen = new Set(prev.cards.map((c) => c.key));
         const added = page.cards.filter((c) => !seen.has(c.key));

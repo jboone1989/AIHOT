@@ -234,6 +234,13 @@ export async function refreshSelectedPayload(articleId: string, actor: string, r
   });
 }
 
+/** Old ordinary news whose stored body was dropped (operations/news-compaction.ts): its public copy keeps
+ * the summary and leaves syndication and the search index body. */
+export async function compactPublications(tx: Tx, ids: string[]) {
+  await tx`UPDATE pool_search SET body = '' WHERE article_id = ANY(${ids}::text[])`;
+  await tx`UPDATE publications SET body_mode = 'summary', syndicate = false WHERE article_id = ANY(${ids}::text[])`;
+}
+
 export async function publishArticle(articleId: string, options: PublishOptions = {}): Promise<PublishResult | null> {
   return sql.begin(async (tx) => {
     await tx`SELECT 1 FROM articles WHERE id = ${articleId} FOR UPDATE`;
