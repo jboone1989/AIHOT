@@ -7,6 +7,7 @@ import { AdminPage, Card, Stat } from "../../features/admin/ui";
 type Metric = { name: string; count: number; sessions: number };
 type Day = { day: string; page_views: number; sessions: number; graph_sessions: number };
 type Overview = {
+  cloudflare: {state: "unconfigured" | "ready" | "error"; pageViews: number | null; daily: Array<{day: string; pageViews: number}>; refreshedAt: string | null; message?: string};
   periodDays: number; asOf: string; weeklyEffectiveExplorers: number;
   ingestion: {total_events: number; last_event_at: string | null};
   totals: { page_views?: number; sessions?: number; story_sessions?: number; graph_sessions?: number; source_sessions?: number; search_sessions?: number };
@@ -41,6 +42,13 @@ export default function AnalyticsAdmin({ loaderData: a }: Route.ComponentProps) 
   const max = Math.max(1, ...a.daily.map(d => d.page_views));
   return (
     <AdminPage title="流量与行为" subtitle={<>最近 {a.periodDays} 天 · 更新于 {a.asOf.slice(0,16).replace("T", " ") + " UTC"} · 匿名会话统计，不等于独立访客数（UV）</>}>
+      <Card className="mb-5" title="Cloudflare Web Analytics · 最近 7 天">
+        {a.cloudflare.state === "ready" ? <>
+          <p className="num text-[24px] font-semibold">{n(a.cloudflare.pageViews)} PV</p>
+          <p className="text-[12px] text-ink-3">数据源：Cloudflare RUM（独立统计口径，不与站内 PV 相加）· 更新 {a.cloudflare.refreshedAt?.slice(0,16).replace("T"," ")} UTC</p>
+          <div className="mt-3 space-y-1">{a.cloudflare.daily.map(d => <div key={d.day} className="flex justify-between text-[12px]"><span>{d.day}</span><span className="num">{n(d.pageViews)} PV</span></div>)}</div>
+        </> : <p className="text-[13px] text-ink-3">{a.cloudflare.message ?? "尚未取得 Cloudflare 数据"}</p>}
+      </Card>
       <div role="status" className="mb-5 rounded-panel border border-line bg-bg-sunk p-4 text-[13px] text-ink-2">{!hasData ? "尚未收到任何真实访问事件。数据采集未得到验证，所有指标暂不显示；不会使用模拟数据。" : `已收到 ${n(a.ingestion.total_events)} 条真实入库事件。最近一次：${a.ingestion.last_event_at ?? "未知"}。访客数不等于匿名会话数。`}</div>
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="7 天有效知识探索" value={metric(a.weeklyEffectiveExplorers)} hint="同一匿名会话：打开事件后选择 Graph 节点或访问原文"/>
