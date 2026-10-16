@@ -16,6 +16,21 @@ export function nvidiaCapability(entry: string | NvidiaCatalogEntry): NvidiaCapa
   const flags = Array.isArray(item.capabilities) ? item.capabilities.join(" ") : JSON.stringify(item.capabilities ?? {});
   const tag = [item.task ?? "", item.type ?? "", flags].join(" ").toLowerCase();
   const s = id + " " + tag;
+  // The /models listing currently exposes IDs, not reliable task metadata.
+  // These exceptions follow each model's published NVIDIA API reference.
+  // Do not treat a word like "diffusion" as proof of image-generation output.
+  const documented: Partial<Record<string,NvidiaCapability>> = {
+    "google/diffusiongemma-26b-a4b-it":"vision",
+    "nvidia/nvclip":"embedding",
+    "nvidia/ising-calibration-1.5-31b":"vision",
+    "meta/muse-glimmer-30b":"vision",
+    "nvidia/riva-translate-4b-instruct":"text",
+    "nvidia/riva-translate-4b-instruct-v2":"text",
+    "poolside/laguna-xs-2.1":"text",
+    "stepfun-ai/step-5-preview":"text",
+  };
+  if (documented[id]) return documented[id]!;
+  if (id.startsWith("nvidia/nemotron-parse")) return "document";
   if (/safety|moderation|guard|shield|content.filter|reward.model/.test(s)) return "safety";
   if (/rerank|re-rank|retriev.*rank|ranking.model/.test(s)) return "rerank";
   if (/embed|text.embedding|vector.representation/.test(s)) return "embedding";
