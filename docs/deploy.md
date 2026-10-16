@@ -79,6 +79,12 @@ docker compose run --rm setup && docker compose up -d
 
 下面按时间从新到旧列出每次更新要注意的事。
 
+#### EventGraph：删掉两个没人读的列（2026 年 10 月 16 日）
+
+两个新迁移**删除列和其中的数据**：`0101` 删 `product_analytics_events.id`（匿名统计只按时间汇总和清理），`0102` 删 `graphiti_ingestions.ingested_at`（只用来判断一篇文章是否已入图，不看时间）。统计数字和图谱都不受影响。
+
+- `.env.example` 补上了代码一直在读的 `NVIDIA_MODEL_POOL_ENABLED` 和 `NEWS_BODY_RETENTION_DAYS`，默认行为不变。
+
 #### EventGraph：删除旧的本地知识图谱原型（2026 年 10 月 16 日）
 
 四个新迁移 `0097`–`0100` **删除表和其中的数据**：`knowledge_claims`、`knowledge_extractions`、`knowledge_entities`（改用 Graphiti 之前的本地图谱原型）和 `knowledge_sync`（已删除的 `scripts/graphiti-sync.ts` 的导入进度）。现在的图谱数据在 Graphiti/Neo4j 里，导入记录在 `graphiti_ingestions`，都不受影响。要保留旧原型的数据，先按[备份](#备份)导出这四张表再升级。

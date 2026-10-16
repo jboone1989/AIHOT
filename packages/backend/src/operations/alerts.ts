@@ -212,6 +212,7 @@ const PROVIDERS: Record<string, { name: string; where: string; stops?: string }>
   dashscope: { name: "阿里云百炼", where: "阿里云百炼控制台" },
   deepseek: { name: "DeepSeek", where: "DeepSeek 开放平台" },
   mimo: { name: "小米 MiMo", where: "小米 MiMo 开放平台" },
+  nvidia: { name: "NVIDIA", where: "NVIDIA Build（build.nvidia.com）控制台" },
   socialdata: { name: "SocialData", stops: "X（推特）上的新内容收不到", where: "SocialData 后台" },
   jina: { name: "Jina", stops: "部分文章取不到正文", where: "Jina 后台" },
   dajiala: { name: "极致了（Dajiala）", stops: "公众号新文章收不到", where: "极致了后台" },
