@@ -32,7 +32,7 @@ export function chooseModel(s:Pool,preferredModel:string,now=Date.now(),traffic:
  const candidates=healthyModels(s,now).filter(h=>
    nvidiaCapability(h.model)===capability &&
    (capability!=="vision"||h.visionVerified===true) &&
-   eligibleFallback(h.model,wanted) || false);
+   eligibleFallback(h.model,wanted));
  const viable=candidates.filter(h=>!modelCircuitOpen(traffic[h.model]??EMPTY_TRAFFIC));
  if(viable.some(h=>h.model===wanted))return wanted;
  return viable.sort((a,b)=>conservativeFailureRisk(traffic[a.model]??EMPTY_TRAFFIC)-
@@ -103,7 +103,7 @@ async function catalog(s:Pool){
  if(s.catalogVersion===3&&age(s.catalogAt,Date.now())<CATALOG_TTL)return;
  const key=credential("models","NVIDIA_API_KEY"),url=credential("models","NVIDIA_BASE_URL");
  if(!key||!url)throw Error("NVIDIA not configured");
- const response=await fetch(url.replace(/\\/$/,"")+"/models",{
+ const response=await fetch(url.replace(/\/$/,"")+"/models",{
    headers:{authorization:"Bearer "+key,accept:"application/json"},signal:AbortSignal.timeout(10000)});
  if(!response.ok)throw Error("NVIDIA catalog HTTP "+response.status);
  const data=await response.json() as {data?:NvidiaCatalogEntry[]};
