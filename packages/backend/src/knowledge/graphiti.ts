@@ -1,4 +1,5 @@
 import { sql } from "../db.ts";
+import { graphitiRetryDelayMs } from "./ingest-backoff.ts";
 
 type Article = {
   id: string; revision: number; title: string; url: string;
@@ -36,28 +37,49 @@ export async function ingestGraphitiOnce() {
            a.published_at, s.name AS source_name
     FROM articles a JOIN sources s ON s.id=a.source_id
     LEFT JOIN graphiti_ingestions g ON g.article_id=a.id AND g.revision=a.revision
-    WHERE a.processing_state='analyzed' AND s.participation_mode='editorial'
+    LEFT JOIN settings cooldown
+      ON cooldown.key = 'graphiti.ingest.failure:' || a.id || ':r' || a.revision::text
+    WHERE (cooldown.value IS NULL OR (cooldown.value->>'retryAfter')::timestamptz <= now())
+      AND a.processing_state='analyzed' AND s.participation_mode='editorial'
       AND g.article_id IS NULL AND a.revision >= 1
       AND a.discovered_at > now() - interval '21 days'
       AND length(coalesce(a.body_text, a.excerpt, '')) >= 80
     ORDER BY (s.tier='T1') DESC, a.discovered_at DESC LIMIT 1`;
   if (!article) return { status: "no_candidate" };
-  const text = [article.title, article.excerpt, article.body_text?.slice(0, 8500)]
-    .filter(Boolean).join("\n").slice(0, 9950);
-  const receipt = await graphiti<{ accepted: boolean; episode_id: string; duplicate: boolean }>("/episodes", {
-    method: "POST", timeoutMs: 180000,
-    body: {
-      article_id: article.id, revision: article.revision, title: article.title,
-      url: article.url, source: article.source_name, text,
-      published_at: article.published_at?.toISOString() ?? null,
-    },
-  });
-  if (!receipt.accepted || !receipt.episode_id) throw new Error("Graphiti did not accept episode");
-  await sql`
-    INSERT INTO graphiti_ingestions(article_id,revision,episode_id)
-    VALUES(${article.id},${article.revision},${receipt.episode_id})
-    ON CONFLICT (article_id,revision) DO NOTHING`;
-  return { status: "ingested", articleId: article.id, duplicate: receipt.duplicate };
+  // Smaller bounded input lowers LLM extraction latency; preserve article identity and provenance.
+  const text = [article.title, article.excerpt, article.body_text?.slice(0, 4500)]
+    .filter(Boolean).join("\n").slice(0, 5400);
+  const retryKey = `graphiti.ingest.failure:${article.id}:r${article.revision}`;
+  try {
+    const receipt = await graphiti<{ accepted: boolean; episode_id: string; duplicate: boolean }>("/episodes", {
+      method: "POST", timeoutMs: 180000,
+      body: {
+        article_id: article.id, revision: article.revision, title: article.title,
+        url: article.url, source: article.source_name, text,
+        published_at: article.published_at?.toISOString() ?? null,
+      },
+    });
+    if (!receipt.accepted || !receipt.episode_id) throw new Error("Graphiti did not accept episode");
+    await sql`
+      INSERT INTO graphiti_ingestions(article_id,revision,episode_id)
+      VALUES(${article.id},${article.revision},${receipt.episode_id})
+      ON CONFLICT (article_id,revision) DO NOTHING`;
+    await sql`DELETE FROM settings WHERE key = ${retryKey}`;
+    return { status: "ingested", articleId: article.id, duplicate: receipt.duplicate };
+  } catch (error) {
+    // An upstream timeout is not proof of failure: Graphiti may still finish after the client
+    // disconnects. Cool down this identity rather than immediately paying to ingest it again.
+    const [previous] = await sql<{ value: { failures?: number } }[]>`
+      SELECT value FROM settings WHERE key = ${retryKey}`;
+    const failures = Math.min(6, Number(previous?.value?.failures ?? 0) + 1);
+    const retryAfter = new Date(Date.now() + graphitiRetryDelayMs(failures)).toISOString();
+    const reason = String(error instanceof Error ? error.message : error).slice(0, 200);
+    await sql`INSERT INTO settings (key, value, updated_by)
+      VALUES (${retryKey}, ${sql.json({ failures, retryAfter, reason } as never)}, 'graphiti-ingest')
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value,
+        updated_by = EXCLUDED.updated_by, updated_at = now()`;
+    throw error;
+  }
 }
 
 /** AIHot is the authority for story membership, Graphiti for knowledge relations. */
