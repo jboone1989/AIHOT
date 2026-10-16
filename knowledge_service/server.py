@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from graphiti_core import Graphiti
 from graphiti_core.nodes import EpisodeType, EpisodicNode
@@ -286,6 +286,25 @@ async def graph_overview():
 
 def article_ids(names):
     return [name.removeprefix("aihot:").split(":r")[0] for name in names if name]
+
+
+
+@app.get("/atlas/centers")
+async def atlas_centers(q: str = "", limit: int = 20):
+    """Small indexed candidate list. Public-evidence filtering happens in the API."""
+    if len(q) > 100 or limit < 1 or limit > 40:
+        raise HTTPException(status_code=400, detail="invalid query")
+    query = q.strip().lower()
+    rows, _, _ = await app.state.graph.driver.execute_query(
+        "MATCH (n:Entity {group_id:'aihot'}) "
+        "WHERE $q = '' OR toLower(n.name) CONTAINS $q "
+        "WITH n OPTIONAL MATCH (ep:Episodic {group_id:'aihot'})-[:MENTIONS]->(n) "
+        "RETURN n.uuid AS key, n.name AS name, collect(DISTINCT ep.name) AS articles "
+        "ORDER BY CASE WHEN $q = '' THEN size(articles) ELSE 0 END DESC, name LIMIT $limit",
+        q=query, limit=limit, routing_="r",
+    )
+    return {"nodes": [{"key": row["key"], "name": row["name"],
+                        "articleIds": article_ids(row["articles"])} for row in rows]}
 
 
 @app.get("/network")

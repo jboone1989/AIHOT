@@ -36,7 +36,7 @@ export default function KnowledgePage() {
         <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 data-page-title className="lr-page-title">{t("让信息形成","Make knowledge")}<span>{t("联系。","connected.")}</span></h1>
-            <p className="mt-3 max-w-[720px] text-[14px] leading-[1.9] text-ink-3">{t("事件是短期的，知识可以持续积累。这里可以浏览完整的公开实体网络，搜索公司、人物与技术，沿着关系追溯每一条报道证据。","News events evolve quickly. Browse the complete public entity network, find companies, people and technologies, and follow their connections back to source reporting.")}</p>
+            <p className="mt-3 max-w-[720px] text-[14px] leading-[1.9] text-ink-3">{t("事件是短期的，知识可以持续积累。从感兴趣的实体开始，沿着有证据支持的关系逐层探索公司、人物与技术。","News events evolve quickly. Start with an entity and explore its evidence-backed connections to companies, people, and technologies.")}</p>
           </div>
           <Link to="/hot" className="lr-inline-link">{t("查看新闻事件树","View event timeline")} <IconArrowRight size={16}/></Link>
         </div>

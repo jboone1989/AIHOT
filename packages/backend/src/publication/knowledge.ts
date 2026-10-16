@@ -2,7 +2,7 @@
 // events (stories) those reports belong to. Graphiti owns the relations; this database owns what is
 // public, so a cited report that was withdrawn, held back or never published is left out here.
 import { sql } from "../db.ts";
-import { graphChanges, graphForEntity, graphForStory, graphNetwork, graphOverview, graphRelation, graphSearch, graphStats, type GraphChanges } from "../knowledge/graphiti.ts";
+import { graphAtlasCenters, graphChanges, graphForEntity, graphForStory, graphNetwork, graphOverview, graphRelation, graphSearch, graphStats, type GraphChanges } from "../knowledge/graphiti.ts";
 import { cached, cachedByKey } from "../lib/cache.ts";
 import { publicSourceName } from "./rules.ts";
 import { storyReportCondition } from "./scope.ts";
@@ -171,4 +171,34 @@ export async function publicGraphRelation(key: string, now = new Date()) {
   const graph = await graphRelation(key);
   const { reports } = await citedReports(citedArticleIds(graph), now);
   return { ...graph, edges: withPublicEvidence(graph.edges, new Set(reports.map(r => r.id))) };
+}
+
+/** Only publicly sourced neighbors are returned; no full-network serialization. */
+export async function publicAtlasNeighborhood(key: string, limit = 40, now = new Date()) {
+  const graph = await entityGraph(key);
+  if (graph.status === "unavailable" || graph.status === "disabled")
+    return {nodes: [], links: [], truncated: false, status: graph.status};
+  if (!graph.entity) return {nodes: [], links: [], truncated: false, status: "not_found"};
+  const {reports} = await citedReports(citedArticleIds(graph), now);
+  const publicEdges = withPublicEvidence(graph.edges, new Set(reports.map(r => r.id)));
+  const edges = publicEdges.slice(0, limit);
+  const nodes = new Map<string, {key:string;name:string;degree:number}>();
+  nodes.set(graph.entity.key, {key:graph.entity.key,name:graph.entity.name,degree:publicEdges.length});
+  const links = edges.map(e => {
+    for (const item of [e.subject, e.object])
+      if (!nodes.has(item.key)) nodes.set(item.key, {key:item.key,name:item.name,degree:1});
+    return {id:e.id,source:e.subject.key,target:e.object.key,predicate:e.predicate,invalidAt:e.invalidAt};
+  });
+  return {nodes:[...nodes.values()],links,truncated:publicEdges.length>limit,status:graph.status??"ok"};
+}
+
+export async function publicAtlasCenters(q: string, now = new Date()) {
+  const candidates = await graphAtlasCenters(q, 30);
+  if (candidates.status === "unavailable" || candidates.status === "disabled")
+    return {nodes: [], status: candidates.status};
+  const ids = [...new Set(candidates.nodes.flatMap(n => n.articleIds))];
+  const {reports} = await citedReports(ids, now);
+  const allowed = new Set(reports.map(r => r.id));
+  return {nodes:candidates.nodes.filter(n => n.articleIds.some(id => allowed.has(id)))
+    .slice(0, 20).map(({key,name}) => ({key,name,degree:0})),status:"ok"};
 }

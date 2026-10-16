@@ -40,9 +40,9 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
       const hubs = new Set([...network.nodes].sort((a, b) => b.degree - a.degree).slice(0, 8).filter(n => n.degree >= 8).map(n => n.key));
       const instance = cytoscape({
         container: container.current, style: createStyles(), pixelRatio: 1,
-        minZoom: 0.03, maxZoom: 5, wheelSensitivity: 0.2,
+        minZoom: 0.2, maxZoom: 5, wheelSensitivity: 0.2,
         elements: [
-          ...network.nodes.map(n => ({ data: { id: n.key, name: n.name, hub: hubs.has(n.key), size: Math.min(48, 8 + Math.sqrt(n.degree) * 3), color: n.degree >= 25 ? "#d5a4f0" : n.degree >= 8 ? "#8baff8" : "#69d8c2" } })),
+          ...network.nodes.map((n, i) => { const nearby = network.nodes.filter(v => v.key !== selectedKey); const index = nearby.findIndex(v => v.key === n.key); const ring = Math.floor(index / 16); const ringCount = Math.min(16, nearby.length - ring * 16); const ringAngle = -Math.PI / 2 + (index % 16) * 2 * Math.PI / Math.max(1, ringCount); const radius = 130 + ring * 110; return { data: { id: n.key, name: n.name, hub: hubs.has(n.key), size: n.key === selectedKey ? 48 : Math.min(35, 14 + Math.sqrt(n.degree) * 3), color: n.key === selectedKey ? "#e5c36f" : n.degree >= 8 ? "#8baff8" : "#69d8c2" }, position: n.key === selectedKey ? { x: 0, y: 0 } : { x: Math.cos(ringAngle) * radius, y: Math.sin(ringAngle) * radius } }; }),
           ...network.links.map(l => ({ data: { id: "r:" + l.id, key: l.id, source: l.source, target: l.target, expired: !!l.invalidAt } })),
         ],
         layout: { name: "preset" },
@@ -51,8 +51,8 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
       instance.on("zoom", () => readableLabels(instance, network.nodes.length > 120));
       instance.on("mouseover", "node", e => { e.target.addClass("hovered"); readableLabels(instance, network.nodes.length > 120); });
       instance.on("mouseout", "node", e => { e.target.removeClass("hovered"); readableLabels(instance, network.nodes.length > 120); });
-      instance.one("layoutstop", () => { if (!disposed) { instance.fit(undefined, 35); setReady(true); } });
-      instance.layout({ name: "cose", animate: true, randomize: true, refresh: 15, numIter: 160, initialTemp: 120, coolingFactor: 0.97, componentSpacing: 15, nodeRepulsion: 6000, idealEdgeLength: 65, padding: 35 }).run();
+      instance.fit(undefined, 35);
+      setReady(true);
       instance.on("tap", "node", e => callbacks.current.onNode(e.target.id()));
       instance.on("tap", "edge", e => callbacks.current.onRelation(e.target.data("key")));
       resize = new ResizeObserver(() => { instance.resize(); instance.fit(undefined, 35); });
