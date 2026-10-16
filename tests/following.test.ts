@@ -53,6 +53,7 @@ test('following an entity lists its public cited reports and names the follow', 
   const res = await followingItems(['no-such-topic'], [ENTITY, 'unknown-entity']);
   assert.deepEqual(res.items.map((i) => i.id), ['fo-public'], 'the withdrawn report is left out');
   assert.deepEqual(res.items[0]!.via, ['Follow Labs']);
+  assert.equal(res.items[0]!.source.tier, 'media', 'cards carry the source tier');
   assert.deepEqual(res.follows, { topics: [], entities: [{ key: ENTITY, name: 'Follow Labs' }] });
 });
 

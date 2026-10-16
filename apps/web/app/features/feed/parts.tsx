@@ -22,6 +22,17 @@ export function SourceLine({ item, className = "" }: { item: Pick<FeedItemSummar
   return <span className={`min-w-0 truncate ${className}`}>{lang==="en"&&/[\u3400-\u9fff]/u.test(item.source.name)?"Publisher":item.source.name}</span>;
 }
 
+/** The source's standing on a card: the party itself or its official account; media and individuals carry no mark. */
+export function TierBadge({ tier }: { tier: FeedItemSummary["source"]["tier"] }) {
+  const t = useText();
+  if (tier !== "first-party" && tier !== "official-account") return null;
+  return (
+    <span className={`lr-tier shrink-0 ${tier === "first-party" ? "is-first" : ""}`} title={tier === "first-party" ? t("当事方自己的发布", "Published by the party itself") : t("官方账号或准官方创作者", "Official account or close creator")}>
+      {tier === "first-party" ? t("一手", "First-party") : t("官方账号", "Official")}
+    </span>
+  );
+}
+
 /** Up to four media thumbnails, kept small in lists (the detail page shows them larger). Videos are stills. */
 export function MediaThumbs({ media, className = "" }: { media: MediaView[]; className?: string }) {
   const lang=useUiLanguage();
