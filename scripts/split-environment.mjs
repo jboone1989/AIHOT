@@ -21,7 +21,7 @@ if(target==="production"){
  const mapping={API:"livingruntime-api-1",WORKER:"livingruntime-worker-1",WEB:"livingruntime-web-1",KNOWLEDGE:"livingruntime-knowledge-1"};
  for(const [service,container] of Object.entries(mapping)){
   const image=execFileSync("docker",["inspect","-f","{{.Config.Image}}",container],{encoding:"utf8",timeout:10000}).trim();
-  const tag=/:(\\w{12})$/.exec(image)?.[1];
+  const tag=/:([0-9a-f]{12})$/i.exec(image)?.[1];
   if(!tag)throw Error("Cannot identify runtime image tag for "+container);
   flags["LRSITE_RELEASE_"+service]=tag;
  }
