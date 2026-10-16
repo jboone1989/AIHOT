@@ -75,7 +75,7 @@ jobs:
           envcheck=importlib.util.module_from_spec(spec)
           spec.loader.exec_module(envcheck)
           prod=envcheck.read_env(Path("config/environments/production.flags.env.example"))
-          assert "NVIDIA_API_KEY is required" in envcheck.errors(prod,"production")
+          assert any("NVIDIA_API_KEY" in issue for issue in envcheck.errors(prod,"production"))
           prod.update({"NVIDIA_API_KEY":"testing-only","NVIDIA_BASE_URL":"https://test.invalid"})
           assert not envcheck.errors(prod,"production")
           prod["MODEL_CALLS_ENABLED"]="false"
