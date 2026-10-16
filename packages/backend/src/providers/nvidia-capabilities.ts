@@ -1,7 +1,6 @@
 /** NVIDIA /models inventory classification. An unknown model is catalogued, never guessed safe. */
 export type ModelCapability = "text"|"vision"|"embedding"|"reranking"|"image_generation"|"audio"|"video"|"safety"|"unknown";
 export type CatalogModel = { id:string; capabilities:ModelCapability[]; source:"metadata"|"name"; };
-const includes=(id:string,rx:RegExp)=>rx.test(id.toLowerCase());
 /** Metadata takes precedence where the provider supplies an explicit task or modality.
  * OpenAI-style GET /models often returns only id/owner; conservative names are a fallback. */
 export function classifyNvidiaModel(item:{id?:string; type?:string; task?:string; capabilities?:unknown; modalities?:unknown; input_modalities?:unknown; output_modalities?:unknown}):CatalogModel|null{
@@ -12,8 +11,9 @@ export function classifyNvidiaModel(item:{id?:string; type?:string; task?:string
   ...(Array.isArray(item.input_modalities)?item.input_modalities:[]),
   ...(Array.isArray(item.output_modalities)?item.output_modalities:[])]
   .filter(x=>typeof x==="string").join(" ").toLowerCase();
- const source=metadata?"metadata" as const:"name" as const;
- const signature=metadata||id.toLowerCase();
+ const meaningfulMetadata=metadata&&!/^(model|system|nvidia|api)$/i.test(metadata);
+ const source=meaningfulMetadata?"metadata" as const:"name" as const;
+ const signature=meaningfulMetadata?metadata+" "+id.toLowerCase():id.toLowerCase();
  let caps:ModelCapability[];
  if(/rerank|cross.encoder/.test(signature))caps=["reranking"];
  else if(/embed|embedding|retriev|bge-|e5-/.test(signature))caps=["embedding"];
