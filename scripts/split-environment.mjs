@@ -3,6 +3,7 @@
 // Never logs values or creates a second secret copy.
 import {chmodSync,readFileSync,renameSync,symlinkSync,lstatSync,existsSync,writeFileSync} from "node:fs";
 import {parseEnv} from "node:util";
+import {execFileSync} from "node:child_process";
 const target=process.argv[2];
 if(!["production","development"].includes(target)){
  console.error("Usage: node scripts/split-environment.mjs production|development");process.exit(2);
