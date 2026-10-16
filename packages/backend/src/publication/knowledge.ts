@@ -133,7 +133,7 @@ async function publicRelations(edges: Edge[], now: Date) {
 /** A public story's relations for agents (MCP): Graphiti's, each with evidence that is public now. */
 export async function publicStoryGraph(publicId: string, now = new Date()) {
   const graph = await graphForStory(publicId);
-  return { status: graph.status ?? "ok", edges: await publicRelations(graph.edges, now) };
+  return { ...graph, status: graph.status ?? "ok", edges: await publicRelations(graph.edges, now) };
 }
 
 /** Site and MCP share the same public-only entity profile, including a consistent time boundary. */
