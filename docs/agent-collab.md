@@ -48,7 +48,7 @@ ChatGPT 一侧用 `<!-- agent:codex -->`。一条评论只交一件事；对方�
 1. **讨论**：用“方案讨论”模板开 issue。模板会挂上 `stage:plan` 和 `agent:codex`。ChatGPT 先读代码、写方案（`stage:plan` 下它只读不改，不开分支），写 `NEXT: claude` 交给 Claude；Claude 的定时审查逐条点评、提出替代或风险，再交回 `agent:codex`。哪一方认为需要使用者决定，就挂 `needs:human`。使用者可以随时在 issue 里插话，再挂上 `agent:codex` 或 `agent:claude` 让讨论继续。
 2. **拍板**：使用者在 issue 里写下定的方案，去掉 `stage:plan`，挂 `agent:codex`。
 3. **开工和审查循环**：ChatGPT 按方案改代码，推到 `codex/issue-<编号>` 并开草稿 PR，标签交给 Claude；Claude 的定时审查评审这个 PR，需要改就挂 `agent:codex`，CI 绿且没有阻塞问题就挂 `needs:human`。两边来回直到可以合并，同一处超过 6 轮会停下等使用者。
-4. **合并和发布**：使用者合并 PR。需要发版时在 GitHub 上打 tag 或建 release。
+4. **合并和发布检查**：使用者合并 PR。部署前看最新一个标题以“发布检查”开头的 issue，它会写“可以发布”或“先别发布”。
 5. **部署**：使用者自己在 VM09 上执行 `bash scripts/deploy-prod.sh`（见 `docs/production-deployment.md`）。两边都不部署。
 
 ## 防止两边无限对话
@@ -72,7 +72,14 @@ Claude 一侧不需要服务器：它运行在 claude.ai 的云端环境里，�
 
 以下都在 server142 上、用平时的 `ubuntu` 账号执行。凭据只放在服务器本机，不进仓库。
 
-0. 确认仓库打开了 Issues（Settings → General → Features）。标签、交接评论和 `agent:codex` 的查询都走 issue 接口，Issues 关着时开 issue 会失败。
+0. 确认仓库打开了 Issues（Settings → General → Features），并建好四个标签。标签、交接评论和 `agent:codex` 的查询都走 issue 接口；用模板开 issue 时，不存在的标签会被直接丢掉，两边都不会接手。在任何装了 `gh` 的机器上执行一次：
+
+   ```bash
+   gh label create agent:codex -R jboone1989/AIHOT --color 10a37f --description "交给 ChatGPT"
+   gh label create agent:claude -R jboone1989/AIHOT --color d97757 --description "交给 Claude"
+   gh label create needs:human -R jboone1989/AIHOT --color fbca04 --description "等使用者决定"
+   gh label create stage:plan -R jboone1989/AIHOT --color 5319e7 --description "方案讨论，只评论不改代码"
+   ```
 
 1. 安装工具：Node.js（已有）、`gh`、`jq`，以及 Codex CLI：
 
@@ -120,7 +127,7 @@ Claude 一侧不需要服务器：它运行在 claude.ai 的云端环境里，�
    journalctl --user -u codex-worker -n 100
    ```
 
-   看到 issue 下出现 Codex 的回复、草稿 PR 和换好的标签，就装好了。脚本第一次运行时会创建上面三个标签。
+   看到 issue 下出现 Codex 的回复、草稿 PR 和换好的标签，就装好了。
 
 脚本在固定的克隆 `~/agent-bridge/repo` 里工作，每次处理前会 `git reset --hard` 到对应分支并清理未跟踪文件（`node_modules` 这类被忽略的目录保留），不要在这个目录里手工改东西。更新脚本时在 `~/agent-bridge-src` 里 `git pull`，再执行第 4 步的 `install` 那行。
 
