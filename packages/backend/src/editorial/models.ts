@@ -89,8 +89,11 @@ export async function modelFor(capability: CapabilityKey | (string & {})): Promi
   const c = capabilities()[capability];
   if (!c) throw new Error(`unknown model step: ${capability}`);
   const chosen = (await overrides())[capability] ?? process.env[c.env] ?? c.default;
-  if (process.env.NVIDIA_MODEL_POOL_ENABLED === "true" && MODELS[chosen]?.service === "nvidia")
-    return availableModel(chosen);
+  if (process.env.NVIDIA_MODEL_POOL_ENABLED === "true") {
+    if (MODELS[chosen]?.service === "nvidia") return availableModel(chosen);
+    if (chosen === "default" && process.env.NVIDIA_POOL_ROUTE_DEFAULT === "true")
+      return availableModel(c.vision ? "nvidia-glm-5.3-flash" : "nvidia-gpt-oss-20b");
+  }
   return MODELS[chosen] ? chosen : c.default;
 }
 

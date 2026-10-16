@@ -30,6 +30,8 @@ services:
       NVIDIA_API_KEY: ${NVIDIA_API_KEY}
       NVIDIA_BASE_URL: ${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
       GRAPHITI_LLM_MODEL: ${GRAPHITI_LLM_MODEL:-openai/gpt-oss-20b}
+      GRAPHITI_EMBEDDING_MODEL: ${GRAPHITI_EMBEDDING_MODEL:-nvidia/nemotron-3-embed-1b}
+      GRAPHITI_EMBEDDING_DIM: ${GRAPHITI_EMBEDDING_DIM:-2048}
     depends_on:
       knowledge-neo4j:
         condition: service_healthy
