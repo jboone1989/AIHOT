@@ -1,0 +1,16 @@
+# Development-only public HTTP ingress. Keep the app itself loopback-only.
+# docker compose -f docker-compose.yml -f docker-compose.dev-ingress.yml up -d --no-deps ingress
+services:
+  ingress:
+    image: node:24-trixie-slim
+    command: ["node", "/opt/ingress.mjs"]
+    volumes:
+      - ./deploy/dev-ingress.mjs:/opt/ingress.mjs:ro
+    ports:
+      - "80:8080"
+      - "8080:8080"
+    restart: unless-stopped
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 96m
+    cpus: 0.25
