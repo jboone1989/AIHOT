@@ -70,6 +70,8 @@ export function McpPanel(props: AgentPanelProps) {
             [<Mono>{T.daily}</Mono>, subjectAfter("最新或指定日期的", "日报"), "给我今天的日报。"],
             [<Mono>{T.weekly}</Mono>, subjectAfter("最新或指定一周的", "周报"), `${subjectAfter("这周", "圈")}有哪些大事？`],
             [<Mono>{T.monthly}</Mono>, subjectAfter("最新或指定月份的", "月报"), `${subjectAfter("上个月", "圈")}发生了什么？`],
+            [<Mono>{T.storyGraph}</Mono>, "一个事件在知识图谱里的关系和来源报道", "这件事牵涉到哪些公司和人？"],
+            [<Mono>{T.entity}</Mono>, "一个图谱实体的全部关系、生效失效时间和相关事件", "这家公司最近和谁有关系？"],
             ...AGENT_PARTS.flatMap((a) => a.tools ?? []).map((t) => [<Mono>{t.name}</Mono>, t.does, t.ask]),
           ]}
         />

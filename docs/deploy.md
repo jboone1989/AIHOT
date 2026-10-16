@@ -81,6 +81,15 @@ docker compose run --rm setup && docker compose up -d
 
 日报缺期告警按北京时间的具体日期跟踪，跨午夜不会自动恢复；只有对应日报存在才发恢复通知。新缺期检查最近 7 个日历日（含今天），不早于最早的日报或 reports.compose 运行记录；没有历史记录时只检查今天。已告警的日期在这 7 天里一直跟踪，关闭采集/模型或 worker 启动宽限期也不会把缺期当成恢复；超出 7 天仍没有日报的，发一条“没能补出、停止提醒”后不再提醒。旧的 report.daily 状态自动按首次告警时间迁移，保留提醒间隔。出刊后两小时告警、每小时提醒及飞书开关保持不变；无需数据库迁移。自定义 responder 若按旧 `report.daily` 精确匹配，需改为识别 `report.daily:YYYY-MM-DD` 日期键。
 
+#### EventGraph：关注、图谱变化、事件价格、MCP 图谱工具和英文版（2026 年 10 月 16 日）
+
+一个新迁移 `0094_market_snapshots.sql`（新表，不动已有数据），没有新环境变量。
+
+- worker 多了定时任务 `market.snapshot`（每 15 分钟读一次 Binance/OKX 现货价，存进 `market_snapshots`），和其他采集任务一样只在 `COLLECT_ENABLED=true` 时运行。事件页的价格要等快照攒起来以后才出现。
+- 日报的“图谱今日变化”和 MCP 的实体摘要需要重新部署 knowledge_service（新接口 `/changes`，`/entities/{uuid}` 多返回 `summary`）。旧版 knowledge_service 下这两处不显示，其余照常。
+- 新地址：`/en` 开头的英文版页面、`/feed/topic/<slug>.xml`、`/feed/entity/<key>.xml`、`/api/site/following`、`/api/site/knowledge/daily/<日期>`、`/api/market/stories/<事件>`。前面有自己的反向代理并且按路径分流的站，`/feed/` 和 `/api/` 照原样转给 api，`/en` 转给 web。
+- 站点 API 的条目 `source` 多了 `tier`；`/api/v1` 不变。
+
 #### 读者文字的改用词（2026 年 10 月 9 日）
 
 没有迁移，没有必填的新环境变量。行业包多了 `industry/wording.ts`（读者文字里不用的词，模板里是空的）和提示词 `mend-wording.md`；合并时这两个文件随更新带进来，自己的行业包没有冲突。词表空着就不查、不多调用模型；写了词以后，用了这些词的标题、摘要、推荐理由会多一次模型调用（模型步骤“改用词”，可用选填的 `WORDING_MODEL` 单独选模型）。说明见 [把它改成你的行业](customize.md)。

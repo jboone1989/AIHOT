@@ -68,20 +68,30 @@ export async function loadDiscoveryEntries(at = new Date(), limits?: { stories: 
     { loc: "/privacy", revision: sha256(stableJson([POLICY.privacy, await readFile(path.join(REPO_ROOT, "site/pages/privacy.md"), "utf8")])), changefreq: "monthly", priority: 0.4 },
     { loc: "/changelog", revision: sha256(stableJson(loadChangelog())), changefreq: "weekly", priority: 0.5 },
   );
-  for (const r of reports) entries.push({ loc: `/${r.kind}/${r.key}`, lastmod: r.t, revision: r.revision, changefreq: "monthly", priority: 0.6 });
+  // The English edition's own addresses (the site's /en pages; their Chinese pages carry hreflang to them).
+  for (const loc of ["/", "/hot", "/knowledge", "/daily", "/topics"]) {
+    const zh = entries.find((e) => e.loc === loc);
+    entries.push({ loc: loc === "/" ? "/en" : `/en${loc}`, revision: zh?.revision, changefreq: zh?.changefreq ?? "daily", priority: 0.6 });
+  }
+  for (const r of reports) {
+    entries.push({ loc: `/${r.kind}/${r.key}`, lastmod: r.t, revision: r.revision, changefreq: "monthly", priority: 0.6 });
+    if (r.kind === "daily") entries.push({ loc: `/en/daily/${r.key}`, lastmod: r.t, revision: r.revision, changefreq: "monthly", priority: 0.4 });
+  }
   for (const t of topics) {
     if (!t.indexable) continue;
     entries.push({ loc: `/topics/${t.slug}`, revision: t.revision, changefreq: "daily", priority: 0.6 });
+    entries.push({ loc: `/en/topics/${t.slug}`, revision: t.revision, changefreq: "daily", priority: 0.4 });
     for (let p = 2; p <= t.pages; p++) entries.push({ loc: `/topics/${t.slug}/page/${p}`, revision: t.revision, changefreq: "weekly", priority: 0.3 });
   }
   // A story needs listed evidence of its own. Its identity follows current readable reports as well
   // as the digest, so a correction or regrouping is visible even when latest_at does not advance.
-  const stories = await sql<{ public_id: string; revision: string }[]>`
+  const stories = await sql<{ public_id: string; revision: string; english_titles: string[] | null }[]>`
     SELECT st.public_id::text, md5(concat_ws('|', st.title, st.summary, st.digest, st.digest_updated_at::text,
-      st.version::text, members.revision)) AS revision
+      st.version::text, members.revision)) AS revision, members.english_titles
     FROM stories st JOIN LATERAL (
       SELECT md5(string_agg(concat_ws(':', p.article_id, p.revision::text, fa.role, f.updated_at::text, s.name),
-        ',' ORDER BY p.article_id, f.id)) AS revision
+        ',' ORDER BY p.article_id, f.id)) AS revision,
+        array_agg(DISTINCT p.original_title) FILTER (WHERE p.original_title IS NOT NULL) AS english_titles
       FROM facts f JOIN fact_articles fa ON fa.fact_id = f.id JOIN publications p ON p.article_id = fa.article_id
       JOIN sources s ON s.id = p.source_id
       WHERE f.story_id = st.id AND ${storyReportCondition(at)}
@@ -90,7 +100,12 @@ export async function loadDiscoveryEntries(at = new Date(), limits?: { stories: 
       SELECT 1 FROM facts f JOIN fact_articles fa ON fa.fact_id = f.id JOIN publications p ON p.article_id = fa.article_id
       WHERE f.story_id = st.id AND ${evidenceCondition()} AND ${listedCondition(at)})
     ORDER BY st.latest_at DESC NULLS LAST, st.id DESC ${limits ? sql`LIMIT ${limits.stories}` : sql``}`;
-  for (const s of stories) entries.push({ loc: `/story/${s.public_id}`, revision: s.revision, changefreq: "daily", priority: 0.5 });
+  for (const s of stories) {
+    entries.push({ loc: `/story/${s.public_id}`, revision: s.revision, changefreq: "daily", priority: 0.5 });
+    // Only published stories with an actual non-Chinese source headline have an indexable /en edition.
+    if (s.english_titles?.some((title) => title.trim() && !/[㐀-鿿]/u.test(title)))
+      entries.push({ loc: `/en/story/${s.public_id}`, revision: s.revision, changefreq: "daily", priority: 0.4 });
+  }
   for (const m of serverModules()) if (m.sitemap?.entries) entries.push(...(await m.sitemap.entries()));
   // Material/translation timestamps can also record a retry or a state repair. Hash the content;
   // without a dedicated public modification clock, omitting lastmod is more accurate than guessing.

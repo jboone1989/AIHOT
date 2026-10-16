@@ -1,6 +1,6 @@
 // RSS routes. Unknown query parameters are accepted and never change content.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { feedCacheControl, isFeedCategory, itemFeed, reportFeed, type ItemFeedKind } from "@aihot/backend/publication/feeds";
+import { entityFeed, feedCacheControl, isFeedCategory, itemFeed, reportFeed, topicFeed, type ItemFeedKind } from "@aihot/backend/publication/feeds";
 import { requestNotice, serverModules } from "@aihot/backend/modules";
 import { applyPublicHeaders, sendTextWithEtag } from "../http/respond.ts";
 
@@ -19,7 +19,7 @@ function feedError(reply: FastifyReply) {
 
 export function registerFeeds(app: FastifyInstance) {
   // A preflight gets 204 and the allowed methods; feeds send no CORS headers.
-  for (const url of ["/feed.xml", "/feed/full.xml", "/feed/all.xml", "/feed/daily.xml", "/feed/weekly.xml", "/feed/monthly.xml", "/feed/category/:file", "/feed/full/category/:file"]) {
+  for (const url of ["/feed.xml", "/feed/full.xml", "/feed/all.xml", "/feed/daily.xml", "/feed/weekly.xml", "/feed/monthly.xml", "/feed/category/:file", "/feed/full/category/:file", "/feed/topic/:file", "/feed/entity/:file"]) {
     app.options(url, async (_req, reply) => reply.code(204).header("Allow", "GET, HEAD, OPTIONS").send());
   }
   const item = (kind: ItemFeedKind) => async (req: FastifyRequest, reply: FastifyReply) => {
@@ -51,6 +51,22 @@ export function registerFeeds(app: FastifyInstance) {
       const kind = full ? "selected-full" : "selected";
       try {
         return await sendFeed(req, reply, await itemFeed(kind, slug, { notice: noticeFor(req) }), feedCacheControl(kind));
+      } catch (error) {
+        req.log.error({ err: error }, "feed error");
+        return feedError(reply);
+      }
+    });
+  }
+  // One topic's or one entity's feed: what a reader can follow on the site, for a feed reader instead.
+  for (const [prefix, read] of [["topic", topicFeed], ["entity", entityFeed]] as const) {
+    app.get(`/feed/${prefix}/:file`, async (req, reply) => {
+      const file = (req.params as { file: string }).file;
+      const key = file.replace(/\.xml$/, "");
+      if (!file.endsWith(".xml") || !/^[A-Za-z0-9_-]{1,80}$/.test(key)) return reply.code(404).type("text/plain; charset=utf-8").send("Not found");
+      try {
+        const xml = await read(key, { notice: noticeFor(req) });
+        if (!xml) return reply.code(404).type("text/plain; charset=utf-8").send("Not found");
+        return await sendFeed(req, reply, xml, feedCacheControl("selected"));
       } catch (error) {
         req.log.error({ err: error }, "feed error");
         return feedError(reply);

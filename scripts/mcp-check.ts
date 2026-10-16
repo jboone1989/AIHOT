@@ -83,6 +83,8 @@ try {
   await call(T.weekly, { week: "2026-W54" }, { error: true, code: "invalid_request" });
   await call(T.monthly, { month: "2026-13" }, { error: true, code: "invalid_request" });
   await call(T.story, { public_id: "__mcp_check_missing__", report_limit: 3 }, { error: true, code: "not_found" });
+  await call(T.storyGraph, { public_id: "__mcp_check_missing__" }, { error: true, code: "not_found" });
+  await call(T.entity, { key: "bad key" }, { error: true });
 
   // SDK/server schema validation must reject values outside the advertised input contract.
   await call(T.latest, { limit: 99 }, { error: true });

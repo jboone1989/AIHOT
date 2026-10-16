@@ -14,7 +14,8 @@ import { isValidDate } from "@aihot/contracts/time";
 import { config } from "@aihot/backend/config";
 import { cachedByKey } from "@aihot/backend/lib/cache";
 import { logError } from "@aihot/backend/lib/log-error";
-import { dailyAnswer, hotAnswer, latestAnswer, periodAnswer, searchAnswer, searchItems, storyAnswer } from "@aihot/backend/publication/agent";
+import { dailyAnswer, entityAnswer, hotAnswer, latestAnswer, periodAnswer, searchAnswer, searchItems, storyAnswer, storyGraphAnswer } from "@aihot/backend/publication/agent";
+import { publicEntityProfile, publicStoryGraph } from "@aihot/backend/publication/knowledge";
 import { v1Items } from "@aihot/backend/publication/v1";
 import { SearchBusyError } from "@aihot/backend/publication/pool";
 import { resolveStory, v1HotTopics, v1Story } from "@aihot/backend/publication/stories";
@@ -29,6 +30,8 @@ const USES = [
   `${T.story} only with a public ID returned by hot topics`,
   `${T.daily} for an edited daily overview`,
   `${T.weekly} and ${T.monthly} for the edited weekly and monthly reports`,
+  `${T.storyGraph} for the knowledge-graph relations behind a story`,
+  `${T.entity} for one graph entity's relations and events, with a key returned by ${T.storyGraph}`,
 ];
 
 const abilities = () => serverModules().flatMap((m) => m.agent?.abilities ?? []);
@@ -101,6 +104,13 @@ const WEEKLY_INPUT = z.strictObject({
 });
 const MONTHLY_INPUT = z.strictObject({
   month: z.string().regex(/^\d{4}-\d{2}$/).optional().describe("Optional real month in YYYY-MM such as 2026-09. Omit for the latest monthly report."),
+});
+
+const STORY_GRAPH_INPUT = z.strictObject({
+  public_id: z.string().min(1).max(128).describe(`Opaque story public ID from ${T.hot} links.story; never guess it.`),
+});
+const ENTITY_INPUT = z.strictObject({
+  key: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/).describe(`Entity key as returned by ${T.storyGraph} (key=…); never guess it.`),
 });
 
 // Agents repeat the same calls. Answers are kept 30 s, within the minute the v1 HTTP answers are
@@ -220,6 +230,41 @@ function registerTools(server: McpServer, say: typeof ok) {
       }),
     );
   }
+
+  server.registerTool(
+    T.storyGraph,
+    {
+      description: `Get the knowledge-graph relations behind one public story: who did what to whom, when each relation took effect or ended, and which public reports support it. Only pass a public_id from ${T.hot}; use the entity keys it returns with ${T.entity}.`,
+      inputSchema: STORY_GRAPH_INPUT,
+      annotations: ANNOTATIONS,
+    },
+    safe(T.storyGraph, async (args) => {
+      let found = await resolveStory(args.public_id.trim());
+      if (found.kind === "merged") found = await resolveStory(found.target);
+      const body = found.kind === "found" ? await v1Story(found.storyId) : null;
+      if (found.kind !== "found" || !body) return fail("not_found", `没有这个公开事件；只使用 ${T.hot} 返回的 public_id。`);
+      const graph = await recent(`story-graph:${found.publicId}`, () => publicStoryGraph(found.publicId));
+      return say(storyGraphAnswer(body.story.title, found.publicId, graph), { schemaVersion: 1, publicId: found.publicId, status: graph.status, relations: graph.edges });
+    }),
+  );
+
+  server.registerTool(
+    T.entity,
+    {
+      description: `Get one knowledge-graph entity: its publicly sourced relations over time (current and ended) and the public stories they come from. Only pass a key returned by ${T.storyGraph} or a previous ${T.entity} answer.`,
+      inputSchema: ENTITY_INPUT,
+      annotations: ANNOTATIONS,
+    },
+    safe(T.entity, async (args) => {
+      const profile = await recent(`entity:${args.key}`, () => publicEntityProfile(args.key));
+      if (!profile.entity) {
+        return profile.status === "unavailable"
+          ? fail("unavailable", "知识图谱暂时无法访问，请稍后再试。")
+          : fail("not_found", `没有这个实体；只使用 ${T.storyGraph} 返回的 key。`);
+      }
+      return say(entityAnswer(profile), { schemaVersion: 1, entity: profile.entity, relations: profile.edges, stories: profile.stories, reports: profile.reports });
+    }),
+  );
 
   for (const ability of abilities()) {
     const name = mcpToolName(ability.mcp.tool);

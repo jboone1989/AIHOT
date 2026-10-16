@@ -1,7 +1,7 @@
 // Public read layer, item level. Every exit (site API, v1, RSS, MCP, sitemap) reads
 // items through these columns and views; which rows are public is decided by scope.ts.
 import { CATEGORY_KEYS, toPublicApiCategory, type CategoryKey, type ChannelKey, type PublicApiCategoryKey } from "@aihot/contracts/taxonomy";
-import type { FeedItemSummary, ItemSummary, MediaView, XPostView } from "@aihot/contracts/site";
+import type { FeedItemSummary, ItemSummary, MediaView, SourceTier, XPostView } from "@aihot/contracts/site";
 import { POLICY } from "@aihot/site";
 import { sql, type Db } from "../db.ts";
 import { isEmptyOrLinkOnly } from "../content/posts.ts";
@@ -32,6 +32,8 @@ export interface ItemRow {
   indexable: boolean;
   fact_id: number | null;
   source_name: string;
+  /** The source's tier (T1, T1_5, T2); read by the item lists. */
+  source_tier?: string;
   /** Participation mode of the source now (editorial, hot_signal, isolated). */
   source_mode: string;
   x_post: Record<string, any> | null;
@@ -50,7 +52,7 @@ export interface ItemRow {
 export const ITEM_COLUMNS = sql`
   p.article_id AS id, p.title, p.original_title, p.summary, p.reason, p.category, p.tags, p.score,
   p.selected, p.seat, p.channel, p.url, p.published_at, p.discovered_at, p.timeline_at, p.visibility,
-  p.body_mode, p.indexable, p.fact_id, s.name AS source_name, s.participation_mode AS source_mode,
+  p.body_mode, p.indexable, p.fact_id, s.name AS source_name, s.tier AS source_tier, s.participation_mode AS source_mode,
   a.x_post, a.author, a.language,
   CASE WHEN s.kind = 'x_search' AND ${sourceOwnsPost(sql`s.name`, sql`a.x_post->>'handle'`)} THEN s.icon_url END AS author_avatar_url,
   st.public_id::text AS story_public_id, st.title AS story_title,
@@ -148,6 +150,8 @@ export function showsPost(row: { channel: string; body_mode: string }): boolean 
   return row.channel === "x" && (!POLICY.xPostIsFullText || row.body_mode === "full");
 }
 
+const PUBLIC_TIER: Record<string, SourceTier> = { T1: "first-party", T1_5: "official-account", T2: "media" };
+
 /** The shared public article; its X post is added as each answer shows it. */
 export function toItemSummary(row: ItemRow): ItemSummary {
   return {
@@ -156,7 +160,7 @@ export function toItemSummary(row: ItemRow): ItemSummary {
     originalTitle: row.original_title,
     summary: row.summary,
     reason: row.selected ? row.reason : null,
-    source: { name: publicSourceName(row.source_name) },
+    source: { name: publicSourceName(row.source_name), ...(row.source_tier && PUBLIC_TIER[row.source_tier] ? { tier: PUBLIC_TIER[row.source_tier] } : {}) },
     links: { original: row.url },
     publishedAt: row.published_at?.toISOString() ?? null,
     discoveredAt: row.discovered_at.toISOString(),

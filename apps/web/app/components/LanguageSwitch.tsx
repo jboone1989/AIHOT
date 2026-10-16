@@ -1,8 +1,10 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useLocation, useNavigate } from "react-router";
+import { chinesePath, englishPath, isEnglishPath } from "../lib/edition";
 
-/** The reading preference is client-only. The canonical server-rendered site stays Chinese.
- * This avoids shared-cache language leaks and duplicate unqualified SEO pages.
+/** The reading preference is client-only, and the unprefixed server-rendered site stays Chinese, which
+ * avoids shared-cache language leaks. The /en addresses (lib/edition.ts) are English for everyone,
+ * server-rendered too, with hreflang to their Chinese pages.
  */
 export type UiLanguage = "zh" | "en";
 const KEY = "livingruntime-language";
@@ -28,7 +30,8 @@ function subscribe(fn: () => void) {
   return () => { listeners.delete(fn); window.removeEventListener("storage", onStorage); };
 }
 export function useUiLanguage(): UiLanguage {
-  const lang = useSyncExternalStore<UiLanguage>(subscribe, read, () => "zh");
+  const stored = useSyncExternalStore<UiLanguage>(subscribe, read, () => "zh");
+  const lang = isEnglishPath(useLocation().pathname) ? "en" : stored;
   useEffect(() => {
     document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
     document.documentElement.dataset.language = lang;
@@ -51,13 +54,16 @@ export function useText() {
  */
 export function LanguageSwitch({compact=false}: {compact?:boolean}) {
   const lang = useUiLanguage();
-  const {pathname} = useLocation();
+  const {pathname, search} = useLocation();
   const navigate=useNavigate();
   const choose=(next: UiLanguage) => {
     if(next===lang) return;
     setUiLanguage(next);
     const match=/^\/items\/([a-zA-Z0-9_-]{1,80})(?:\/original)?$/.exec(pathname);
     if(match) void navigate(`/items/${match[1]}${next==="en"?"/original":""}`,{replace:true});
+    // A page with an English edition moves to the address of the language chosen.
+    const en=englishPath(pathname);
+    if(en) void navigate((next==="en"?en:chinesePath(pathname))+search,{replace:true});
   };
   return (
     <div className={`inline-flex items-center gap-0.5 rounded-lg border border-line bg-surface p-1 ${compact?"text-[11px]":"text-[12px]"}`} role="group" aria-label="Language / 语言">

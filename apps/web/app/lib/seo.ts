@@ -1,6 +1,7 @@
 // Page metadata from one place: title template, canonical address, OG images, robots; and list addresses,
 // with the feed filters they carry. The site's name and wording come from site/site.ts;
 //; its address from SITE_URL.
+import { chinesePath, englishPath, isEnglishPath } from "./edition.ts";
 import type { MetaDescriptor } from "react-router";
 import type { ReportDetail, StoryDetail, TimelineFilters } from "@aihot/contracts/site";
 import { isCategoryKey, isChannelKey } from "@aihot/contracts/taxonomy";
@@ -97,6 +98,44 @@ export function pageMeta(input: PageMetaInput): MetaDescriptor[] {
   if (input.noindex) tags.push({ name: "robots", content: input.nofollow ? "noindex, nofollow" : "noindex, follow" });
   if (input.jsonLd) tags.push({ "script:ld+json": input.jsonLd });
   return tags;
+}
+
+/**
+ * A page's tags at its Chinese or English (/en) address: hreflang between the two when the page has an
+ * English edition, and at the /en address the English title and description with their own canonical.
+ */
+export function localized(tags: MetaDescriptor[], pathname: string, en: { title: string; description: string; noindex?: boolean }): MetaDescriptor[] {
+  const base = siteUrl();
+  const canonical = tags.find((t) => "rel" in t && t.rel === "canonical") as { href: string } | undefined;
+  const zhPath = chinesePath(canonical ? canonical.href.slice(base.length) || "/" : pathname);
+  const [zhPage, query] = zhPath.split("?");
+  const english = englishPath(zhPage!);
+  if (!english) return tags;
+  const enPath = query ? `${english}?${query}` : english;
+  // Filtered lists, and English pages without a real English title, are not indexed: they get no alternates.
+  const alternates: MetaDescriptor[] = query || en.noindex ? [] : [
+    { tagName: "link", rel: "alternate", hrefLang: "zh-CN", href: `${base}${zhPath}` },
+    { tagName: "link", rel: "alternate", hrefLang: "en", href: `${base}${enPath}` },
+    { tagName: "link", rel: "alternate", hrefLang: "x-default", href: `${base}${zhPath}` },
+  ];
+  if (!isEnglishPath(pathname)) return [...tags, ...alternates];
+  const title = titled(en.title);
+  const replace: Record<string, string> = {
+    description: en.description, "og:title": en.title, "og:description": en.description, "og:url": `${base}${enPath}`,
+    "og:locale": "en_US", "twitter:title": en.title, "twitter:description": en.description,
+  };
+  return [
+    ...tags.map((t): MetaDescriptor => {
+      if ("title" in t) return { title };
+      if ("rel" in t && t.rel === "canonical") return { tagName: "link", rel: "canonical", href: `${base}${enPath}` };
+      const key = ("name" in t && t.name) || ("property" in t && t.property);
+      if (typeof key === "string" && key in replace) return { ...t, content: replace[key] } as MetaDescriptor;
+      return t;
+    }),
+    { property: "og:locale:alternate", content: SITE.locale.replace("-", "_") },
+    ...(en.noindex && !tags.some((t) => "name" in t && t.name === "robots") ? [{ name: "robots", content: "noindex, follow" }] : []),
+    ...alternates,
+  ];
 }
 
 export function organizationLd() {

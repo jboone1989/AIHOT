@@ -2,9 +2,14 @@
 // but it is served from the same public read layer as v1, RSS and MCP.
 import type { CategoryKey, ChannelKey } from "./taxonomy.ts";
 
+/** A source's standing: the party itself, its official account or a close creator, or anyone else. */
+export type SourceTier = "first-party" | "official-account" | "media";
+
 export interface SourceRef {
   /** The name readers see (publication/rules.ts publicSourceName), as is every source name here. */
   name: string;
+  /** On item cards; absent on snapshots cached before tiers were public. */
+  tier?: SourceTier;
 }
 
 export interface MediaView {

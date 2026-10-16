@@ -3,7 +3,7 @@ import { Link, useLoaderData } from "react-router";
 import type { Route } from "./+types/knowledge";
 import { apiGet, cachedPage } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { pageMeta } from "../lib/seo";
+import { localized, pageMeta } from "../lib/seo";
 import { PhoneBar } from "../components/shell/PhoneBar";
 import type { Screen } from "../components/shell/screens";
 import { IconArrowRight, IconHistory, IconSearch } from "../components/icons";
@@ -21,7 +21,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   ]);
   return cachedPage(60, { graph, stats });
 }
-export function meta() { return pageMeta({ title: `知识网络 | ${SITE.name}`, description: "探索新闻背后的实体关系、历史变化与可追溯的原始来源。", path: "/knowledge" }); }
+export function meta({ location }: Route.MetaArgs) {
+  return localized(pageMeta({ title: `知识网络 | ${SITE.name}`, description: "探索新闻背后的实体关系、历史变化与可追溯的原始来源。", path: "/knowledge" }), location.pathname, {
+    title: "Knowledge graph",
+    description: "Explore the entities and relations behind the news, how they changed over time, and the original sources that support them.",
+  });
+}
 
 export default function KnowledgePage() {
   const { graph, stats } = useLoaderData<typeof loader>();

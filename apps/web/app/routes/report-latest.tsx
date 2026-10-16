@@ -2,15 +2,17 @@ import { useLoaderData } from "react-router";
 import type { Route } from "./+types/report-latest";
 import type { ReportLatestPage } from "@aihot/contracts/site";
 import { REPORTS, subjectAfter, withSubject } from "@aihot/site";
-import { cachedPage, loadOr404 } from "../lib/api.server";
+import { apiGet, cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { pageMeta, reportLd } from "../lib/seo";
+import { localized, pageMeta, reportLd } from "../lib/seo";
+import { chinesePath } from "../lib/edition";
 import { beijingDate } from "@aihot/contracts/time";
 import { EmptyState } from "../components/ui/Page";
 import { ReportLayout } from "../features/report/ReportLayout";
 import { useUiLanguage } from "../components/LanguageSwitch";
 import { EnglishReport } from "../components/EnglishPages";
 import { ReportPaper, reportOutline } from "../features/report/ReportPaper";
+import { GraphChanges, type DailyGraphChanges } from "../features/report/GraphChanges";
 import { KIND_LABEL, feedLink, kindFromPath } from "../features/report/format";
 import type { Screen } from "../components/shell/screens";
 
@@ -21,30 +23,37 @@ export const { clientLoader, shouldRevalidate } = pageReuse<typeof loader>();
 export async function loader({ request }: Route.LoaderArgs) {
   const kind = kindFromPath(new URL(request.url).pathname);
   const { index, report } = await loadOr404<ReportLatestPage>(`/api/site/reports/${kind}/latest-page`, { signal: request.signal });
-  return cachedPage(600, { kind, report, index, today: beijingDate(Date.now()) });
+  const graph = kind === "daily" && report
+    ? await apiGet<DailyGraphChanges>(`/api/site/knowledge/daily/${report.key}`, { signal: request.signal, timeoutMs: 2_000 }).catch(() => null)
+    : null;
+  return cachedPage(600, { kind, report, index, graph, today: beijingDate(Date.now()) });
 }
 
 export function meta({ loaderData, location }: Route.MetaArgs) {
   const kind = loaderData?.kind ?? "daily";
   const description = `${REPORTS.descriptions[kind]}。`;
   const report = loaderData?.report;
-  return [...pageMeta({
+  const path = chinesePath(location.pathname);
+  return [...localized(pageMeta({
     title: withSubject(KIND_LABEL[kind]),
     description,
-    path: location.pathname,
+    path,
     image: `/og/pages/${kind}.png`,
     // The latest issue, described at this page's own address (its canonical).
-    jsonLd: report ? reportLd(report, location.pathname, report.lead?.leadParagraph ?? description) : undefined,
+    jsonLd: report ? reportLd(report, path, report.lead?.leadParagraph ?? description) : undefined,
+  }), location.pathname, {
+    title: "Daily brief",
+    description: "The latest daily brief: the day's most important reports with links to their original sources, and what changed in the knowledge graph.",
   }), feedLink(kind)];
 }
 
 export default function ReportLatestPage() {
   const language=useUiLanguage();
-  const { kind, report, index, today } = useLoaderData<typeof loader>();
-  if(language==="en") return <EnglishReport report={report} kind={kind}/>;
+  const { kind, report, index, graph, today } = useLoaderData<typeof loader>();
+  if(language==="en") return <EnglishReport report={report} kind={kind} graph={<GraphChanges changes={graph} />}/>;
   return (
     <ReportLayout kind={kind} index={index} current={report?.key ?? null} today={today} outline={report ? reportOutline(report) : []}>
-      {report ? <ReportPaper report={report} index={index} /> : <EmptyState title={subjectAfter("还没有发布", KIND_LABEL[kind])}>第一期发布后会出现在这里。</EmptyState>}
+      {report ? <><ReportPaper report={report} index={index} /><GraphChanges changes={graph} /></> : <EmptyState title={subjectAfter("还没有发布", KIND_LABEL[kind])}>第一期发布后会出现在这里。</EmptyState>}
     </ReportLayout>
   );
 }

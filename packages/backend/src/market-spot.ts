@@ -11,7 +11,7 @@ export type SpotQuote = {
   exchangeAt: string;
   sourceUrl: string;
 };
-type Getter = (url: string, init?: RequestInit) => Promise<Response>;
+export type Getter = (url: string, init?: RequestInit) => Promise<Response>;
 const finite = (value: unknown): number => {
   if (value === null || value === undefined || value === "") throw Error("missing exchange number");
   const n = Number(value);
@@ -74,3 +74,4 @@ export function getSpot(asset: SpotAsset) {
   cache.set(asset, { until: now + 60_000, result: promise });
   return promise;
 }
+

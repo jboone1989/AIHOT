@@ -4,7 +4,7 @@ import type { Route } from "./+types/topics";
 import type { TopicSummary, TopicsResponse } from "@aihot/contracts/site";
 import { apiGet, cachedPage } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { breadcrumbLd, pageMeta, siteUrl } from "../lib/seo";
+import { breadcrumbLd, localized, pageMeta, siteUrl } from "../lib/seo";
 import { relativeTime } from "../lib/format";
 import { IconChevronRight } from "../components/icons";
 import { IntentLink } from "../components/ui/IntentLink";
@@ -23,14 +23,14 @@ export async function loader({ request }: { request: Request }) {
   return cachedPage(300, await apiGet<TopicsResponse>("/api/site/topics", { signal: request.signal }));
 }
 
-export function meta({ loaderData }: Route.MetaArgs) {
+export function meta({ loaderData, location }: Route.MetaArgs) {
   if (!loaderData) return pageMeta({ title: SITE.topicsTitle, path: "/topics", image: "/og/pages/topics.png" });
   const { groups, topics } = loaderData;
   const by = groups.map((g) => g.name).join("、");
   const indexed = topics.filter((t) => t.indexable);
   const named = indexed.slice(0, 6).map((t) => t.name.split(" / ")[0]).join("、");
   const base = siteUrl();
-  return pageMeta({
+  return localized(pageMeta({
     title: SITE.topicsTitle,
     description: `按${by}${subjectAfter("追踪", "最新动态")}：${named ? `${named}等 ` : ""}${topics.length} 个主题，浏览最新精选与重要进展，持续更新。`,
     path: "/topics",
@@ -52,6 +52,9 @@ export function meta({ loaderData }: Route.MetaArgs) {
       },
       breadcrumbLd([{ name: SITE.name, path: "/" }, { name: "主题", path: "/topics" }]),
     ],
+  }), location.pathname, {
+    title: "Topics",
+    description: `Follow ${topics.length} topics across AI, crypto, finance and research, each with its latest selected reports and RSS feed.`,
   });
 }
 

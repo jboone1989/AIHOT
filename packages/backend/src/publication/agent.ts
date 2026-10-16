@@ -321,3 +321,52 @@ export function agentGuide(): string {
   ];
   return `${lines.join("\n")}\n`;
 }
+
+type GraphEdge = {
+  subject: { key: string; name: string }; predicate: string; object: { key: string; name: string };
+  fact: string; validAt: string | null; invalidAt: string | null; evidence: Array<{ articleId: string; source: string }>;
+};
+
+function relationLines(edges: GraphEdge[]): string[] {
+  return edges.map((e, i) => {
+    const when = [e.validAt ? `生效 ${stamp(e.validAt)}` : null, e.invalidAt ? `已失效 ${stamp(e.invalidAt)}` : "当前有效"].filter(Boolean).join("，");
+    const sources = [...new Set(e.evidence.map((ev) => publicSourceName(ev.source)).filter(Boolean))].join("、");
+    return `${i + 1}. ${e.subject.name}（key=${e.subject.key}）—${e.predicate.replaceAll("_", " ")}→ ${e.object.name}（key=${e.object.key}）：${e.fact}（${when}${sources ? `；来源：${sources}` : ""}；报道：${e.evidence.map((ev) => siteUrl(`/items/${ev.articleId}`)).join(" ")}）`;
+  });
+}
+
+const GRAPH_HINTS = [
+  "关系是 Graphiti 从报道里提取的事实陈述，不是原文引述；引用时说明“据报道”，重要的回报道原文核对。",
+  "标了“已失效”的关系表示后来的报道显示它已不成立，不要当成现状。",
+  `要看某个实体的全部关系，用 ${T.entity} 并传上面的 key；不要猜 key。`,
+  NO_INTERNALS,
+];
+
+/** A public story's knowledge relations (MCP get_story_graph). */
+export function storyGraphAnswer(title: string, publicId: string, graph: { status: string; edges: GraphEdge[] }): string {
+  const head = [`# ${SITE.name} 事件关系：${title}`, "", `事件页：${siteUrl(`/story/${publicId}`)}`];
+  if (graph.edges.length === 0) {
+    return answer(head, null, [graph.status === "unavailable" ? "知识图谱暂时无法访问，稍后再试；先用事件时间线回答。" : "这个事件在知识图谱里还没有有公开来源的关系，直接说明，不要自己推断关系。", NO_INTERNALS]);
+  }
+  return answer([...head, `${graph.edges.length} 条有公开来源的关系`], relationLines(graph.edges), GRAPH_HINTS);
+}
+
+/** One graph entity's profile (MCP get_entity). */
+export function entityAnswer(profile: {
+  entity: { key: string; name: string; summary?: string | null } | null; edges: GraphEdge[];
+  stories: Array<{ publicId: string; title: string; reportCount: number; latestAt: string }>;
+}): string {
+  const e = profile.entity!;
+  const current = profile.edges.filter((x) => !x.invalidAt).length;
+  return answer([
+    `# ${SITE.name} 实体：${e.name}`,
+    "",
+    `${profile.edges.length} 条有公开来源的关系（当前有效 ${current} 条）· ${profile.stories.length} 个相关事件`,
+    `实体档案：${siteUrl(`/knowledge/entity/${encodeURIComponent(e.key)}`)}`,
+  ], [
+    ...(e.summary ? [`实体摘要（Graphiti 生成）：${e.summary}`, ""] : []),
+    "关系（最近记录的在前）：",
+    ...relationLines(profile.edges.slice(0, 40)),
+    ...(profile.stories.length ? ["", "相关事件：", ...profile.stories.map((s) => `- ${s.title}（${s.reportCount} 篇相关报道，最近 ${stamp(s.latestAt)}）：public_id=${s.publicId}`)] : []),
+  ], [...GRAPH_HINTS, `相关事件可以用 ${T.story} 加 public_id 看时间线。`]);
+}

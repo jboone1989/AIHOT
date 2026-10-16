@@ -15,6 +15,7 @@ import { loadContact, loadMakerAvatar } from "@aihot/backend/site/contact";
 import { loadSiteStats } from "@aihot/backend/site/stats";
 import { itemAvailability } from "@aihot/backend/publication/availability";
 import { listTopicSummaries, loadTopicPage, topicBrowseLinks } from "@aihot/backend/publication/topics";
+import { FOLLOW_LIMITS, followingItems, followList } from "@aihot/backend/publication/following";
 import { registerFeedback } from "./feedback.ts";
 import { loadHot, loadStoryDetail, resolveStory } from "@aihot/backend/publication/stories";
 import { listReports, loadReport, reportNavigation, loadReportNavigation, loadReportMonth, type ReportKind } from "@aihot/backend/publication/reports";
@@ -146,6 +147,15 @@ export function registerSite(app: FastifyInstance) {
     const data = await loadTopicPage(slug, Number(looseQuery(req).page ?? 1));
     if (!data) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "topic page not found", cacheControl: "public, max-age=60" });
     return sendJsonWithEtag(req, reply, data, { etagPrefix: "topic", cacheControl: "public, max-age=60, s-maxage=60" });
+  }));
+
+  // The reader's follow list arrives in the query (it is kept only in their browser), so the answer is
+  // the same for everyone with the same list and caches like any public page.
+  app.get("/api/site/following", siteHandler(async (req, reply) => {
+    const query = looseQuery(req);
+    const topics = followList(query.topics, FOLLOW_LIMITS.topics, /^[a-z0-9-]{1,60}$/);
+    const entities = followList(query.entities, FOLLOW_LIMITS.entities, /^[A-Za-z0-9_-]{1,80}$/);
+    return sendJsonWithEtag(req, reply, await followingItems(topics, entities), { etagPrefix: "following", cacheControl: "public, max-age=60, s-maxage=60" });
   }));
 
   registerFeedback(app);

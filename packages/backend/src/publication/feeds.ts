@@ -13,7 +13,9 @@ import { textToHtml } from "../content/sanitize.ts";
 import type { FeedNotice } from "../modules.ts";
 import { publicCategoryCondition, exportTranslation, xView, type ItemRow } from "./items.ts";
 import { publicSourceName } from "./rules.ts";
-import { listedCondition, seatedCondition } from "./scope.ts";
+import { listedCondition, seatedCondition, storyReportCondition } from "./scope.ts";
+import { citedArticleIds, entityGraph } from "./knowledge.ts";
+import { findTopic, inTopic } from "./topics.ts";
 import { dailyUrl, itemUrl, periodUrl, siteUrl } from "./links.ts";
 
 interface FeedMeta {
@@ -191,6 +193,54 @@ export async function itemFeed(kind: ItemFeedKind, category: PublicApiCategoryKe
   }
   const items = rows.map((r) => itemXml(r, includeContent));
   const first = notice?.(meta.selfPath);
+  if (first) items.unshift(noticeXml(first));
+  return channel(meta, items);
+}
+
+const FOLLOW_COLUMNS = sql`p.article_id AS id, p.title, p.summary, p.url, p.category, p.published_at, s.name AS source_name`;
+
+/** A topic's selected reports of the last 30 days, 50 at most: subscribing to a topic instead of following it on the site. */
+export async function topicFeed(slug: string, { now = new Date(), notice }: { now?: Date; notice?: NoticeFor } = {}): Promise<string | null> {
+  const topic = findTopic(slug);
+  if (!topic) return null;
+  const rows = await sql<FeedRow[]>`
+    SELECT ${FOLLOW_COLUMNS} FROM publications p JOIN sources s ON s.id = p.source_id
+    WHERE ${seatedCondition(now)} AND ${inTopic(topic)} AND coalesce(p.published_at, p.discovered_at) >= ${new Date(now.getTime() - 30 * 86400_000)}
+    ORDER BY coalesce(p.published_at, p.discovered_at) DESC, p.article_id DESC LIMIT 50`;
+  const selfPath = `/feed/topic/${topic.slug}.xml`;
+  const meta = {
+    title: `${SITE.name} — ${topic.name}`,
+    description: `${SITE.name} 精选里属于「${topic.name}」的报道：${topic.definition}`,
+    homePath: `/topics/${topic.slug}`, selfPath, ttl: feedMeta("selected").pollHintMinutes,
+  };
+  const items = rows.map((r) => itemXml(r, false));
+  const first = notice?.(selfPath);
+  if (first) items.unshift(noticeXml(first));
+  return channel(meta, items);
+}
+
+/** The public reports an entity's Graphiti relations cite, newest 50; null when Graphiti has no such entity. */
+export async function entityFeed(key: string, { now = new Date(), notice }: { now?: Date; notice?: NoticeFor } = {}): Promise<string | null> {
+  const graph = await entityGraph(key);
+  if (!graph.entity) {
+    if (graph.status === "unavailable") throw new Error("Graphiti unavailable");
+    return null;
+  }
+  const ids = citedArticleIds(graph);
+  const rows = ids.length
+    ? await sql<FeedRow[]>`
+        SELECT ${FOLLOW_COLUMNS} FROM publications p JOIN sources s ON s.id = p.source_id
+        WHERE p.article_id = ANY(${ids}::text[]) AND ${storyReportCondition(now)}
+        ORDER BY coalesce(p.published_at, p.discovered_at) DESC, p.article_id DESC LIMIT 50`
+    : [];
+  const selfPath = `/feed/entity/${encodeURIComponent(key)}.xml`;
+  const meta = {
+    title: `${SITE.name} — ${graph.entity.name}`,
+    description: `知识图谱里与「${graph.entity.name}」有关系的公开报道；关系由 Graphiti 从报道中提取。`,
+    homePath: `/knowledge/entity/${encodeURIComponent(key)}`, selfPath, ttl: feedMeta("selected").pollHintMinutes,
+  };
+  const items = rows.map((r) => itemXml(r, false));
+  const first = notice?.(selfPath);
   if (first) items.unshift(noticeXml(first));
   return channel(meta, items);
 }

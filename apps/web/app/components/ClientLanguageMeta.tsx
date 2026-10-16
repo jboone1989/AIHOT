@@ -1,6 +1,8 @@
 import {useEffect,useRef} from "react";
 import {useLocation} from "react-router";
+import {SITE} from "@aihot/site";
 import {useUiLanguage} from "./LanguageSwitch";
+import {isEnglishPath} from "../lib/edition";
 
 /** Client-only browser labels. Canonical SSR metadata remains the original publication language. */
 function section(path:string){
@@ -18,17 +20,17 @@ function section(path:string){
   if(path.startsWith("/weekly"))return ["Weekly Brief","Weekly source coverage and reporting."];
   if(path.startsWith("/monthly"))return ["Monthly Brief","Monthly source coverage and reporting."];
   const map:Record<string,[string,string]>={
-    "/about":["About","About LivingRuntime and its evidence-linked approach."],
+    "/about":["About",`About ${SITE.name} and its evidence-linked approach.`],
     "/changelog":["Product Updates","Track product releases and changes."],
     "/feedback":["Feedback","Send feedback and content corrections."],
     "/starred":["Saved Reports","Your locally saved reports."],
     "/more":["Settings","Settings, language and tools."],
     "/agent":["Agent Access","Connect MCP, REST and RSS agents."],
-    "/privacy":["Privacy Information","How LivingRuntime handles data."],
+    "/privacy":["Privacy Information",`How ${SITE.name} handles data.`],
     "/terms":["Terms of Use","Current service use policies."],
     "/search-busy":["Search Busy","Search is temporarily busy."],
   };
-  return map[path]??["LivingRuntime","Research and news with traceable evidence."];
+  return map[path]??[SITE.name,"Research and news with traceable evidence."];
 }
 const originalMeta=new Map<string,{title:string;description:string|null}>();
 export function ClientLanguageMeta(){
@@ -36,13 +38,15 @@ export function ClientLanguageMeta(){
   const {pathname}=useLocation();
   const entered=useRef<string|null>(null);
   useEffect(()=>{
+    // The English edition is rendered with its English title and description already.
+    if(isEnglishPath(pathname))return;
     const meta=document.querySelector<HTMLMetaElement>('meta[name="description"]');
     // Capture server values only once per page, before replacing them in EN.
     if(!originalMeta.has(pathname))originalMeta.set(pathname,{title:document.title,description:meta?.content??null});
     const original=originalMeta.get(pathname)!;
     if(lang==="en"){
       const [heading,desc]=section(pathname);
-      document.title=heading+" · LivingRuntime";
+      document.title=heading+" · "+SITE.name;
       if(meta)meta.content=desc;
     }else if(entered.current===pathname){
       document.title=original.title;

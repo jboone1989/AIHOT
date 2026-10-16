@@ -1,5 +1,6 @@
 import type {FastifyInstance} from "fastify";
-import {graphForStory,graphForEntity,graphStats,graphSearch,graphOverview} from "@aihot/backend/knowledge/graphiti";
+import {graphStats,graphSearch,graphOverview} from "@aihot/backend/knowledge/graphiti";
+import {dailyGraphChanges,entityProfile,publicStoryGraph} from "@aihot/backend/publication/knowledge";
 import {timingSafeEqual} from "node:crypto";
 
 export function registerKnowledge(app:FastifyInstance){
@@ -22,11 +23,19 @@ export function registerKnowledge(app:FastifyInstance){
   app.get<{Params:{publicId:string}}>("/api/site/knowledge/stories/:publicId",async(req,reply)=>{
     const {publicId}=req.params;
     if(!/^[a-f0-9-]{36}$/i.test(publicId))return reply.code(400).send({error:"invalid_story"});
-    return reply.header("Cache-Control","public, max-age=120").send(await graphForStory(publicId));
+    return reply.header("Cache-Control","public, max-age=120").send(await publicStoryGraph(publicId));
   });
   app.get<{Params:{key:string}}>("/api/site/knowledge/entities/:key",async(req,reply)=>{
     const key=req.params.key;
     if(key.length>180)return reply.code(400).send({error:"invalid_entity"});
-    return reply.header("Cache-Control","public, max-age=120").send(await graphForEntity(key));
+    return reply.header("Cache-Control","public, max-age=120").send(await entityProfile(key));
+  });
+  app.get<{Params:{key:string}}>("/api/site/knowledge/daily/:key",async(req,reply)=>{
+    const {key}=req.params;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(key))return reply.code(400).send({error:"invalid_date"});
+    const changes=await dailyGraphChanges(key).catch(()=>undefined);
+    if(changes===undefined)return reply.code(503).header("Cache-Control","no-store").send({error:"unavailable"});
+    if(!changes)return reply.code(404).header("Cache-Control","public, max-age=60").send({error:"not_found"});
+    return reply.header("Cache-Control","public, max-age=300").send(changes);
   });
 }

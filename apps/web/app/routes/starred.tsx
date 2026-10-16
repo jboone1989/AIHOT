@@ -30,6 +30,7 @@ function reportText(r: ImportReport): string {
   if (r.starredSkipped || r.readSkipped) parts.push(`超出上限或格式不对而跳过 ${r.starredSkipped + r.readSkipped} 条`);
   if (r.themeApplied) parts.push("已沿用导入的深浅色设置");
   if (r.fontApplied) parts.push("已沿用导入的字体设置");
+  if (r.followsAdded) parts.push(`新增关注 ${r.followsAdded} 个`);
   if (r.readFailed) parts.push("已读记录没能保存（浏览器存储已满或不可用）");
   return parts.join("，");
 }

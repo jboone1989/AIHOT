@@ -84,10 +84,29 @@ export async function graphForStory(publicId: string): Promise<Graph> {
 export async function graphForEntity(uuid: string) {
   if (!process.env.GRAPHITI_API_URL) return { entity: null, edges: [], status: "disabled" };
   try {
-    return await graphiti<{ entity: {key:string;name:string;kind:string}|null; edges:Edge[] }>("/entities/" + encodeURIComponent(uuid));
+    return await graphiti<{ entity: {key:string;name:string;kind:string;summary?:string|null}|null; edges:Edge[]; status?: string }>("/entities/" + encodeURIComponent(uuid));
   } catch (error) {
     console.error("graphiti_entity_lookup_failed", error);
     return { entity: null, edges: [], status: "unavailable" };
+  }
+}
+
+export type GraphChanges = {
+  added: Graph & { count: number };
+  ended: Graph & { count: number };
+  newEntities: { count: number; items: Array<{ key: string; name: string }> };
+  status?: string;
+};
+
+/** What Graphiti recorded in a window: relations added and ended, entities first seen. */
+export async function graphChanges(since: Date, until: Date): Promise<GraphChanges> {
+  const empty = (status: string): GraphChanges => ({ added: { count: 0, entities: 0, edges: [] }, ended: { count: 0, entities: 0, edges: [] }, newEntities: { count: 0, items: [] }, status });
+  if (!process.env.GRAPHITI_API_URL) return empty("disabled");
+  try {
+    return await graphiti<GraphChanges>(`/changes?since=${encodeURIComponent(since.toISOString())}&until=${encodeURIComponent(until.toISOString())}`);
+  } catch (error) {
+    console.error("graphiti_changes_failed", error);
+    return empty("unavailable");
   }
 }
 

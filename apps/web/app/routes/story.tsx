@@ -6,10 +6,11 @@ import type { StoryDetail, StoryReportView } from "@aihot/contracts/site";
 import { SITE } from "@aihot/site";
 import { apiGet, cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { breadcrumbLd, pageMeta, storyLd, titled } from "../lib/seo";
+import { breadcrumbLd, localized, pageMeta, storyLd, titled } from "../lib/seo";
 import { beijingDate, beijingTime } from "@aihot/contracts/time";
 import { monthDay, monthDayTime, relativeTime } from "../lib/format";
 import { HeatChart } from "../features/story/HeatChart";
+import { EventPrices, type StoryMarket } from "../features/story/EventPrices";
 import { KnowledgeExplorer, type KnowledgeGraph } from "../components/KnowledgeNetwork";
 import { englishText } from "../components/EnglishStory";
 import { sessionCache } from "../lib/session-cache";
@@ -35,14 +36,16 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       if (request.signal.aborted) throw error;
       return { entities: 0, edges: [], status: "unavailable" };
     });
-  const [story, graph] = await Promise.all([storyPromise, graphPromise]);
-  return cachedPage(120, { story, graph });
+  const marketPromise = apiGet<StoryMarket>(`/api/market/stories/${encodeURIComponent(params.publicId)}`, { signal: request.signal, timeoutMs: 1_500 }).catch(() => null);
+  const [story, graph, market] = await Promise.all([storyPromise, graphPromise, marketPromise]);
+  return cachedPage(120, { story, graph, market });
 }
 
-export function meta({ loaderData }: Route.MetaArgs) {
+export function meta({ loaderData, location }: Route.MetaArgs) {
   if (!loaderData) return [{ title: titled("事件不存在") }, { name: "robots", content: "noindex" }];
   const s = loaderData.story;
-  return pageMeta({
+  const english = s.englishTitle && !/[㐀-鿿]/u.test(s.englishTitle) ? s.englishTitle : null;
+  return localized(pageMeta({
     title: s.title,
     description: (s.digest ?? s.summary ?? s.excerpt?.text)?.slice(0, 150) ?? `${s.sourceCount} 个报道来源 ${s.reportCount} 篇报道，完整时间线与最新进展。`,
     path: `/story/${s.publicId}`,
@@ -53,6 +56,11 @@ export function meta({ loaderData }: Route.MetaArgs) {
       // Under the board only while it is a way in, as the back link.
       breadcrumbLd([{ name: SITE.name, path: "/" }, ...(inNav("/hot") ? [{ name: "热点榜", path: "/hot" }] : []), { name: s.title, path: `/story/${s.publicId}` }]),
     ],
+  }), location.pathname, {
+    title: english ?? "Event timeline",
+    description: `${english ?? "This event"}: ${s.reportCount} reports from ${s.sourceCount} sources, with the full timeline, knowledge-graph relations and links to the original reporting.`,
+    // Without a publisher's English headline the English page has nothing of its own to index.
+    noindex: !english,
   });
 }
 
@@ -195,7 +203,7 @@ type Order = "desc" | "asc";
 const viewCache = sessionCache<{ savedAt: number; filter: Filter; order: Order }>("aihot:story-view:", 30 * 60 * 1000);
 
 export default function StoryPage() {
-  const { story, graph } = useLoaderData<typeof loader>();
+  const { story, graph, market } = useLoaderData<typeof loader>();
   const t=useText();
   const uiLang=useUiLanguage();
   const entry = useLocation().key;
@@ -478,6 +486,7 @@ export default function StoryPage() {
         </div>
 
         <aside className="order-2 flex min-w-0 flex-col gap-4 lg:order-none lg:gap-5">
+          <EventPrices market={market} />
           {observed && (
             <RailCard title={t("为什么热","Why trending")}>
               <p className="text-[12.5px] leading-[1.75] text-ink-3">

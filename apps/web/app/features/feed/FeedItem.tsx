@@ -10,7 +10,7 @@ import { ITEM_COPY } from "@aihot/site";
 import { SameEventBadge, SelectedBadge } from "../../components/ui/Badge";
 import { ScoreLabel } from "../../components/ui/Score";
 import { beijingTime } from "@aihot/contracts/time";
-import { MediaThumbs, SourceLine, StarButton } from "./parts";
+import { MediaThumbs, SourceLine, StarButton, TierBadge } from "./parts";
 import { GroupButton, GroupSources } from "./ReadingGroup";
 import { IconExternal } from "../../components/icons";
 import { QuotedLine } from "../item/QuotedPost";
@@ -58,6 +58,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
           </span>
         )}
         <SourceLine item={item} className="text-ink-4" />
+        <TierBadge tier={item.source.tier} />
         {at && (
           <time dateTime={at} className="mono shrink-0 text-[12px] lg:hidden">
             · {beijingTime(at)}
