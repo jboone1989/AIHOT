@@ -98,3 +98,34 @@ test("a story with a digest gets an English title and digest", async () => {
   assert.ok(row?.title.startsWith("Chip export rules tighten"));
   assert.ok(row?.digest.includes("Regulators"));
 });
+
+test("an English page's context: the event, its other coverage, prices around the report, and whether it is indexed", async () => {
+  const first = await selected("ether-context-a", 1300);
+  const second = await selected("ether-context-b", 1400);
+  const alone = await selected("ether-context-c", 1500);
+  await sql`UPDATE publications SET original_title = ${`Ether ETF update ${T}`} WHERE article_id IN (${first}, ${second}, ${alone})`;
+  const [story] = await sql<{ id: number; public_id: string }[]>`
+    INSERT INTO stories (public_id, title, digest, latest_at) VALUES (gen_random_uuid(), ${`以太坊 ETF-${T}`}, '以太坊 ETF 有了新进展。', now())
+    RETURNING id, public_id::text`;
+  await sql`UPDATE publications SET story_id = ${story!.id} WHERE article_id IN (${first}, ${second})`;
+  const [at] = await sql<{ at: Date }[]>`SELECT coalesce(published_at, discovered_at) AS at FROM publications WHERE article_id = ${first}`;
+  await sql`INSERT INTO market_snapshots (asset, observed_at, price_usdt, exchange) VALUES
+    ('ETH', ${new Date(at!.at.getTime() - 600_000)}, 4000, 'Binance'), ('ETH', ${new Date(at!.at.getTime() + 3600_000)}, 4100, 'Binance')
+    ON CONFLICT DO NOTHING`;
+
+  const res = await app.inject({ method: "GET", url: `/api/site/items/${first}/context` });
+  assert.equal(res.statusCode, 200);
+  const context = JSON.parse(res.body);
+  assert.equal(context.story.publicId, story!.public_id);
+  assert.deepEqual([context.story.reportCount, context.story.sourceCount], [2, 1]);
+  assert.deepEqual(context.coverage.map((c: { id: string }) => c.id), [second], "the other report of the event, not the report itself");
+  assert.equal(context.indexable, true, "one of several reports on its event");
+  assert.equal(context.market.assets[0].asset, "ETH");
+  assert.equal(context.market.assets[0].changePercent, 2.5);
+  assert.deepEqual(context.facts, [], "no graph configured, no relations");
+
+  const lone = JSON.parse((await app.inject({ method: "GET", url: `/api/site/items/${alone}/context` })).body);
+  assert.equal(lone.story, null);
+  assert.equal(lone.indexable, false, "a report on its own is not indexed in English");
+  assert.equal((await app.inject({ method: "GET", url: `/api/site/items/missing-${T}/context` })).statusCode, 404);
+});

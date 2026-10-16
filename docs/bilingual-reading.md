@@ -14,7 +14,7 @@ The public routes now have English experiences: homepage, news feed, hot/events,
 
 ## SEO and QA boundaries
 
-English pages have stable `/en` addresses with hreflang to their Chinese pages (`apps/web/app/lib/edition.ts`). Article and event pages are indexed in English only when they have English copy of their own; without it they carry `noindex` and stay out of the sitemap, so headline-only pages are not offered to search engines.
+English pages have stable `/en` addresses with hreflang to their Chinese pages (`apps/web/app/lib/edition.ts`). Event pages are indexed in English once they have an English digest. An English article page also shows what the site knows around the report (`GET /api/site/items/:id/context`, `packages/backend/src/publication/item-context.ts`): its event's English overview and counts, the other public reports of that event nearest in time, relations the knowledge graph extracted from this report, and spot prices before and a day after it for the assets it names. It is indexed only when it has English copy and its event has at least two public reports (`INDEXED_MIN_REPORTS`), so the page carries context beyond one summary; other pages carry `noindex` and stay out of the sitemap.
 
 Checks:
 ```sh

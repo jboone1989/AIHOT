@@ -81,6 +81,17 @@ export async function graphForStory(publicId: string): Promise<Graph> {
   }
 }
 
+/** The relations Graphiti extracted from one article revision. */
+export async function graphForArticle(id: string, revision: number): Promise<Graph> {
+  if (!process.env.GRAPHITI_API_URL) return emptyGraph("disabled");
+  try {
+    return await graphiti<Graph>("/relations/by-articles", { method: "POST", body: { articles: [id + ":r" + revision], limit: 20 }, timeoutMs: 4000 });
+  } catch (error) {
+    console.error("graphiti_article_lookup_failed", error);
+    return emptyGraph("unavailable");
+  }
+}
+
 export async function graphForEntity(uuid: string) {
   if (!process.env.GRAPHITI_API_URL) return { entity: null, edges: [], status: "disabled" };
   try {

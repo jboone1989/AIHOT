@@ -59,9 +59,16 @@ export function meta({ loaderData, location }: Route.MetaArgs) {
   if (!loaderData) return [{ title: titled("内容不存在") }, { name: "robots", content: "noindex" }];
   const { item } = loaderData;
   if (!item) return [{ title: titled(loaderData.preview.title) }];
-  // The English page is indexed only with English copy of its own (editorial/english.ts), never on a bare headline.
+  return itemMeta(item, location.pathname, false);
+}
+
+/**
+ * The article's tags in either language. The English page (/en/items) is indexed only with English copy of
+ * its own (editorial/english.ts) and context enough (routes/item-english.tsx), never on a bare headline.
+ */
+export function itemMeta(item: SiteItemDetail, pathname: string, englishIndexable: boolean) {
   const english = item.english ?? null;
-  const onEnglish = isEnglishPath(location.pathname) && english;
+  const onEnglish = isEnglishPath(pathname) && english;
   return localized(pageMeta({
     title: item.title,
     description: item.summary ?? undefined,
@@ -79,10 +86,10 @@ export function meta({ loaderData, location }: Route.MetaArgs) {
         { name: item.title, path: `/items/${item.id}` },
       ]),
     ],
-  }), location.pathname, {
+  }), pathname, {
     title: english?.title ?? item.originalTitle ?? "Original report",
     description: english?.summary ?? `Source record from ${item.source.name}, with a link to the original reporting.`,
-    noindex: !english || !item.indexable,
+    noindex: !english || !item.indexable || (isEnglishPath(pathname) && !englishIndexable),
   });
 }
 

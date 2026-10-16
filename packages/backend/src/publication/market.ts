@@ -42,7 +42,11 @@ export async function storyMarket(storyId: number, now = new Date()): Promise<St
   if (reports.length === 0) return null;
   const [story] = await sql<{ title: string }[]>`SELECT title FROM stories WHERE id = ${storyId}`;
   const assets = assetsNamed([story?.title ?? "", ...reports.flatMap((r) => [r.title, r.original_title ?? ""])]);
-  const eventAt = new Date(Math.min(...reports.map((r) => r.at.getTime())));
+  return marketAround(assets, new Date(Math.min(...reports.map((r) => r.at.getTime()))), now);
+}
+
+/** The named assets priced just before `eventAt` and a day later (or at the latest snapshot while that day is not over). */
+export async function marketAround(assets: SpotAsset[], eventAt: Date, now = new Date()): Promise<StoryMarket> {
   const dayLater = new Date(eventAt.getTime() + DAY_MS);
   const priced: StoryAssetPrice[] = [];
   for (const asset of assets) {

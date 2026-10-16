@@ -9,6 +9,7 @@ import { loadChangelog } from "../site/meta.ts";
 import { latestHotRanking } from "./hot.ts";
 import { ITEM_FROM } from "./items.ts";
 import { ENGLISH_STORY_INPUTS } from "./story-text.ts";
+import { INDEXED_MIN_REPORTS } from "./item-context.ts";
 import { sql } from "../db.ts";
 import { cached, SHARED_ONLY } from "../lib/cache.ts";
 import { escapeXml } from "../lib/text.ts";
@@ -112,10 +113,15 @@ export async function loadDiscoveryEntries(at = new Date(), limits?: { stories: 
   // Material/translation timestamps can also record a retry or a state repair. Hash the content;
   // without a dedicated public modification clock, omitting lastmod is more accurate than guessing.
   const items = await sql<{ id: string; revision: string; en_revision: string | null }[]>`
+    WITH story_sizes AS (
+      SELECT p.story_id, count(*) AS n FROM publications p JOIN sources s ON s.id = p.source_id
+      WHERE p.story_id IS NOT NULL AND ${storyReportCondition(at)} GROUP BY p.story_id)
     SELECT p.article_id AS id,
       md5(concat_ws('|', p.revision::text, a.content_hash, tr.title, tr.body_html, tr.body_text, tr.complete::text, qt.text_zh,
         s.name, s.icon_url, st.public_id::text, st.title)) AS revision,
-      CASE WHEN ec.title IS NOT NULL THEN md5(concat_ws('|', p.revision::text, a.content_hash, ec.title, ec.summary, ec.reason, s.name)) END AS en_revision
+      -- An English page with English copy and an event of several reports (item-context.ts INDEXED_MIN_REPORTS).
+      CASE WHEN ec.title IS NOT NULL AND coalesce((SELECT z.n FROM story_sizes z WHERE z.story_id = p.story_id), 0) >= ${INDEXED_MIN_REPORTS}
+      THEN md5(concat_ws('|', p.revision::text, a.content_hash, ec.title, ec.summary, ec.reason, s.name)) END AS en_revision
     ${ITEM_FROM}
     WHERE ${storyReportCondition(at)} AND p.indexable
     ORDER BY p.timeline_at DESC, p.article_id DESC ${limits ? sql`LIMIT ${Math.max(0, limits.urls - entries.length)}` : sql``}`;
