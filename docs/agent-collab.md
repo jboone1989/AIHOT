@@ -6,13 +6,14 @@
 
 ## 球在谁手里：标签
 
-一个 issue 或 PR 上同时只挂一个下面的标签，表示现在该谁动：
+一个 issue 或 PR 上同时只挂 `agent:codex`、`agent:claude`、`needs:human` 中的一个，表示现在该谁动：
 
 | 标签 | 含义 |
 | --- | --- |
 | `agent:codex` | 交给 ChatGPT。server142 上的轮询脚本会接手。 |
 | `agent:claude` | 交给 Claude。 |
 | `needs:human` | 需要使用者决定、合并或部署；两边都不再动它。 |
+| `stage:plan` | 方案讨论阶段，和上面三个之一一起挂：两边只评论不改代码。 |
 
 交出去的一方：写一条交接评论，然后把自己的标签换成对方的（或 `needs:human`）。接手的一方做完后同样换标签。没有标签的 issue/PR 两边都不主动处理。
 
@@ -39,6 +40,16 @@ ChatGPT 一侧用 `<!-- agent:codex -->`。一条评论只交一件事；对方�
 - **Claude**：两条路，都不用使用者开口。
   - Claude 线程开出 PR 后会订阅它，PR 上的新评论、CI 结果和评审会自动唤醒那个线程。所以 ChatGPT 在 Claude 开的 PR 上留评论，Claude 就会接着做。
   - 其他事由 claude.ai 项目里的定时任务“PR 和 main 自动审查（含标签交接）”负责，每小时一次（UTC 每小时第 22 分钟）：对每个开着的 PR（包括 ChatGPT 开的）的新提交和 `main` 做一次只评论的评审，不推送、不合并；ChatGPT 开的 PR 需要改时挂上 `agent:codex`，可以合并时挂 `needs:human`；挂了 `agent:claude` 的 issue 也由它接手。它的评论首行是 `<!-- agent:claude -->`，同一处来回 6 轮后停下。
+
+## 从讨论到发布
+
+一个新项目或大改动按这个顺序走，全程都在同一个 issue 和它的 PR 里，使用者只在三处出现：提想法、拍板方案、合并和部署。
+
+1. **讨论**：用“方案讨论”模板开 issue。模板会挂上 `stage:plan` 和 `agent:codex`。ChatGPT 先读代码、写方案（`stage:plan` 下它只读不改，不开分支），写 `NEXT: claude` 交给 Claude；Claude 的定时审查逐条点评、提出替代或风险，再交回 `agent:codex`。哪一方认为需要使用者决定，就挂 `needs:human`。使用者可以随时在 issue 里插话，再挂上 `agent:codex` 或 `agent:claude` 让讨论继续。
+2. **拍板**：使用者在 issue 里写下定的方案，去掉 `stage:plan`，挂 `agent:codex`。
+3. **开工和审查循环**：ChatGPT 按方案改代码，推到 `codex/issue-<编号>` 并开草稿 PR，标签交给 Claude；Claude 的定时审查评审这个 PR，需要改就挂 `agent:codex`，CI 绿且没有阻塞问题就挂 `needs:human`。两边来回直到可以合并，同一处超过 6 轮会停下等使用者。
+4. **合并和发布**：使用者合并 PR。需要发版时在 GitHub 上打 tag 或建 release。
+5. **部署**：使用者自己在 VM09 上执行 `bash scripts/deploy-prod.sh`（见 `docs/production-deployment.md`）。两边都不部署。
 
 ## 防止两边无限对话
 
