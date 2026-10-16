@@ -2,7 +2,7 @@
 // events (stories) those reports belong to. Graphiti owns the relations; this database owns what is
 // public, so a cited report that was withdrawn, held back or never published is left out here.
 import { sql } from "../db.ts";
-import { graphChanges, graphForEntity, graphForStory, graphOverview, graphNetwork, graphRelation, graphAtlasCenters, type GraphChanges } from "../knowledge/graphiti.ts";
+import { graphAtlasCenters, graphChanges, graphForEntity, graphForStory, graphNetwork, graphOverview, graphRelation, graphSearch, graphStats, type GraphChanges } from "../knowledge/graphiti.ts";
 import { cached, cachedByKey } from "../lib/cache.ts";
 import { publicSourceName } from "./rules.ts";
 import { storyReportCondition } from "./scope.ts";
@@ -140,6 +140,11 @@ const overview = cached(() => readPublicOverview(), { freshMs: 60_000, maxStaleM
 export async function publicGraphOverview(now?: Date) {
   return now ? readPublicOverview(now) : overview.get();
 }
+
+/** The graph's counts, for the knowledge page. */
+export const publicGraphStats = () => graphStats();
+/** A search of the graph, for the token-holding search endpoint. */
+export const searchGraph = (q: string, limit: number) => graphSearch(q, limit);
 
 /** Public atlas: isolated nodes need a public mention; links need their own public evidence. */
 async function readPublicNetwork(now = new Date()) {

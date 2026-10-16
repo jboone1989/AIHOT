@@ -1,6 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { getSpot, SPOT_ASSETS, type SpotAsset } from "@aihot/backend/market-spot";
-import { storyMarket } from "@aihot/backend/publication/market";
+import { SPOT_ASSETS, spotPrice, storyMarket, type SpotAsset } from "@aihot/backend/publication/market";
 import { resolveStory } from "@aihot/backend/publication/stories";
 
 /** Public read-only snapshot, separate from article processing. */
@@ -12,7 +11,7 @@ export function registerMarket(app: FastifyInstance) {
     }
     const asset = query.asset.toUpperCase();
     if (!SPOT_ASSETS.some(s => s === asset)) return reply.code(400).send({ error: "unsupported asset" });
-    const result = await getSpot(asset as SpotAsset);
+    const result = await spotPrice(asset as SpotAsset);
     reply.header("Cache-Control", "public, max-age=30, s-maxage=60");
     if (!result.observations.length) return reply.code(503).send(result);
     return reply.send(result);

@@ -32,9 +32,9 @@
 
 ```sh
 npm run typecheck
-node scripts/knowledge-ui-smoke.mjs
-# 浏览器二进制存在时才运行交互/响应式验收：
-node scripts/knowledge-ui-browser-check.mjs
+E2E_BASE_URL=http://127.0.0.1:3000 npm run e2e -- knowledge.spec.ts pages.spec.ts
 ```
+
+图谱为空时（CI 没有 Graphiti），画图和实体页两项会标为跳过；指向有图谱数据的开发环境或正式站时才会真正跑（`docs/testing.md`）。
 
 不要把首页图谱缩略图误称作全库数据，不要提前承诺跨事件关系必然存在；关系只由新闻证据产生。前端不得持有 Neo4j 密码或 NVIDIA API 密钥。

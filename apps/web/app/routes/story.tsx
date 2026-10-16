@@ -8,7 +8,7 @@ import { apiGet, cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
 import { breadcrumbLd, localized, pageMeta, storyLd, titled } from "../lib/seo";
 import { beijingDate, beijingTime } from "@aihot/contracts/time";
-import { localizedMonthDayTime, monthDay, relativeTime } from "../lib/format";
+import { localizedMonthDay, localizedMonthDayTime, relativeTime } from "../lib/format";
 import { HeatChart } from "../features/story/HeatChart";
 import { EventPrices, type StoryMarket } from "../features/story/EventPrices";
 import { KnowledgeExplorer, type KnowledgeGraph } from "../components/KnowledgeNetwork";
@@ -276,7 +276,7 @@ export default function StoryPage() {
   return (
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-10">
       <PhoneBar back={inNav("/hot") ? { to: "/hot", label: t("热点","Events") } : { to: "/", label: t("精选","Featured") }} title={displayTitle} />
-      <nav aria-label="位置" className="hidden items-center gap-2.5 pb-5 pt-4 text-[12px] text-ink-4 lg:flex">
+      <nav aria-label={t("位置","Breadcrumb")} className="hidden items-center gap-2.5 pb-5 pt-4 text-[12px] text-ink-4 lg:flex">
         <Link to={inNav("/hot") ? "/hot" : "/"} className="inline-flex items-center gap-1.5 transition-colors hover:text-ink">
           <IconArrowLeft size={15} /> {inNav("/hot") ? t("热点榜","Events") : t("精选","Featured")}
         </Link>
@@ -451,7 +451,7 @@ export default function StoryPage() {
             ) : (
               days.map(({ day, rows }) => (
                 <div key={day}>
-                  <div className="pb-0.5 pt-5 text-[14px] font-semibold text-ink">{monthDay(day)}</div>
+                  <div className="pb-0.5 pt-5 text-[14px] font-semibold text-ink">{localizedMonthDay(day, uiLang)}</div>
                   <ol>
                     {rows.map((r) => (
                       <TimelineRow key={r.id} r={r} />
@@ -520,7 +520,7 @@ export default function StoryPage() {
                   <li key={r.id} className="py-3">
                     <div className="truncate text-[11.5px] text-ink-4">{r.source.name}</div>
                     <Link viewTransition to={reportPath(r.id)} className="group mt-1 block text-[13.5px] font-semibold leading-[1.6] text-ink transition-colors hover:text-accent">
-                      {r.title}
+                      {reportTitle(r)}
                       <IconChevronRight size={13} className="ml-0.5 inline -translate-y-px text-ink-4 transition-transform group-hover:translate-x-0.5" />
                     </Link>
                   </li>

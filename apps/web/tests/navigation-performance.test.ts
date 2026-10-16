@@ -98,15 +98,15 @@ test('SSR list and visited query variants return offline without another read',a
     await expect(page.getByRole('link',{name:'性能检查文章',exact:true})).toBeVisible({timeout:1500});
     await context.setOffline(false);
     await page.getByRole('button',{name:/^筛选/}).click();
-    await page.getByRole('link',{name:'模型',exact:true}).click();
-    await expect(page.getByRole('link',{name:'分类 research',exact:true})).toBeVisible();
+    await page.getByRole('link',{name:'AI',exact:true}).click();
+    await expect(page.getByRole('link',{name:'分类 ai',exact:true})).toBeVisible();
     await page.getByRole('button',{name:/^筛选/}).click();
-    await page.getByRole('link',{name:'产品',exact:true}).click();
-    await expect(page.getByRole('link',{name:'分类 term',exact:true})).toBeVisible();
+    await page.getByRole('link',{name:'金融',exact:true}).click();
+    await expect(page.getByRole('link',{name:'分类 finance',exact:true})).toBeVisible();
     await context.setOffline(true);
     await page.goBack();
-    await expect(page.getByRole('link',{name:'分类 research',exact:true})).toBeVisible({timeout:1500});
-    await expect(page.locator('link[rel=canonical]')).toHaveAttribute('href',origin+'/?category=research');
+    await expect(page.getByRole('link',{name:'分类 ai',exact:true})).toBeVisible({timeout:1500});
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute('href',origin+'/?category=ai');
   }finally{await context.close();}
 });
 
@@ -117,7 +117,7 @@ test('hover still fetches article data, touches that move do not, and failed pre
     const link=page.getByRole('link',{name:'性能检查文章',exact:true});
     const start=hits.length;
     await link.dispatchEvent('touchstart');await link.dispatchEvent('touchmove');
-    await page.getByRole('heading',{name:'精选',exact:true}).click();
+    await page.getByRole('heading',{name:'正在发生的事',exact:true}).click();
     assert.equal(hits.slice(start).filter(x=>x.startsWith('/api/site/items/')).length,0);
     const response=page.waitForResponse(r=>r.url().includes('/items/navigation-fixture.data'));
     await link.hover();await response;
@@ -129,7 +129,7 @@ test('hover still fetches article data, touches that move do not, and failed pre
       await freshPage.goto(origin+'/');failing='/api/site/items/navigation-fixture';
       const failed=freshPage.waitForResponse(r=>r.url().includes('/items/navigation-fixture.data')&&r.status()===503);
       await freshPage.getByRole('link',{name:'性能检查文章',exact:true}).hover();await failed;
-      await expect(freshPage.getByRole('heading',{name:'精选',exact:true})).toBeVisible();
+      await expect(freshPage.getByRole('heading',{name:'正在发生的事',exact:true})).toBeVisible();
     }finally{await fresh.close();}
   }finally{failing='';await context.close();}
 });
@@ -159,17 +159,17 @@ test('intent on a selected link preserves visited data and the next revisit star
   page.on('request',request=>{if(request.url().includes('.data'))requests.push(request.url());});
   try{
     await page.goto(origin+'/');
-    await page.getByRole('link',{name:'模型',exact:true}).click();
-    await expect(page.getByRole('link',{name:'分类 research',exact:true})).toBeVisible();
-    await page.getByRole('link',{name:'模型',exact:true}).focus();
+    await page.getByRole('link',{name:'AI',exact:true}).click();
+    await expect(page.getByRole('link',{name:'分类 ai',exact:true})).toBeVisible();
+    await page.getByRole('link',{name:'AI',exact:true}).focus();
     await page.waitForTimeout(150);
-    await page.getByRole('link',{name:'产品',exact:true}).click();
-    await expect(page.getByRole('link',{name:'分类 term',exact:true})).toBeVisible();
-    await page.getByRole('link',{name:'产品',exact:true}).focus();
+    await page.getByRole('link',{name:'金融',exact:true}).click();
+    await expect(page.getByRole('link',{name:'分类 finance',exact:true})).toBeVisible();
+    await page.getByRole('link',{name:'金融',exact:true}).focus();
     await page.waitForTimeout(150);
     const before=requests.length;
-    await page.getByRole('link',{name:'模型',exact:true}).click();
-    await expect(page.getByRole('link',{name:'分类 research',exact:true})).toBeVisible();
+    await page.getByRole('link',{name:'AI',exact:true}).click();
+    await expect(page.getByRole('link',{name:'分类 ai',exact:true})).toBeVisible();
     assert.deepEqual(requests.slice(before),[],'neither prefetch nor navigation may evict and reload a still-valid visited page');
   }finally{await context.close();}
 });
@@ -226,6 +226,7 @@ test('Agent tabs finish offline with matching canonical; invalid direct tabs and
   }finally{await context.close();}
 });
 
+// Opening search also records an analytics event and may refresh the market strip; everything else must be the suggestions read.
 test('phone suggestions load only on opening, use one small read, retry failures and update on reopening',async()=>{
   const context=await safari.newContext({viewport:{width:390,height:844}});const page=await context.newPage();
   try{
@@ -234,12 +235,12 @@ test('phone suggestions load only on opening, use one small read, retry failures
     let start=hits.length;
     await page.getByRole('button',{name:'搜索',exact:true}).click();
     await expect(page.getByRole('link',{name:'1 建议版本 1',exact:true})).toBeVisible();
-    assert.deepEqual(hits.slice(start),['/api/site/search/suggestions']);
+    assert.deepEqual(hits.slice(start).filter(x=>!/^\/api\/(analytics\/events|market\/spot)/.test(x)),['/api/site/search/suggestions']);
     await page.getByRole('button',{name:'取消',exact:true}).click();
     suggestionsVersion=2;start=hits.length;
     await page.getByRole('button',{name:'搜索',exact:true}).click();
     await expect(page.getByRole('link',{name:'1 建议版本 2',exact:true})).toBeVisible();
-    assert.deepEqual(hits.slice(start),['/api/site/search/suggestions']);
+    assert.deepEqual(hits.slice(start).filter(x=>!/^\/api\/(analytics\/events|market\/spot)/.test(x)),['/api/site/search/suggestions']);
     await page.getByRole('button',{name:'取消',exact:true}).click();
     failing='/api/site/search/suggestions';await page.getByRole('button',{name:'搜索',exact:true}).click();
     await expect(page.getByRole('link',{name:'1 建议版本 2',exact:true})).not.toBeVisible();
@@ -288,7 +289,7 @@ test('deep reading returns to its anchor, including folded dates',async()=>{
   try{
     await page.goto(origin+'/?tag=long-reading');
     await expect(page.locator('[data-card-key]')).toHaveCount(180);
-    await page.getByRole('button',{name:'收起10月4日',exact:true}).click();
+    await page.getByRole('button',{name:'收起 10月4日',exact:true}).click();
     await expect(page.locator('[data-card-key]')).toHaveCount(120);
     await page.getByRole('link',{name:'长列表文章 160',exact:true}).scrollIntoViewIfNeeded();
     const before=await page.evaluate(()=>{
@@ -300,6 +301,6 @@ test('deep reading returns to its anchor, including folded dates',async()=>{
     await page.goBack();
     await expect(page.locator('[data-card-key]')).toHaveCount(120);
     await expect.poll(()=>page.locator(`[data-card-key="${before.key}"]`).evaluate((e,top)=>Math.abs(e.getBoundingClientRect().top-top),before.top)).toBeLessThan(2);
-    await expect(page.getByRole('button',{name:'展开10月4日',exact:true})).toBeVisible();
+    await expect(page.getByRole('button',{name:'展开 10月4日',exact:true})).toBeVisible();
   }finally{await context.close();}
 });

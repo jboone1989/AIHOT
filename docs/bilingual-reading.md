@@ -21,16 +21,15 @@ Checks:
 npm run typecheck
 node scripts/english-site-smoke.mjs
 node scripts/english-coverage.mjs
-node scripts/language-switch-smoke.mjs
-node scripts/knowledge-ui-smoke.mjs
+E2E_BASE_URL=http://127.0.0.1:3000 npm run e2e
 ```
 
-Smoke tests cover route availability and original title data, **not** a real Chromium click-and-screenshot pass. Playwright Chromium was not available on the development host at validation time. No production deployment is implied.
+The browser checks (`e2e/`, `docs/testing.md`) open every public page and the sampled article, event, report, topic and entity pages in Chromium at desktop and phone sizes, switch languages, and screenshot each page into the report.
 
 ## English DOM regression gate (2026-10-15)
 
-The root script `npm run audit:english` performs three checks against the running dev site at `http://127.0.0.1:3000` (or `PREVIEW_URL`): exact `en-US` day/time renderers, Playwright Chromium crawling of 26 public/representative routes at 1365×860 and 390×844, and interactive English popup scans (search, filter, participant and ranking disclosure).
+The root script `npm run audit:english` checks the exact `en-US` day/time renderers and then runs `e2e/english.spec.ts` against the running site (`E2E_BASE_URL`, default `http://127.0.0.1:3000`): every public and sampled content page at 1365×860 and on a phone, plus the English popups (search, filter, participants) and the feedback screenshot picker.
 
-Audit logic sets `livingruntime-language=en` in browser storage, waits until the client language is active, checks visible DOM text and attributes (`aria-label`, `title`, `placeholder`, `alt`), document title/description, response status and uncaught JavaScript exceptions. It excludes the language selector itself since the Chinese-language choice is intentionally labeled “中文”. A nonzero result exits with failure. The script is a regression check of sampled dynamic content, not a claim that source archives already have full English editorial translations.
+Audit logic sets `livingruntime-language=en` in browser storage, waits until the client language is active, checks visible DOM text and attributes (`aria-label`, `title`, `placeholder`, `alt`), document title/description, response status and uncaught JavaScript exceptions. It excludes the language selector itself since the Chinese-language choice is intentionally labeled “中文”. A page with Chinese left fails and lists the strings. The check is a regression check of sampled dynamic content, not a claim that source archives already have full English editorial translations.
 
 The live crawl reported `checked=52, offendingStrings=0, affectedScreens=0` after fixing shared date/count renderers and React hydration. React SSR incorrectly hoisted an SVG `<title>` element inside knowledge graph links, causing hydration error #418. Replaced it with an `aria-label` on the interactive SVG links. Both English and Chinese share the deterministic graph layout. Source-original articles, event graph, reports, navigation and source references remained functional.

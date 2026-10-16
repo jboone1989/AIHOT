@@ -1,6 +1,5 @@
 import type {FastifyInstance} from "fastify";
-import {graphStats,graphSearch} from "@aihot/backend/knowledge/graphiti";
-import {dailyGraphChanges,entityProfile,publicGraphOverview,publicGraphNetwork,publicGraphRelation,publicStoryGraph,publicAtlasNeighborhood,publicAtlasCenters} from "@aihot/backend/publication/knowledge";
+import {dailyGraphChanges,entityProfile,publicAtlasCenters,publicAtlasNeighborhood,publicGraphOverview,publicGraphNetwork,publicGraphRelation,publicGraphStats,publicStoryGraph,searchGraph} from "@aihot/backend/publication/knowledge";
 import {timingSafeEqual} from "node:crypto";
 
 export function registerKnowledge(app:FastifyInstance){
@@ -14,7 +13,7 @@ export function registerKnowledge(app:FastifyInstance){
     const limit=Number(req.query.limit??10);
     if(q.length<2||q.length>500||!Number.isInteger(limit)||limit<1||limit>30)
       return reply.code(400).send({error:"invalid_query"});
-    return reply.header("Cache-Control","no-store").send(await graphSearch(q,limit));
+    return reply.header("Cache-Control","no-store").send(await searchGraph(q,limit));
   });
   app.get("/api/site/knowledge/overview",async(_req,reply)=>
     reply.header("Cache-Control","public, max-age=60").send(await publicGraphOverview()));
@@ -45,7 +44,7 @@ export function registerKnowledge(app:FastifyInstance){
     return reply.header("Cache-Control","public, max-age=60").send(result);
   });
   app.get("/api/site/knowledge/stats",async(_req,reply)=>
-    reply.header("Cache-Control","public, max-age=60").send(await graphStats()));
+    reply.header("Cache-Control","public, max-age=60").send(await publicGraphStats()));
   app.get<{Params:{publicId:string}}>("/api/site/knowledge/stories/:publicId",async(req,reply)=>{
     const {publicId}=req.params;
     if(!/^[a-f0-9-]{36}$/i.test(publicId))return reply.code(400).send({error:"invalid_story"});
