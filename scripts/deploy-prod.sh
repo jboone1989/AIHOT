@@ -12,7 +12,7 @@ START=$SECONDS
 git diff --quiet && git diff --cached --quiet || { echo "Dirty checkout; abort" >&2; exit 1; }
 test -f .env && test -f scripts/production-smoke.py
 command -v docker >/dev/null
-python3 scripts/production-env-check.py .env --role production
+python3 scripts/production-env-check.py .env --role production --compare config/environments/production.flags.env.example --enforce
 git fetch origin main
 NEW_SHA="$(git rev-parse origin/main)"
 OLD_SHA="$(git rev-parse HEAD)"
@@ -87,7 +87,7 @@ for key,tag in {"LRSITE_APP_RELEASE":app,"LRSITE_KNOWLEDGE_RELEASE":knowledge,"L
 p.write_text(data)
 os.chmod(p,0o600)
 WRITE_RELEASE
-python3 scripts/production-env-check.py .env --role production
+python3 scripts/production-env-check.py .env --role production --compare config/environments/production.flags.env.example --enforce
 "${COMPOSE[@]}" config --quiet
 echo "[4/5] Apply schema migration only if migration files changed"
 if [[ "$SCHEMA_CHANGED" == 1 ]]; then

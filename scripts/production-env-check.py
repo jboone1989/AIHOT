@@ -49,7 +49,8 @@ def main():
     cli = argparse.ArgumentParser()
     cli.add_argument("env_file", type=Path)
     cli.add_argument("--role", choices=["production", "development"], required=True)
-    cli.add_argument("--compare", type=Path, help="Optional second environment: only feature flags are compared")
+    cli.add_argument("--compare", type=Path, help="Compare against versioned desired flags or another environment")
+    cli.add_argument("--enforce", action="store_true", help="Fail when compared feature flags differ")
     args = cli.parse_args()
     primary = read_env(args.env_file)
     faults = errors(primary, args.role)
@@ -57,7 +58,10 @@ def main():
         secondary = read_env(args.compare)
         for key in FEATURES:
             if primary.get(key) != secondary.get(key):
-                print(f"DIFF {key}: {args.role}={primary.get(key, 'unset')}, other={secondary.get(key, 'unset')}")
+                report=f"DIFF {key}: {args.role}={primary.get(key, 'unset')}, desired={secondary.get(key, 'unset')}"
+                print(report)
+                if args.enforce:
+                    faults.append(report)
     if faults:
         for issue in faults:
             print("INVALID:", issue, file=sys.stderr)
