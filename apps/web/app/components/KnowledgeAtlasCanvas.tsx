@@ -21,8 +21,9 @@ function readableLabels(instance: Core, dense: boolean) {
   instance.edges().style("width", Math.min(16, 0.55 / zoom));
 }
 
-export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation }: {
-  network: AtlasNetwork; selectedKey: string | null; onNode: (key: string) => void; onRelation: (key: string) => void;
+export function KnowledgeAtlasCanvas({ network, selectedKey, homeKey, onNode, onRelation }: {
+  network: AtlasNetwork; selectedKey: string | null; homeKey?: string | null;
+  onNode: (key: string) => void; onRelation: (key: string) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const cy = useRef<Core | null>(null);
@@ -130,6 +131,21 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
     if (!ready || !instance || !selectedKey) return;
     centerOnce(instance, selectedKey, focused.current !== null);
   }, [selectedKey, ready]);
+  const returnHome = () => {
+    if (!homeKey) return;
+    if (selectedKey !== homeKey) {
+      // Focus change is handled by the existing single-pan effect.
+      callbacks.current.onNode(homeKey);
+      return;
+    }
+    // Even when already selected, the user may have dragged the viewport away.
+    // Recenter only the camera; preserve zoom, node coordinates and graph state.
+    const instance = cy.current;
+    const target = instance?.getElementById(homeKey);
+    if (!instance || !target?.length) return;
+    instance.stop();
+    instance.animate({ center: { eles: target }, duration: 320, easing: "ease-in-out" });
+  };
   const zoom = (factor: number) => { const instance = cy.current; if (instance) instance.zoom({ level: instance.zoom() * factor, renderedPosition: { x: instance.width() / 2, y: instance.height() / 2 } }); };
   return <div className="lr-atlas-map">
     <div ref={container} className="lr-atlas-canvas" role="img" aria-label={t(`知识网络：${network.nodes.length} 个实体，${network.links.length} 条关系；可通过实体目录进行键盘探索`, `Knowledge network: ${network.nodes.length} entities, ${network.links.length} relations; use the entity directory for keyboard exploration`)} />
@@ -138,6 +154,7 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
       <button type="button" aria-label={t("放大图谱", "Zoom in")} onClick={() => zoom(1.5)}>+</button>
       <button type="button" aria-label={t("缩小图谱", "Zoom out")} onClick={() => zoom(1 / 1.5)}>−</button>
       <button type="button" onClick={() => cy.current?.fit(undefined, 35)}>{t("适应画布", "Fit graph")}</button>
+      {homeKey && <button type="button" data-testid="atlas-home" onClick={returnHome} aria-label={t("回到档案实体", "Recenter profile entity")} title={t("回到档案实体中心", "Return to the profile entity center")}>{t("回到本实体", "Profile center")} ⌖</button>}
     </div>
     <div className="lr-atlas-map-note">{t("拖动画布 · 滚轮或双指缩放 · 点击节点探索", "Drag to pan · Scroll or pinch to zoom · Select a node")}</div>
   </div>;
