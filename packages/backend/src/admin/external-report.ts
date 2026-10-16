@@ -26,8 +26,8 @@ export function cachedReport<T>() {
 
 export class ProviderError extends Error {}
 
-export async function providerJson<T>(provider: string, url: string, init: RequestInit): Promise<T> {
-  const response = await fetch(url, { ...init, signal: AbortSignal.timeout(8000) });
+export async function providerJson<T>(provider: string, url: string, init: RequestInit, fetcher: typeof fetch = fetch): Promise<T> {
+  const response = await fetcher(url, { ...init, signal: AbortSignal.timeout(8000) });
   if (!response.ok) throw new ProviderError(`${provider} HTTP ${response.status}，请检查只读授权和 API 配置。`);
   return response.json() as Promise<T>;
 }

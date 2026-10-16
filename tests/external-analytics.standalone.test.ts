@@ -1,9 +1,14 @@
 import { test, type TestContext } from "node:test";
 import assert from "node:assert/strict";
 import { GoogleAuth } from "google-auth-library";
+import { generateKeyPairSync } from "node:crypto";
+import { createRequire } from "node:module";
+import { config } from "../packages/backend/src/config.ts";
 import { posthogReport } from "../packages/backend/src/admin/posthog-analytics.ts";
 import { searchConsoleReport } from "../packages/backend/src/admin/search-console-analytics.ts";
 import { cloudflareReport } from "../packages/backend/src/admin/cloudflare-analytics.ts";
+
+const { MockAgent, getGlobalDispatcher, setGlobalDispatcher } = createRequire(new URL("../packages/backend/package.json", import.meta.url))("undici") as typeof import("undici");
 
 const keys = ["POSTHOG_PROJECT_ID", "POSTHOG_PERSONAL_API_KEY", "POSTHOG_REGION", "SITE_URL",
   "GOOGLE_SEARCH_CONSOLE_PROPERTY", "GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON",
@@ -13,6 +18,22 @@ function environment(t: TestContext, values: Record<string, string>) {
   for (const key of keys) delete process.env[key];
   Object.assign(process.env, values);
   t.after(() => { for (const key of keys) { if (previous[key] === undefined) delete process.env[key]; else process.env[key] = previous[key]; } });
+}
+type SearchQuery = { dimensions: string[]; startDate: string; endDate: string; dataState: string };
+function googleNetwork(t: TestContext, property: string, reply: (query: SearchQuery) => unknown) {
+  const previous = { dispatcher: getGlobalDispatcher(), proxy: config.egressProxyUrl, private: config.allowPrivateNetworkFetch };
+  const network = new MockAgent(); network.disableNetConnect(); setGlobalDispatcher(network);
+  config.egressProxyUrl = null; config.allowPrivateNetworkFetch = true;
+  network.get("https://www.googleapis.com").intercept({
+    path: `/webmasters/v3/sites/${encodeURIComponent(property)}/searchAnalytics/query`, method: "POST",
+  }).reply(200, options => JSON.stringify(reply(JSON.parse(String(options.body)))), {
+    headers: { "content-type": "application/json" },
+  }).persist();
+  t.after(async () => {
+    setGlobalDispatcher(previous.dispatcher); config.egressProxyUrl = previous.proxy; config.allowPrivateNetworkFetch = previous.private;
+    await network.close();
+  });
+  return network;
 }
 test("missing reporting credentials do not make requests or display zero metrics", async t => {
   environment(t, {});
@@ -55,13 +76,12 @@ test("Search Console uses independent totals, domain encoding, Pacific dates and
     return "mock-access-token";
   });
   const dimensions: string[][] = [];
-  t.mock.method(globalThis, "fetch", async (url: string, init: RequestInit) => {
-    assert.ok(url.includes("sc-domain%3Aexample.com/searchAnalytics/query"));
-    const body = JSON.parse(String(init.body)); dimensions.push(body.dimensions);
+  googleNetwork(t, "sc-domain:example.com", body => {
+    dimensions.push(body.dimensions);
     assert.equal(body.dataState, "final");
     assert.equal(Date.parse(body.endDate) - Date.parse(body.startDate), 29 * 86400000);
-    return Response.json({ rows: body.dimensions.length ? [{ keys:["2026-10-15"],clicks:1,impressions:10,ctr:0.1,position:5 }] :
-      [{ clicks:10,impressions:100,ctr:0.1,position:7 }] });
+    return { rows: body.dimensions.length ? [{ keys:["2026-10-15"],clicks:1,impressions:10,ctr:0.1,position:5 }] :
+      [{ clicks:10,impressions:100,ctr:0.1,position:7 }] };
   });
   const report = await searchConsoleReport();
   assert.equal(report.state, "ready"); assert.equal(report.data?.clicks, 10);
@@ -71,10 +91,29 @@ test("Search Console authorized empty data is distinct from missing authorizatio
   environment(t, { GOOGLE_SEARCH_CONSOLE_PROPERTY: "sc-domain:empty.example.com",
     GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON: JSON.stringify({type:"service_account",client_email:"reader@example.com",private_key:"mocked"}) });
   t.mock.method(GoogleAuth.prototype, "getAccessToken", async () => "mock-token");
-  t.mock.method(globalThis, "fetch", async () => Response.json({}));
+  googleNetwork(t, "sc-domain:empty.example.com", () => ({}));
   const report = await searchConsoleReport();
   assert.equal(report.state, "empty"); assert.equal(report.data?.position, null);
   assert.ok(report.refreshedAt);
+});
+test("Search Console exchanges a real signed JWT and reads all reports through the configured HTTP transport", async t => {
+  const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  environment(t, { GOOGLE_SEARCH_CONSOLE_PROPERTY: "sc-domain:transport.example.com",
+    GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON: JSON.stringify({ type: "service_account", client_email: "reader@example.com",
+      private_key: privateKey.export({ type: "pkcs8", format: "pem" }) }) });
+  let queries = 0, tokens = 0;
+  const network = googleNetwork(t, "sc-domain:transport.example.com", () => { queries++; return {}; });
+  network.get("https://oauth2.googleapis.com").intercept({ path: "/token", method: "POST" }).reply(200, options => {
+    const body = new URLSearchParams(String(options.body));
+    assert.equal(body.get("grant_type"), "urn:ietf:params:oauth:grant-type:jwt-bearer");
+    const claims = JSON.parse(Buffer.from(body.get("assertion")!.split(".")[1]!, "base64url").toString());
+    assert.equal(claims.scope, "https://www.googleapis.com/auth/webmasters.readonly");
+    tokens++;
+    return JSON.stringify({ access_token: "transport-test-token", token_type: "Bearer", expires_in: 3600 });
+  }, { headers: { "content-type": "application/json" } });
+  t.mock.method(globalThis, "fetch", () => { throw new Error("native fetch must not bypass egress"); });
+  assert.equal((await searchConsoleReport()).state, "empty");
+  assert.equal(tokens, 1); assert.equal(queries, 4);
 });
 test("Cloudflare variables are bounded identifiers and GraphQL errors never become zero PV", async t => {
   environment(t, { CLOUDFLARE_ACCOUNT_ID: "a".repeat(32), CLOUDFLARE_WEB_ANALYTICS_SITE_TAG: "b".repeat(32), CLOUDFLARE_ANALYTICS_API_TOKEN: "cf-private" });
