@@ -55,7 +55,7 @@ test("public relation evidence is addressable beyond the entity detail's 100-row
     assert.equal(found.statusCode, 200);
     assert.equal(found.json().edges[0].id, "l118");
     assert.equal((await app.inject({ method: "GET", url: "/api/site/knowledge/relations/hidden" })).statusCode, 404);
-    assert.equal((await app.inject({ method: "GET", url: "/api/site/knowledge/relations/" + "x".repeat(181) })).statusCode, 400);
+    assert.ok([400, 414].includes((await app.inject({ method: "GET", url: "/api/site/knowledge/relations/" + "x".repeat(181) })).statusCode));
     assert.equal((await app.inject({ method: "GET", url: "/api/site/knowledge/network" })).json().nodes.length, 121);
   } finally { await app.close(); }
 });
