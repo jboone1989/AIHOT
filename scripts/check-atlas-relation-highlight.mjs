@@ -60,7 +60,7 @@ try {
   assert.equal(state.sameInstance, true);
   assert.equal(state.highlightedCount, 1, "only the traversed factual edge should glow");
   assert.equal(state.highlightedId, "r:" + link.id);
-  assert.equal(state.styleColor, "rgb(255, 226, 140)");
+  assert.equal(state.styleColor.replaceAll(" ", ""), "rgb(255,226,140)");
   assert.equal(state.selectedRows, 1);
   assert.equal(state.initialPositionsUnchanged, true);
   assert.equal(state.zoomUnchanged, true);
