@@ -8,7 +8,7 @@ case "$MODE" in --deploy|--plan|--check) ;; *) echo "Usage: bash scripts/deploy-
 ENV_FILE=".env.production"
 test -f "$ENV_FILE" || { echo "Missing private $ENV_FILE (production settings must be explicit)" >&2; exit 1; }
 export AIHOT_ENV_FILE="$ENV_FILE"
-node scripts/check-environment.mjs --target=production --file="$ENV_FILE"
+python3 scripts/check-environment.py --target=production --file="$ENV_FILE"
 COMPOSE=(docker compose --env-file "$ENV_FILE" -f docker-compose.yml -f docker-compose.production.yml -f docker-compose.knowledge.yml -f docker-compose.release.yml --profile knowledge)
 "${COMPOSE[@]}" config --quiet
 if [[ "$MODE" == --check ]]; then
