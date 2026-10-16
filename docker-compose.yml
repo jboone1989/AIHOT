@@ -11,7 +11,7 @@ x-app: &app
 
 x-backend: &backend
   <<: *app
-  env_file: .env
+  env_file: ${AIHOT_ENV_FILE:-.env}
   environment: &backend-env
     NODE_ENV: production
     DATABASE_URL: postgres://aihot:${POSTGRES_PASSWORD:-aihot}@db:5432/aihot
