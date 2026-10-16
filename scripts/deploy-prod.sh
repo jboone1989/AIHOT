@@ -13,8 +13,8 @@ git diff --quiet && git diff --cached --quiet || { echo "Dirty checkout; abort" 
 test -f .env && test -f scripts/production-smoke.py
 command -v docker >/dev/null
 python3 scripts/production-env-check.py .env --role production --compare config/environments/production.flags.env.example --enforce
-git fetch origin main
-NEW_SHA="$(git rev-parse origin/main)"
+git fetch github main
+NEW_SHA="$(git rev-parse FETCH_HEAD)"
 OLD_SHA="$(git rev-parse HEAD)"
 [[ "$NEW_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
 TAG="${NEW_SHA:0:12}"
@@ -50,8 +50,8 @@ if [[ "$APP_CHANGED" == 1 || "$KNOWLEDGE_CHANGED" == 1 ]]; then
  "${SSH[@]}" "bash -s -- '$NEW_SHA' '$TAG' '$DEV_ROOT' '$APP_CHANGED' '$KNOWLEDGE_CHANGED'" <<'BUILD_ON_DEV'
 set -Eeuo pipefail
 SHA="$1"; TAG="$2"; ROOT="$3"; APP="$4"; KNOWLEDGE="$5"
-git -C "$ROOT" fetch origin main
-[[ "$(git -C "$ROOT" rev-parse origin/main)" == "$SHA" ]] || { echo "Source mismatch" >&2; exit 1; }
+git -C "$ROOT" fetch https://github.com/jboone1989/AIHOT.git main
+[[ "$(git -C "$ROOT" rev-parse FETCH_HEAD)" == "$SHA" ]] || { echo "Source mismatch" >&2; exit 1; }
 TMP="$(mktemp -d /tmp/livingruntime-build.XXXXXXXX)"
 trap 'rm -rf "$TMP"' EXIT
 git -C "$ROOT" archive "$SHA" | tar -xf - -C "$TMP"
@@ -71,7 +71,7 @@ else
  echo "[1–2/5] No image changes: reuse existing app and knowledge images"
 fi
 echo "[3/5] Advance checkout and pin per-service release image"
-git merge --ff-only origin/main
+git merge --ff-only "$NEW_SHA"
 [[ "$(git rev-parse HEAD)" == "$NEW_SHA" ]] || exit 1
 python3 - "$APP_TAG" "$KNOWLEDGE_TAG" <<'WRITE_RELEASE'
 from pathlib import Path
