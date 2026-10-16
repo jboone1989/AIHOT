@@ -5,7 +5,7 @@ import { sql } from "../db.ts";
 import { credential } from "../config.ts";
 import { chatJson, isNvidiaTextModel, ModelOutputError, MODELS } from "./llm.ts";
 import { BudgetExceededError, ProviderRejectedError, ReceiptUnknownError } from "./receipts.ts";
-import { eligibleFallback, modelCircuitOpen, trafficFailureRate, EMPTY_TRAFFIC, VERIFIED_FALLBACKS, type ModelTraffic } from "./nvidia-routing.ts";
+import { eligibleFallback, modelCircuitOpen, trafficFailureRate, conservativeFailureRisk, EMPTY_TRAFFIC, VERIFIED_FALLBACKS, type ModelTraffic } from "./nvidia-routing.ts";
 
 const KEY="nvidia.model_pool.v1";
 const TTL=4*3600_000, CATALOG_TTL=2*3600_000, MAX=100;
@@ -31,8 +31,8 @@ export function chooseModel(s:Pool,preferredModel:string,now=Date.now(),traffic:
  // Keep the user's configured model unless actual telemetry has opened its circuit.
  if(candidates.some(h=>h.model===wanted))return wanted;
  // Among verified backups, favor observed success rather than one fast synthetic ping.
- return candidates.sort((a,b)=>trafficFailureRate(traffic[a.model]??EMPTY_TRAFFIC)-
-   trafficFailureRate(traffic[b.model]??EMPTY_TRAFFIC)||
+ return candidates.sort((a,b)=>conservativeFailureRisk(traffic[a.model]??EMPTY_TRAFFIC)-
+   conservativeFailureRisk(traffic[b.model]??EMPTY_TRAFFIC)||
    (a.latencyMs??99999)-(b.latencyMs??99999))[0]?.model??null;
 }
 export function nextProbe(s:Pool,now=Date.now()):string|null{
