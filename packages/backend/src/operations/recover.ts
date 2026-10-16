@@ -1,7 +1,7 @@
 // In-doubt work. A stopped process leaves "pending" receipts and deliveries: they become
-// "unknown" and are never re-sent on their own. An unknown receipt is released once automatically after
-// half an hour without checking the provider's bill, so a lost answer costs at most one repeat; one that
-// turns unknown again waits for the admin, who checks the bill and releases it with a note. A released
+// "unknown" and are never re-sent on their own. Automatic release without checking the
+// provider's bill is disabled by default. A deployment can explicitly opt in to the legacy
+// one-time 30-minute release behavior with RECEIPT_AUTO_RELEASE_ENABLED=true. A released
 // receipt lets its request call again, and an article that stopped on it goes back to processing.
 import { audit, Conflict } from "../audit.ts";
 import { sql } from "../db.ts";
@@ -54,7 +54,16 @@ export async function autoReleaseUnknownReceipts(now = Date.now()) {
   return { released, requeued };
 }
 
+/** Production requires explicit operator review before another potentially billable call. */
+export function autoReleaseConfigured(value: string | undefined): boolean {
+  return value === "true";
+}
+
 /** ops.recover, every 10 minutes. */
 export async function recoverStaleWork() {
-  return { receipts: await markStalePendingReceipts(), released: await autoReleaseUnknownReceipts(), jobs: await retryReleasedReceiptJobs(), grouping: await sweepUngrouped(), deliveries: await markStaleDeliveries() };
+  const receipts = await markStalePendingReceipts();
+  const released = autoReleaseConfigured(process.env.RECEIPT_AUTO_RELEASE_ENABLED)
+    ? await autoReleaseUnknownReceipts()
+    : { released: 0, requeued: 0 };
+  return { receipts, released, jobs: await retryReleasedReceiptJobs(), grouping: await sweepUngrouped(), deliveries: await markStaleDeliveries() };
 }
