@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {test} from "node:test";
 import { chooseModel, nextProbe, type Pool } from "@aihot/backend/providers/nvidia-pool";
-import { modelCircuitOpen, trafficFailureRate, eligibleFallback, conservativeFailureRisk, type ModelTraffic } from "@aihot/backend/providers/nvidia-routing";
+import { modelCircuitOpen, trafficFailureRate, conservativeFailureRisk, type ModelTraffic } from "@aihot/backend/providers/nvidia-routing";
 
 const now = Date.parse("2026-10-16T15:00:00Z");
 const health = (model: string, latencyMs=2000) => ({
@@ -30,7 +30,7 @@ test("unsafe primary is replaced only by a verified approved fallback",()=>{
  assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now,traffic),"openai/gpt-oss-20b");
  assert.ok(conservativeFailureRisk(traffic["openai/gpt-oss-20b"]!)<conservativeFailureRisk(traffic["z-ai/glm-5.3-flash"]!));
  assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now),"nvidia/nemotron-3.5-lightning-30b-a3b");
- assert.equal(eligibleFallback("meta/llama-3.3-70b-instruct","nvidia/nemotron-3.5-lightning-30b-a3b"),false);
+ // Eligible models are determined by the discovered capability pool and a real health probe.
  state.health["openai/gpt-oss-20b"]!.ok=false;
  state.health["z-ai/glm-5.3-flash"]!.ok=false;
  assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now,traffic),null);

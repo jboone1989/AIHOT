@@ -1,101 +1,133 @@
 #!/usr/bin/env bash
-# One-command VM09 release: build immutable images on cn-dev, transfer them over
-# existing SSH, then recreate the SAME Compose services without database restore.
+# Incremental EventGraph release. Version every service separately; NEVER recreate DB/Neo4j
+# unless an explicitly requested migration/DB maintenance operation warrants it.
 set -Eeuo pipefail
-
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
-DEV="ubuntu@43.142.127.40"
-DEV_ROOT="/home/ubuntu/livingruntime-aihot"
-SSH=(ssh -o BatchMode=yes -o ConnectTimeout=12 -o ServerAliveInterval=15 "${DEV}")
-COMPOSE=(docker compose
-  -f docker-compose.yml
-  -f docker-compose.production.yml
-  -f docker-compose.knowledge.yml
-  -f docker-compose.release.yml
-  --profile knowledge)
-
-if [[ "${1:-}" != "" && "${1:-}" != "--check" ]]; then
-  echo "Usage: bash scripts/deploy-prod.sh [--check]" >&2
-  exit 2
-fi
-if ! git diff --quiet || ! git diff --cached --quiet; then
-  echo "Refusing deployment with uncommitted tracked source changes" >&2
-  exit 1
-fi
-test -f .env && test -f scripts/production-smoke.py
-command -v docker >/dev/null
-git fetch origin main
-SHA="$(git rev-parse origin/main)"
-TAG="${SHA:0:12}"
-if [[ ! "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
-  echo "Invalid source commit ID" >&2; exit 1
-fi
-if [[ "${1:-}" == "--check" ]]; then
-  "${COMPOSE[@]}" config --quiet
-  "${SSH[@]}" "git -C '$DEV_ROOT' rev-parse --is-inside-work-tree"
-  python3 scripts/production-smoke.py
-  echo "Preflight OK. Remote source version: $SHA"
-  exit 0
-fi
-
-echo "[1/5] Build immutable application and Graphiti images on cn-dev: $TAG"
-"${SSH[@]}" "bash -s -- '$SHA' '$TAG' '$DEV_ROOT'" <<'BUILD_ON_DEV'
-set -Eeuo pipefail
-SHA="$1"; TAG="$2"; ROOT="$3"
-[[ "$SHA" =~ ^[0-9a-f]{40}$ && "$TAG" =~ ^[0-9a-f]{12}$ ]]
-git -C "$ROOT" fetch origin main
-[[ "$(git -C "$ROOT" rev-parse origin/main)" == "$SHA" ]] || {
-  echo "Remote source does not match the requested release" >&2; exit 1;
-}
-TMP="$(mktemp -d /tmp/livingruntime-build.XXXXXXXX)"
-trap 'rm -rf "$TMP"' EXIT
-git -C "$ROOT" archive "$SHA" | tar -xf - -C "$TMP"
-docker build -t "livingruntime-app:$TAG" -f "$TMP/Dockerfile" "$TMP"
-docker build -t "livingruntime-knowledge:$TAG" -f "$TMP/knowledge_service/Dockerfile" "$TMP"
-docker image inspect "livingruntime-app:$TAG" "livingruntime-knowledge:$TAG" >/dev/null
-BUILD_ON_DEV
-
-echo "[2/5] Stream only the built images from cn-dev to VM09 over SSH"
-"${SSH[@]}" "docker image save livingruntime-app:$TAG livingruntime-knowledge:$TAG | gzip -1" \
-  | gzip -dc | docker image load
-docker image inspect "livingruntime-app:$TAG" "livingruntime-knowledge:$TAG" >/dev/null
-
-echo "[3/5] Advance only this release directory to the exact image commit"
-git merge --ff-only origin/main
-[[ "$(git rev-parse HEAD)" == "$SHA" ]] || exit 1
-
-echo "[4/5] Select release images and restart existing Compose services"
-python3 - "$TAG" <<'SET_VERSION'
-from pathlib import Path
-import os, re, sys
-tag=sys.argv[1]
-assert re.fullmatch(r"[0-9a-f]{12}",tag)
-p=Path(".env")
-assert p.is_file() and p.stat().st_mode & 0o077 == 0
-data=p.read_text()
-if re.search(r"^LRSITE_RELEASE=",data,re.M):
-    data=re.sub(r"^LRSITE_RELEASE=.*$", "LRSITE_RELEASE="+tag, data, flags=re.M)
-else:
-    data += "\nLRSITE_RELEASE="+tag+"\n"
-p.write_text(data)
-os.chmod(p,0o600)
-print("Release pinned:",tag)
-SET_VERSION
+MODE="${1:---deploy}"
+case "$MODE" in --deploy|--plan|--check) ;; *) echo "Usage: bash scripts/deploy-prod.sh [--plan|--check|--deploy]" >&2; exit 2;; esac
+ENV_FILE=".env.production"
+test -f "$ENV_FILE" || { echo "Missing private $ENV_FILE (production settings must be explicit)" >&2; exit 1; }
+export AIHOT_ENV_FILE="$ENV_FILE"
+python3 scripts/check-environment.py --target=production --file="$ENV_FILE"
+COMPOSE=(docker compose --env-file "$ENV_FILE" -f docker-compose.yml -f docker-compose.production.yml -f docker-compose.knowledge.yml -f docker-compose.release.yml --profile knowledge)
 "${COMPOSE[@]}" config --quiet
-"${COMPOSE[@]}" up -d --no-build --pull never \
-  db api web worker knowledge-neo4j knowledge
-
-echo "[5/5] Verify substantive content and graph data before success"
-OK=0
-for n in 1 2 3 4 5 6 7 8 9 10; do
-  if python3 scripts/production-smoke.py; then
-    OK=1
-    break
-  fi
-  sleep 6
-done
-if [[ "$OK" != "1" ]]; then
-  echo "Deployment health check failed; no database volumes were replaced" >&2
-  exit 1
+if [[ "$MODE" == --check ]]; then
+ python3 scripts/production-smoke.py
+ exit 0
 fi
-echo "SUCCESS: VM09 production updated to $SHA (Docker Compose, existing data volumes)"
+[[ -z "$(git status --porcelain --untracked-files=no)" ]] || { echo "Tracked files modified; refusing release" >&2; exit 1; }
+# Production git source is advanced independently to a reviewable merged commit.
+git fetch https://github.com/jboone1989/AIHOT.git main
+git merge --ff-only FETCH_HEAD
+SHA="$(git rev-parse HEAD)"
+TAG="${SHA:0:12}"
+BASE="$(sed -n 's/^LRSITE_DEPLOYED_SHA=//p' "$ENV_FILE" | head -n1)"
+[[ "$BASE" =~ ^[a-f0-9]{40}$ ]] || { echo "Missing production baseline SHA; initialize LRSITE_DEPLOYED_SHA" >&2; exit 1; }
+git merge-base --is-ancestor "$BASE" "$SHA" || { echo "Release is not fast-forward" >&2; exit 1; }
+mapfile -t CHANGED < <(git diff --name-only "$BASE" "$SHA")
+API=0;WORKER=0;WEB=0;KNOWLEDGE=0;SETUP=0;APP_FULL=0;KNOW_FULL=0
+app_files=();know_files=()
+for path in "${CHANGED[@]}"; do
+ case "$path" in
+  apps/api/*) API=1;app_files+=("$path");;
+  apps/worker/*) WORKER=1;app_files+=("$path");;
+  apps/web/*) APP_FULL=1;WEB=1;app_files+=("$path");;
+  packages/backend/*) API=1;WORKER=1;app_files+=("$path");;
+  packages/contracts/*|site/*|industry/*|modules/*) APP_FULL=1;API=1;WORKER=1;WEB=1;app_files+=("$path");;
+  knowledge_service/requirements.txt|knowledge_service/Dockerfile) KNOW_FULL=1;KNOWLEDGE=1;;
+  knowledge_service/*) KNOWLEDGE=1;know_files+=("$path");;
+  scripts/migrate.ts|database/migrations/*) SETUP=1;app_files+=("$path");;
+  docker-compose.yml|docker-compose.production.yml|docker-compose.release.yml)
+    API=1;WORKER=1;WEB=1;;
+  Dockerfile|package-lock.json|package.json|packages/*/package.json|apps/*/package.json)
+    APP_FULL=1;API=1;WORKER=1;WEB=1;;
+  config/*|tests/*|scripts/*|.github/*|README*|docs/*) ;;
+  *) APP_FULL=1;API=1;WORKER=1;WEB=1;;
+ esac
+done
+if ((API||WORKER||WEB||SETUP));then
+ for path in "${app_files[@]}";do
+   [[ -f "$path" && "$path" != *.lock ]] || APP_FULL=1
+ done
+fi
+if ((KNOWLEDGE));then
+ for path in "${know_files[@]}";do [[ -f "$path" ]] || KNOW_FULL=1;done
+fi
+echo "Release $BASE -> $SHA; changed files=${#CHANGED[@]}; affected: api=$API worker=$WORKER web=$WEB knowledge=$KNOWLEDGE migrations=$SETUP"
+if [[ "$MODE" == --plan ]];then exit 0;fi
+# A normal TS change takes a small offline overlay on the already deployed base image.
+# For dependency changes build only the affected full image on cn-dev.
+DEV="ubuntu@43.142.127.40"
+SSH=(ssh -o BatchMode=yes -o ConnectTimeout=12 -o ServerAliveInterval=15 "$DEV")
+if ((API||WORKER||WEB||SETUP));then
+ if ((APP_FULL));then
+  echo "Dependency change: build only application image on cn-dev, transfer via existing SSH"
+  "${SSH[@]}" "set -e; ROOT=/home/ubuntu/livingruntime-aihot; git -C \"\$ROOT\" fetch https://github.com/jboone1989/AIHOT.git main; test \"\$(git -C \"\$ROOT\" rev-parse FETCH_HEAD)\" = '$SHA'; TMP=\$(mktemp -d); trap 'rm -rf \"\$TMP\"' EXIT; git -C \"\$ROOT\" archive '$SHA' | tar -xf - -C \"\$TMP\"; docker build -t livingruntime-app:$TAG -f \"\$TMP/Dockerfile\" \"\$TMP\" >&2; docker save livingruntime-app:$TAG | gzip -1" | gzip -dc | docker load
+ else
+ BASE_TAG="$(sed -n 's/^LRSITE_RELEASE_API=//p' "$ENV_FILE"|head -n1)"
+ BASE_TAG="${BASE_TAG:-$(sed -n 's/^LRSITE_RELEASE=//p' "$ENV_FILE"|head -n1)}"
+ docker image inspect "livingruntime-app:$BASE_TAG" >/dev/null
+ TMP="$(mktemp -d /tmp/eventgraph-release.XXXXXXXX)"
+ trap 'rm -rf "$TMP"' EXIT
+ echo "FROM livingruntime-app:$BASE_TAG" > "$TMP/Dockerfile"
+ for path in "${app_files[@]}";do
+  [[ -f "$path" ]] || continue
+  printf 'COPY --chown=node:node %s /app/%s\n' "$path" "$path" >> "$TMP/Dockerfile"
+ done
+ docker build --network none --pull=false -q -f "$TMP/Dockerfile" -t "livingruntime-app:$TAG" .
+ fi
+fi
+if ((KNOWLEDGE));then
+ if ((KNOW_FULL));then
+  echo "Graphiti dependency change: build only Graphiti image on cn-dev"
+  "${SSH[@]}" "set -e; ROOT=/home/ubuntu/livingruntime-aihot; git -C \"\$ROOT\" fetch https://github.com/jboone1989/AIHOT.git main; TMP=\$(mktemp -d); trap 'rm -rf \"\$TMP\"' EXIT; git -C \"\$ROOT\" archive '$SHA' | tar -xf - -C \"\$TMP\"; docker build -t livingruntime-knowledge:$TAG -f \"\$TMP/knowledge_service/Dockerfile\" \"\$TMP\" >&2; docker save livingruntime-knowledge:$TAG | gzip -1" | gzip -dc | docker load
+ else
+ OLD_KNOW="$(sed -n 's/^LRSITE_RELEASE_KNOWLEDGE=//p' "$ENV_FILE"|head -n1)"
+ OLD_KNOW="${OLD_KNOW:-$(sed -n 's/^LRSITE_RELEASE=//p' "$ENV_FILE"|head -n1)}"
+ docker image inspect "livingruntime-knowledge:$OLD_KNOW" >/dev/null
+ TMP_K="$(mktemp -d /tmp/eventgraph-graphiti.XXXXXXXX)"
+ trap 'rm -rf "${TMP:-}" "$TMP_K"' EXIT
+ echo "FROM livingruntime-knowledge:$OLD_KNOW" > "$TMP_K/Dockerfile"
+ for path in "${know_files[@]}";do
+  [[ -f "$path" ]] || continue
+  printf 'COPY %s /app/%s\n' "$path" "${path#knowledge_service/}" >> "$TMP_K/Dockerfile"
+ done
+ docker build --network none --pull=false -q -f "$TMP_K/Dockerfile" -t "livingruntime-knowledge:$TAG" .
+ fi
+fi
+# Pin only changed services, retaining existing image tags for untouched containers.
+python3 - "$ENV_FILE" "$TAG" "$SHA" "$API" "$WORKER" "$WEB" "$KNOWLEDGE" "$SETUP" <<'PY'
+import os, pathlib,sys
+path=pathlib.Path(sys.argv[1])
+tag,sha=sys.argv[2:4]
+flags=list(map(int,sys.argv[4:]))
+mapping={"LRSITE_RELEASE_API":flags[0],"LRSITE_RELEASE_WORKER":flags[1],"LRSITE_RELEASE_WEB":flags[2],
+ "LRSITE_RELEASE_KNOWLEDGE":flags[3],"LRSITE_RELEASE_SETUP":flags[4]}
+rows=path.read_text().splitlines()
+cfg={x.split("=",1)[0]:x.split("=",1)[1] for x in rows if "=" in x and not x.startswith("#")}
+for key,on in mapping.items():
+ if on: cfg[key]=tag
+cfg["LRSITE_DEPLOYED_SHA"]=sha
+cfg["LRSITE_RELEASE"]=tag
+out=[];seen=set()
+for row in rows:
+ k=row.split("=",1)[0]
+ if k in cfg and "=" in row and not row.startswith("#"):out.append(k+"="+cfg[k]);seen.add(k)
+ else:out.append(row)
+for k in cfg:
+ if k not in seen:out.append(k+"="+cfg[k])
+path.write_text("\n".join(out)+"\n")
+os.chmod(path,0o600)
+PY
+services=()
+((SETUP))&&services+=(setup)
+((API))&&services+=(api)
+((WORKER))&&services+=(worker)
+((WEB))&&services+=(web)
+((KNOWLEDGE))&&services+=(knowledge)
+if (("${#services[@]}"));then
+ echo "Updating only: ${services[*]}"
+ "${COMPOSE[@]}" up -d --no-build --pull never --no-deps "${services[@]}"
+fi
+python3 scripts/production-smoke.py
+echo "SUCCESS incremental release $SHA"

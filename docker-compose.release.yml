@@ -1,13 +1,13 @@
-# Final layer: production consumes immutable versioned application images.
-# Building happens on cn-dev; VM09 only loads the images and recreates containers.
+# Each service pins its own immutable image; unchanged services never roll during release.
+# The old LRSITE_RELEASE is a backward-compatible fallback only.
 services:
   setup:
-    image: livingruntime-app:${LRSITE_RELEASE:?Set LRSITE_RELEASE}
+    image: livingruntime-app:${LRSITE_RELEASE_SETUP:-${LRSITE_RELEASE:?Set LRSITE_RELEASE}}
   api:
-    image: livingruntime-app:${LRSITE_RELEASE:?Set LRSITE_RELEASE}
+    image: livingruntime-app:${LRSITE_RELEASE_API:-${LRSITE_RELEASE:?Set LRSITE_RELEASE}}
   worker:
-    image: livingruntime-app:${LRSITE_RELEASE:?Set LRSITE_RELEASE}
+    image: livingruntime-app:${LRSITE_RELEASE_WORKER:-${LRSITE_RELEASE:?Set LRSITE_RELEASE}}
   web:
-    image: livingruntime-app:${LRSITE_RELEASE:?Set LRSITE_RELEASE}
+    image: livingruntime-app:${LRSITE_RELEASE_WEB:-${LRSITE_RELEASE:?Set LRSITE_RELEASE}}
   knowledge:
-    image: livingruntime-knowledge:${LRSITE_RELEASE:?Set LRSITE_RELEASE}
+    image: livingruntime-knowledge:${LRSITE_RELEASE_KNOWLEDGE:-${LRSITE_RELEASE:?Set LRSITE_RELEASE}}

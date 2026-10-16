@@ -1,0 +1,11 @@
+{
+  "environment": "development",
+  "requiredFlags": {
+    "COLLECT_ENABLED": "true",
+    "MODEL_CALLS_ENABLED": "true",
+    "GRAPHITI_INGEST_ENABLED": "true",
+    "NVIDIA_MODEL_POOL_ENABLED": "true",
+    "RECEIPT_AUTO_RELEASE_ENABLED": "false"
+  },
+  "reportCredentials": []
+}
