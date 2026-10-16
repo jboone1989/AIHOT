@@ -66,7 +66,45 @@ try {
       afterSecond.layouts !== 0 || !afterSecond.allPreserved || !afterSecond.sameInstance ||
       afterSecond.edges < 19 || afterSecond.zoomDelta > 0.0001)
     throw Error("Repeated selection continuity regression: " + JSON.stringify(afterSecond));
-  console.log("PASS: two selections, exactly one pan per click, zero relayouts, coordinates stable");
+  const home = page.getByTestId("atlas-home");
+  await home.click();
+  await page.waitForFunction(() => document.querySelector(".lr-atlas-entity h3")?.textContent === "Omi");
+  await page.waitForTimeout(850);
+  const returned = await page.evaluate(() => {
+    const p = window.__atlasProbe;
+    const cy = document.querySelector(".lr-atlas-canvas")?._cyreg?.cy;
+    const target = cy.getElementById("37d059b4-e30a-4378-bee9-9be0c71ff372");
+    const point = target.renderedPosition();
+    return { animations: p.animations, layouts: p.layouts, fits: p.fits, sameInstance: cy === p.cy,
+      allPreserved: [...p.positions.entries()].every(([id,pos]) => {
+        const n=cy.getElementById(id);
+        return n.length && Math.abs(n.position().x-pos.x)<0.01 && Math.abs(n.position().y-pos.y)<0.01;
+      }), centered: Math.abs(point.x-cy.width()/2)<2 && Math.abs(point.y-cy.height()/2)<2,
+      zoomDelta: Math.abs(cy.zoom()-p.initialZoom) };
+  });
+  if (returned.animations !== 3 || returned.layouts !== 0 || returned.fits !== 0 ||
+      !returned.sameInstance || !returned.allPreserved || !returned.centered || returned.zoomDelta > 0.0001)
+    throw Error("Returning from Strategy should pan once to the profile center: " + JSON.stringify(returned));
+
+  // Same selected entity, but canvas manually dragged elsewhere: one-click camera reset still works.
+  await page.evaluate(() => document.querySelector(".lr-atlas-canvas")._cyreg.cy.panBy({ x: 150, y: 70 }));
+  await home.click();
+  await page.waitForTimeout(850);
+  const dragged = await page.evaluate(() => {
+    const p=window.__atlasProbe, cy=document.querySelector(".lr-atlas-canvas")._cyreg.cy;
+    const point=cy.getElementById("37d059b4-e30a-4378-bee9-9be0c71ff372").renderedPosition();
+    return { animations:p.animations, layouts:p.layouts, fits:p.fits, sameInstance:cy===p.cy,
+      centered:Math.abs(point.x-cy.width()/2)<2 && Math.abs(point.y-cy.height()/2)<2,
+      allPreserved:[...p.positions.entries()].every(([id,pos])=>{
+        const n=cy.getElementById(id);
+        return n.length && Math.abs(n.position().x-pos.x)<0.01 && Math.abs(n.position().y-pos.y)<0.01;
+      }), zoomDelta:Math.abs(cy.zoom()-p.initialZoom) };
+  });
+  console.log("HOME_RESET", JSON.stringify({ returned, dragged }));
+  if (dragged.animations !== 4 || dragged.layouts !== 0 || dragged.fits !== 0 ||
+      !dragged.sameInstance || !dragged.centered || !dragged.allPreserved || dragged.zoomDelta > 0.0001)
+    throw Error("Dragged canvas must return to original entity in one camera pan: " + JSON.stringify(dragged));
+  console.log("PASS: entity navigation and home reset keep positions, zoom and the canvas instance unchanged");
 } finally {
   await browser.close();
 }
