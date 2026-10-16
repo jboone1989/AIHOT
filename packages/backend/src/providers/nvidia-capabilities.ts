@@ -31,7 +31,7 @@ export function classifyNvidiaModel(item:{id?:string; type?:string; task?:string
 export const POOL_CAPABILITIES:readonly ModelCapability[]=["text","vision","embedding","reranking","image_generation","audio","video","safety","unknown"];
 export type CapabilityPools=Record<ModelCapability,string[]>;
 export function makeCapabilityPools(items:CatalogModel[]):CapabilityPools{
- const pools=Object.fromEntries(POOL_CAPABILITIES.map(key=>[key,[]])) as CapabilityPools;
+ const pools:CapabilityPools={text:[],vision:[],embedding:[],reranking:[],image_generation:[],audio:[],video:[],safety:[],unknown:[]};
  for(const model of items)for(const cap of model.capabilities) pools[cap].push(model.id);
  return pools;
 }
