@@ -12,7 +12,11 @@ export function trafficFailureRate(s: ModelTraffic): number {
   return attempts ? (s.unknown + s.failed) / attempts : 0;
 }
 export function eligibleFallback(model: string, wanted: string): boolean {
-  return model === wanted || (nvidiaCapability(model) !== "unknown" && nvidiaCapability(model) === nvidiaCapability(wanted) && ["text","vision"].includes(nvidiaCapability(model)));
+  const source=nvidiaCapability(model), target=nvidiaCapability(wanted);
+  // A vision-capable model can also produce text. Its image ability is verified
+  // separately in chooseModel, never inferred from a successful text request.
+  return model===wanted || (target==="text" ? ["text","vision"].includes(source) :
+    target==="vision" && source==="vision");
 }
 
 /** Bayesian smoothed risk prevents an unobserved model scoring better than 35 known successes. */

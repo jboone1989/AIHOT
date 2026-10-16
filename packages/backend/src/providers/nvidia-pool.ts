@@ -30,8 +30,8 @@ export function chooseModel(s:Pool,preferredModel:string,now=Date.now(),traffic:
  const spec=MODELS[preferredModel], wanted=spec?.model??"";
  const capability: NvidiaCapability=spec?.vision?"vision":"text";
  const candidates=healthyModels(s,now).filter(h=>
-   nvidiaCapability(h.model)===capability &&
-   (capability!=="vision"||h.visionVerified===true) &&
+   (capability==="text" ? ["text","vision"].includes(nvidiaCapability(h.model)) :
+    nvidiaCapability(h.model)==="vision" && h.visionVerified===true) &&
    eligibleFallback(h.model,wanted));
  const viable=candidates.filter(h=>!modelCircuitOpen(traffic[h.model]??EMPTY_TRAFFIC));
  if(viable.some(h=>h.model===wanted))return wanted;
@@ -96,7 +96,7 @@ export async function availableModel(preferredModel:string):Promise<string>{
 export async function poolOverview(){
  const [s,traffic]=await Promise.all([read(),recentModelTraffic()]);
  return {catalogCount:s.catalogCount,catalogAt:s.catalogAt,candidates:s.candidates.length,probes:s.probes,
- inventory:Object.fromEntries(Object.entries(s.inventory??nvidiaInventory(s.candidates.map(id=>({id})))).map(([k,ids])=>[k,{total:ids.length,healthy:ids.filter(id=>s.health[id]?.ok && age(s.health[id]?.lastOk,Date.now())<TTL).length}])),
+ inventory:Object.fromEntries(Object.entries(s.inventory??nvidiaInventory(s.candidates.map(id=>({id})))).map(([k,ids])=>[k,{total:ids.length,healthy:ids.filter(id=>s.health[id]?.ok && age(s.health[id]?.lastOk,Date.now())<TTL && (k!=="vision" || s.health[id]?.visionVerified===true)).length}])),
  healthy:healthyModels(s).map(h=>({model:h.model,capability:nvidiaCapability(h.model),visionVerified:!!h.visionVerified,latencyMs:h.latencyMs,checkedAt:h.checkedAt,
    circuitOpen:modelCircuitOpen(traffic[h.model]??EMPTY_TRAFFIC),
    failureRate:trafficFailureRate(traffic[h.model]??EMPTY_TRAFFIC),
@@ -141,7 +141,7 @@ async function mergeLiveSuccesses(s:Pool):Promise<void>{
    if(old && Date.parse(old.checkedAt)>=Date.parse(at))continue;
    s.health[r.model]={model:r.model,ok:true,checkedAt:at,lastOk:at,
      latencyMs:old?.latencyMs??7000,reason:"real_completed_request",
-     samples:Math.max(old?.samples??0,r.samples)};
+     samples:Math.max(old?.samples??0,r.samples),visionVerified:old?.visionVerified};
  }
 }
 const schema=z.object({label:z.literal("PASS"),titleZh:z.string().min(4),summaryZh:z.string().min(6)});

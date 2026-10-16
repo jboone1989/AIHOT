@@ -31,6 +31,8 @@ test("unsafe primary is replaced only by a healthy same-capability fallback",()=
  assert.ok(conservativeFailureRisk(traffic["openai/gpt-oss-20b"]!)<conservativeFailureRisk(traffic["z-ai/glm-5.3-flash"]!));
  assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now),"nvidia/nemotron-3.5-lightning-30b-a3b");
  assert.equal(eligibleFallback("meta/llama-3.3-70b-instruct","nvidia/nemotron-3.5-lightning-30b-a3b"),true);
+ assert.equal(eligibleFallback("z-ai/glm-5.3-flash","openai/gpt-oss-20b"),true);
+ assert.equal(eligibleFallback("openai/gpt-oss-20b","z-ai/glm-5.3-flash"),false);
  state.health["openai/gpt-oss-20b"]!.ok=false;
  state.health["z-ai/glm-5.3-flash"]!.ok=false;
  assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now,traffic),"meta/llama-3.3-70b-instruct");
