@@ -167,7 +167,7 @@ async def relations_by_articles(request: ArticleRelations):
         "MATCH (ep:Episodic) WHERE ep.group_id='aihot' AND ep.name IN $names "
         "WITH collect(ep.uuid) AS ids "
         "MATCH (s:Entity)-[r:RELATES_TO]->(o:Entity) "
-        "WHERE r.group_id='aihot' AND any(u IN coalesce(r.episodes, []) WHERE u IN ids) "
+        "WHERE r.group_id='aihot' AND coalesce(r.editorial_rejected, false)=false AND any(u IN coalesce(r.episodes, []) WHERE u IN ids) "
         "RETURN " + EDGE_COLUMNS + " ORDER BY r.created_at DESC LIMIT $limit",
         names=names, limit=request.limit, routing_="r",
     )
@@ -186,8 +186,8 @@ async def relations_by_entity(uuid: str):
         return {"entity": None, "edges": []}
     rows, _, _ = await app.state.graph.driver.execute_query(
         "MATCH (s:Entity)-[r:RELATES_TO]->(o:Entity) "
-        "WHERE r.group_id='aihot' AND (s.uuid=$uuid OR o.uuid=$uuid) "
-        "RETURN " + EDGE_COLUMNS + " ORDER BY r.created_at DESC LIMIT 100",
+        "WHERE r.group_id='aihot' AND coalesce(r.editorial_rejected, false)=false AND (s.uuid=$uuid OR o.uuid=$uuid) "
+        "RETURN " + EDGE_COLUMNS + " ORDER BY r.created_at DESC",
         uuid=uuid, routing_="r",
     )
     # summary: Graphiti's own entity summary, written when episodes were ingested (not at read time).
@@ -202,12 +202,12 @@ async def graph_changes(since: datetime, until: datetime):
     window = {"since": since, "until": until}
     added, _, _ = await app.state.graph.driver.execute_query(
         "MATCH (s:Entity)-[r:RELATES_TO]->(o:Entity) "
-        "WHERE r.group_id='aihot' AND r.created_at >= $since AND r.created_at < $until "
+        "WHERE r.group_id='aihot' AND coalesce(r.editorial_rejected, false)=false AND r.created_at >= $since AND r.created_at < $until "
         "RETURN " + EDGE_COLUMNS + " ORDER BY r.created_at DESC LIMIT 12", **window, routing_="r",
     )
     ended, _, _ = await app.state.graph.driver.execute_query(
         "MATCH (s:Entity)-[r:RELATES_TO]->(o:Entity) "
-        "WHERE r.group_id='aihot' AND r.expired_at >= $since AND r.expired_at < $until "
+        "WHERE r.group_id='aihot' AND coalesce(r.editorial_rejected, false)=false AND r.expired_at >= $since AND r.expired_at < $until "
         "RETURN " + EDGE_COLUMNS + " ORDER BY r.expired_at DESC LIMIT 12", **window, routing_="r",
     )
     entities, _, _ = await app.state.graph.driver.execute_query(
@@ -215,8 +215,8 @@ async def graph_changes(since: datetime, until: datetime):
         "RETURN n.uuid AS key, n.name AS name ORDER BY n.created_at DESC LIMIT 16", **window, routing_="r",
     )
     counts, _, _ = await app.state.graph.driver.execute_query(
-        "CALL { MATCH ()-[r:RELATES_TO]->() WHERE r.group_id='aihot' AND r.created_at >= $since AND r.created_at < $until RETURN count(r) AS added } "
-        "CALL { MATCH ()-[r:RELATES_TO]->() WHERE r.group_id='aihot' AND r.expired_at >= $since AND r.expired_at < $until RETURN count(r) AS ended } "
+        "CALL { MATCH ()-[r:RELATES_TO]->() WHERE r.group_id='aihot' AND coalesce(r.editorial_rejected, false)=false AND r.created_at >= $since AND r.created_at < $until RETURN count(r) AS added } "
+        "CALL { MATCH ()-[r:RELATES_TO]->() WHERE r.group_id='aihot' AND coalesce(r.editorial_rejected, false)=false AND r.expired_at >= $since AND r.expired_at < $until RETURN count(r) AS ended } "
         "CALL { MATCH (n:Entity) WHERE n.group_id='aihot' AND n.created_at >= $since AND n.created_at < $until RETURN count(n) AS entities } "
         "RETURN added, ended, entities", **window, routing_="r",
     )
@@ -238,7 +238,7 @@ async def graph_stats():
         )
         counts[key] = rows[0]["n"]
     rows, _, _ = await app.state.graph.driver.execute_query(
-        "MATCH ()-[r:RELATES_TO]->() WHERE r.group_id='aihot' "
+        "MATCH ()-[r:RELATES_TO]->() WHERE r.group_id='aihot' AND coalesce(r.editorial_rejected, false)=false "
         "RETURN count(r) AS n", routing_="r",
     )
     return {**counts, "relations": rows[0]["n"]}
@@ -277,7 +277,7 @@ async def graph_overview():
     """Bounded sample of observed facts for the public knowledge workspace."""
     rows, _, _ = await app.state.graph.driver.execute_query(
         "MATCH (s:Entity)-[r:RELATES_TO]->(o:Entity) "
-        "WHERE r.group_id='aihot' "
+        "WHERE r.group_id='aihot' AND coalesce(r.editorial_rejected, false)=false "
         "RETURN " + EDGE_COLUMNS + " ORDER BY r.created_at DESC LIMIT 64",
         routing_="r",
     )
@@ -319,7 +319,7 @@ async def graph_network():
     )
     links, _, _ = await app.state.graph.driver.execute_query(
         "MATCH (s:Entity {group_id:'aihot'})-[r:RELATES_TO {group_id:'aihot'}]->(o:Entity {group_id:'aihot'}) "
-        "WITH s,o,r ORDER BY r.uuid LIMIT 20001 "
+        "WHERE coalesce(r.editorial_rejected, false)=false WITH s,o,r ORDER BY r.uuid LIMIT 20001 "
         "OPTIONAL MATCH (ep:Episodic {group_id:'aihot'}) WHERE ep.uuid IN coalesce(r.episodes,[]) "
         "RETURN r.uuid AS id, s.uuid AS source, o.uuid AS target, r.name AS predicate, "
         "r.invalid_at AS invalid_at, collect(DISTINCT ep.name) AS articles ORDER BY id",
@@ -339,6 +339,6 @@ async def graph_network():
 async def graph_relation(uuid: str):
     rows, _, _ = await app.state.graph.driver.execute_query(
         "MATCH (s:Entity)-[r:RELATES_TO {uuid:$uuid,group_id:'aihot'}]->(o:Entity) "
-        "RETURN " + EDGE_COLUMNS + " LIMIT 1", uuid=uuid, routing_="r",
+        "WHERE coalesce(r.editorial_rejected, false)=false RETURN " + EDGE_COLUMNS + " LIMIT 1", uuid=uuid, routing_="r",
     )
     return await relation_results(rows)

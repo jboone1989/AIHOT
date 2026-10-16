@@ -31,42 +31,105 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const t = useText();
+  const focused = useRef<string | null>(null);
+  const desiredFocus = useRef(selectedKey);
+  desiredFocus.current = selectedKey;
+
+  // Only camera movements respond to focus. New data never triggers another pan.
+  const centerOnce = (instance: Core, key: string, animated: boolean) => {
+    const target = instance.getElementById(key);
+    if (!target.length || focused.current === key) return;
+    instance.nodes().removeClass("chosen");
+    target.addClass("chosen");
+    instance.stop();
+    if (animated) instance.animate({ center: { eles: target }, duration: 320, easing: "ease-in-out" });
+    else instance.center(target);
+    focused.current = key;
+  };
+
   useEffect(() => {
     let disposed = false;
     let resize: ResizeObserver | undefined;
-    setReady(false); setFailed(false);
     import("cytoscape").then(({ default: cytoscape }) => {
       if (disposed || !container.current) return;
-      const hubs = new Set([...network.nodes].sort((a, b) => b.degree - a.degree).slice(0, 8).filter(n => n.degree >= 8).map(n => n.key));
       const instance = cytoscape({
         container: container.current, style: createStyles(), pixelRatio: 1,
         minZoom: 0.2, maxZoom: 5, wheelSensitivity: 0.2,
-        elements: [
-          ...network.nodes.map((n, i) => { const nearby = network.nodes.filter(v => v.key !== selectedKey); const index = nearby.findIndex(v => v.key === n.key); const ring = Math.floor(index / 16); const ringCount = Math.min(16, nearby.length - ring * 16); const ringAngle = -Math.PI / 2 + (index % 16) * 2 * Math.PI / Math.max(1, ringCount); const radius = 130 + ring * 110; return { data: { id: n.key, name: n.name, hub: hubs.has(n.key), size: n.key === selectedKey ? 48 : Math.min(35, 14 + Math.sqrt(n.degree) * 3), color: n.key === selectedKey ? "#e5c36f" : n.degree >= 8 ? "#8baff8" : "#69d8c2" }, position: n.key === selectedKey ? { x: 0, y: 0 } : { x: Math.cos(ringAngle) * radius, y: Math.sin(ringAngle) * radius } }; }),
-          ...network.links.map(l => ({ data: { id: "r:" + l.id, key: l.id, source: l.source, target: l.target, expired: !!l.invalidAt } })),
-        ],
-        layout: { name: "preset" },
+        elements: [], layout: { name: "preset" },
       });
       cy.current = instance;
-      instance.on("zoom", () => readableLabels(instance, network.nodes.length > 120));
-      instance.on("mouseover", "node", e => { e.target.addClass("hovered"); readableLabels(instance, network.nodes.length > 120); });
-      instance.on("mouseout", "node", e => { e.target.removeClass("hovered"); readableLabels(instance, network.nodes.length > 120); });
-      instance.fit(undefined, 35);
-      setReady(true);
+      instance.on("zoom", () => readableLabels(instance, false));
+      instance.on("mouseover", "node", e => { e.target.addClass("hovered"); readableLabels(instance, false); });
+      instance.on("mouseout", "node", e => { e.target.removeClass("hovered"); readableLabels(instance, false); });
       instance.on("tap", "node", e => callbacks.current.onNode(e.target.id()));
       instance.on("tap", "edge", e => callbacks.current.onRelation(e.target.data("key")));
-      resize = new ResizeObserver(() => { instance.resize(); instance.fit(undefined, 35); });
+      resize = new ResizeObserver(() => instance.resize());
       resize.observe(container.current);
+      setReady(true);
     }).catch(() => { if (!disposed) setFailed(true); });
-    return () => { disposed = true; resize?.disconnect(); cy.current?.destroy(); cy.current = null; };
-  }, [network]);
+    return () => {
+      disposed = true;
+      resize?.disconnect();
+      cy.current?.destroy();
+      cy.current = null;
+    };
+  }, []);
+
+  // Incrementally add only genuinely new graph elements. No layout reruns,
+  // coordinate assignments to old nodes, zoom resets or unnecessary camera moves.
   useEffect(() => {
     const instance = cy.current;
-    if (!instance) return;
-    instance.nodes().removeClass("chosen");
-    if (selectedKey) instance.getElementById(selectedKey).addClass("chosen");
-    readableLabels(instance, network.nodes.length > 120);
-  }, [selectedKey, ready, network]);
+    if (!instance || !ready) return;
+    const firstLoad = instance.nodes().length === 0;
+    const existing = new Set(instance.nodes().map(n => n.id()));
+    const newcomers = network.nodes.filter(n => !existing.has(n.key));
+    const selected = desiredFocus.current;
+    const active = selected ? instance.getElementById(selected) : null;
+    const center = active?.length ? active.position() : {
+      x: (instance.width() / 2 - instance.pan().x) / instance.zoom(),
+      y: (instance.height() / 2 - instance.pan().y) / instance.zoom(),
+    };
+    const rootIsNew = !!selected && newcomers.some(n => n.key === selected);
+    const root = rootIsNew ? (firstLoad ? { x: 0, y: 0 } : { x: center.x + 230, y: center.y }) : center;
+    const ordered = [...newcomers.filter(n => n.key === selected), ...newcomers.filter(n => n.key !== selected)];
+    const edges = network.links.filter(l => !instance.getElementById("r:" + l.id).length);
+    if (!ordered.length && !edges.length) return;
+    instance.batch(() => {
+      let index = 0;
+      for (const n of ordered) {
+        const isRoot = rootIsNew && n.key === selected;
+        const theta = -Math.PI / 2 + index * Math.PI * (3 - Math.sqrt(5));
+        const radius = 140 + Math.sqrt(index) * 47;
+        const position = isRoot ? root : {
+          x: root.x + Math.cos(theta) * radius,
+          y: root.y + Math.sin(theta) * radius,
+        };
+        if (!isRoot) index += 1;
+        instance.add({ group: "nodes", data: {
+          id: n.key, name: n.name, size: Math.min(35, 14 + Math.sqrt(n.degree) * 3),
+          color: n.degree >= 8 ? "#8baff8" : "#69d8c2",
+        }, position });
+      }
+      for (const l of edges) {
+        if (instance.getElementById(l.source).length && instance.getElementById(l.target).length) {
+          instance.add({ group: "edges", data: {
+            id: "r:" + l.id, key: l.id, source: l.source, target: l.target, expired: !!l.invalidAt,
+          } });
+        }
+      }
+    });
+    if (firstLoad) instance.fit(undefined, 45);
+    if (selected) centerOnce(instance, selected, !firstLoad);
+    readableLabels(instance, false);
+  }, [network, ready]);
+
+  // The selected entity might already be drawn when it is clicked. In that
+  // case pan exactly once, immediately; the later API response only adds nodes.
+  useEffect(() => {
+    const instance = cy.current;
+    if (!ready || !instance || !selectedKey) return;
+    centerOnce(instance, selectedKey, focused.current !== null);
+  }, [selectedKey, ready]);
   const zoom = (factor: number) => { const instance = cy.current; if (instance) instance.zoom({ level: instance.zoom() * factor, renderedPosition: { x: instance.width() / 2, y: instance.height() / 2 } }); };
   return <div className="lr-atlas-map">
     <div ref={container} className="lr-atlas-canvas" role="img" aria-label={t(`知识网络：${network.nodes.length} 个实体，${network.links.length} 条关系；可通过实体目录进行键盘探索`, `Knowledge network: ${network.nodes.length} entities, ${network.links.length} relations; use the entity directory for keyboard exploration`)} />
