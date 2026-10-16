@@ -57,11 +57,11 @@ test("packages never import the apps, and nothing below the admin imports it", (
   assert.deepEqual(found, [], "admin/ is the top layer: move what others need to the folder that owns it");
 });
 
-// Public routes read through the public read faces; the rest are the reader's own writes (feedback) and
-// the image proxy. Admin and ingest routes may call any backend use case.
+// Public routes read through the public read faces; the rest are the reader's own writes (feedback,
+// anonymous analytics) and the image proxy. Admin and ingest routes may call any backend use case.
 const PRIVATE_ROUTES = new Set(["admin.ts", "admin-auth.ts", "ingest.ts"]);
 const PUBLIC_READS = [
-  /^publication\//, /^site\//, /^lib\//, /^config\.ts$/, /^operations\/feedback\.ts$/, /^media\//, /^jobs\/queue\.ts$/, /^modules\.ts$/,
+  /^publication\//, /^site\//, /^lib\//, /^config\.ts$/, /^operations\/feedback\.ts$/, /^operations\/analytics\.ts$/, /^media\//, /^jobs\/queue\.ts$/, /^modules\.ts$/,
 ];
 
 test("public routes read content only through the public read layer", () => {
@@ -139,13 +139,14 @@ const assigned = (file: string, pattern: RegExp) => [...readFileSync(path.join(R
 // ports), the Caddyfile the HTTPS domain; a server deployment may keep its own templates beside it
 // (`<name>.env.example`) and set a few in its systemd units (`Environment=`). Keys and secrets are read by name through credential(group,
 // NAME) or a model preset, so a name the code gives whole as a string counts as read, and so does one a
-// deployment file substitutes (the database password, the HTTPS domain).
+// deployment file substitutes (the database password, the HTTPS domain, an overlay's egress bridge).
 const matches = (text: string, pattern: RegExp) => [...text.matchAll(pattern)].map((m) => (m[1] ?? m[2])!);
 const NAMED = /["']([A-Z][A-Z0-9_]+)["']/g;
 const SUBSTITUTED = /\$\{([A-Z][A-Z0-9_]+)|\{\$([A-Z][A-Z0-9_]+)\}/g;
 const COMPOSE = "docker-compose.yml";
-const DEPLOYMENT = [COMPOSE, "deploy/Caddyfile"].filter((file) => existsSync(path.join(ROOT, file)));
 const tracked = (pattern: string) => execFileSync("git", ["ls-files", "--", pattern], { cwd: ROOT, encoding: "utf8" }).split("\n").filter(Boolean);
+// The compose overlays (docker-compose.<name>.yml) substitute their own settings too.
+const DEPLOYMENT = [COMPOSE, ...tracked("docker-compose.*.yml"), "deploy/Caddyfile"].filter((file) => existsSync(path.join(ROOT, file)));
 
 test("every environment variable the code reads is listed in a template, and every listed one is read", () => {
   const listed = new Set(tracked("*.env.example").flatMap((file) => assigned(file, /^#?\s*([A-Z][A-Z0-9_]+)=/gm)));

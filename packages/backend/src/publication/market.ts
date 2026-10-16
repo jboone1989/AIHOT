@@ -1,7 +1,7 @@
 // An event beside the prices around it: the assets its reports name, each priced just before the event's
 // first public report and a day later (or at the latest snapshot while that day is not over). Prices are
 // set side by side only; nothing here says the event moved them.
-import { SPOT_ASSETS, type SpotAsset } from "../market-spot.ts";
+import { getSpot, SPOT_ASSETS, type SpotAsset } from "../market-spot.ts";
 import { sql } from "../db.ts";
 import { storyReportCondition } from "./scope.ts";
 
@@ -67,3 +67,7 @@ export async function marketAround(assets: SpotAsset[], eventAt: Date, now = new
   }
   return { eventAt: eventAt.toISOString(), assets: priced };
 }
+
+export { SPOT_ASSETS, type SpotAsset };
+/** The latest spot price of one asset, for the public spot endpoint. */
+export const spotPrice = (asset: SpotAsset) => getSpot(asset);
