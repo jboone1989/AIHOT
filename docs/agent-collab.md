@@ -62,7 +62,7 @@ Claude 一侧不需要服务器：它运行在 claude.ai 的云端环境里，�
 
 以下都在 server142 上、用平时的 `ubuntu` 账号执行。凭据只放在服务器本机，不进仓库。
 
-0. 在 GitHub 仓库的 Settings → General → Features 里勾选 Issues。仓库现在关着 Issues，标签、交接评论和 `agent:codex` 的查询都走 issue 接口，关着时开 issue 会失败。
+0. 确认仓库打开了 Issues（Settings → General → Features）。标签、交接评论和 `agent:codex` 的查询都走 issue 接口，Issues 关着时开 issue 会失败。
 
 1. 安装工具：Node.js（已有）、`gh`、`jq`，以及 Codex CLI：
 

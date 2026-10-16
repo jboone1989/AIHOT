@@ -1,5 +1,5 @@
 import type {FastifyInstance} from "fastify";
-import {dailyGraphChanges,entityProfile,publicGraphNetwork,publicGraphOverview,publicGraphRelation,publicGraphStats,publicStoryGraph,searchGraph} from "@aihot/backend/publication/knowledge";
+import {dailyGraphChanges,entityProfile,publicAtlasCenters,publicAtlasNeighborhood,publicGraphNetwork,publicGraphOverview,publicGraphRelation,publicGraphStats,publicStoryGraph,searchGraph} from "@aihot/backend/publication/knowledge";
 import {timingSafeEqual} from "node:crypto";
 
 export function registerKnowledge(app:FastifyInstance){
@@ -28,6 +28,22 @@ export function registerKnowledge(app:FastifyInstance){
     if(graph.status==="unavailable")return reply.code(503).header("Cache-Control","no-store").send(graph);
     if(!graph.edges.length)return reply.code(404).header("Cache-Control","no-store").send({error:"not_found"});
     return reply.header("Cache-Control","public, max-age=60").send(graph);
+  });
+  app.get<{Querystring:{q?:string}}>("/api/site/knowledge/centers",async(req,reply)=>{
+    const q=(req.query.q??"").trim();
+    if(q.length>100)return reply.code(400).send({error:"invalid_query"});
+    const result=await publicAtlasCenters(q);
+    if(result.status==="unavailable")return reply.code(503).header("Cache-Control","no-store").send(result);
+    return reply.header("Cache-Control","public, max-age=60").send(result);
+  });
+  app.get<{Params:{key:string};Querystring:{limit?:string}}>("/api/site/knowledge/neighborhood/:key",async(req,reply)=>{
+    if(req.params.key.length>180)return reply.code(400).send({error:"invalid_entity"});
+    const limit=Number(req.query.limit??40);
+    if(!Number.isInteger(limit)||limit<1||limit>80)return reply.code(400).send({error:"invalid_limit"});
+    const result=await publicAtlasNeighborhood(req.params.key,limit);
+    if(result.status==="unavailable")return reply.code(503).header("Cache-Control","no-store").send(result);
+    if(result.status==="not_found")return reply.code(404).send(result);
+    return reply.header("Cache-Control","public, max-age=60").send(result);
   });
   app.get("/api/site/knowledge/stats",async(_req,reply)=>
     reply.header("Cache-Control","public, max-age=60").send(await publicGraphStats()));
