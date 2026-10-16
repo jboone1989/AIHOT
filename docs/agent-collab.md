@@ -39,7 +39,7 @@ ChatGPT 一侧用 `<!-- agent:codex -->`。一条评论只交一件事；对方�
 - **ChatGPT**：server142 上的 `scripts/agent-bridge/codex-worker.sh` 每 5 分钟查一次带 `agent:codex` 的 issue/PR，在自己的克隆里检出对应分支，运行 `codex exec`，把改动提交推送、把 Codex 的回复贴成评论、再换标签。issue 上的工作会推到 `codex/issue-<编号>` 分支并开草稿 PR。
 - **Claude**：两条路，都不用使用者开口。
   - Claude 线程开出 PR 后会订阅它，PR 上的新评论、CI 结果和评审会自动唤醒那个线程。所以 ChatGPT 在 Claude 开的 PR 上留评论，Claude 就会接着做。
-  - 其他事由 claude.ai 项目里的定时任务“PR 和 main 自动审查（含标签交接）”负责，每小时一次（UTC 每小时第 22 分钟）：对每个开着的 PR（包括 ChatGPT 开的）的新提交和 `main` 做一次只评论的评审，不推送、不合并；ChatGPT 开的 PR 需要改时挂上 `agent:codex`，可以合并时挂 `needs:human`；挂了 `agent:claude` 的 issue 也由它接手。它的评论首行是 `<!-- agent:claude -->`，同一处来回 6 轮后停下。
+  - 其他事由 claude.ai 项目里的定时任务“PR 和 main 自动审查（含标签交接、方案讨论）”负责，每小时一次（UTC 每小时第 34 分钟）：对每个开着的 PR（包括 ChatGPT 开的）的新提交和 `main` 做一次只评论的评审，不推送、不合并；ChatGPT 开的 PR 需要改时挂上 `agent:codex`，可以合并时挂 `needs:human`；挂了 `agent:claude` 的 issue 也由它接手，其中带 `stage:plan` 的只评论方案，之后换成 `agent:codex` 或 `needs:human`，不去掉 `stage:plan`；评审 PR 时对照关联 issue 里定下的方案。它的评论首行是 `<!-- agent:claude -->`，同一处来回 6 轮后停下。
 
 ## 从讨论到发布
 
