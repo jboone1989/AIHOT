@@ -15,6 +15,8 @@ bash scripts/deploy-prod.sh
 
 That one command fetches the exact `main` commit, builds version-tagged application and Graphiti images on cn-dev using a clean `git archive`, streams both images to VM09 over the existing SSH connection, advances VM09's Git checkout, sets `LRSITE_RELEASE`, recreates existing Docker Compose services **without any build on VM09**, and runs a substantive production smoke check. The PostgreSQL and Neo4j named volumes are **not replaced or re-imported**. AdSense and model inference retain their configured flags.
 
+**Before a release, read the latest release check.** Every morning (08:52 Beijing time) a scheduled Claude task looks at `main`; if it has new commits since the last check, it reads all of them together (looking for one change breaking another feature, missing Chinese/English counterparts, migrations, and config drift), checks CI on the newest commit, and opens an issue titled `发布检查：<date>（<sha>）` whose first line is `可以发布` or `先别发布`. Deploy only a commit whose check says `可以发布`. Once the Playwright checks (`npm run e2e`) are on `main`, also run them on cn-dev against the deployed dev stack with real data: `E2E_BASE_URL=http://127.0.0.1:3000 npm run e2e`, and add the result to the issue.
+
 For a safe environment check before deploying:
 
 ```bash
