@@ -2,12 +2,12 @@
 # Building happens on cn-dev; VM09 only loads the images and recreates containers.
 services:
   setup:
-    image: livingruntime-app:${LRSITE_APP_RELEASE:?Set LRSITE_APP_RELEASE}
+    image: livingruntime-app:${LRSITE_APP_RELEASE:-${LRSITE_RELEASE:?Set LRSITE_RELEASE}}
   api:
-    image: livingruntime-app:${LRSITE_APP_RELEASE:?Set LRSITE_APP_RELEASE}
+    image: livingruntime-app:${LRSITE_APP_RELEASE:-${LRSITE_RELEASE:?Set LRSITE_RELEASE}}
   worker:
-    image: livingruntime-app:${LRSITE_APP_RELEASE:?Set LRSITE_APP_RELEASE}
+    image: livingruntime-app:${LRSITE_APP_RELEASE:-${LRSITE_RELEASE:?Set LRSITE_RELEASE}}
   web:
-    image: livingruntime-app:${LRSITE_APP_RELEASE:?Set LRSITE_APP_RELEASE}
+    image: livingruntime-app:${LRSITE_APP_RELEASE:-${LRSITE_RELEASE:?Set LRSITE_RELEASE}}
   knowledge:
-    image: livingruntime-knowledge:${LRSITE_KNOWLEDGE_RELEASE:?Set LRSITE_KNOWLEDGE_RELEASE}
+    image: livingruntime-knowledge:${LRSITE_KNOWLEDGE_RELEASE:-${LRSITE_RELEASE:?Set LRSITE_RELEASE}}
