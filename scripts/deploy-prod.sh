@@ -26,6 +26,18 @@ APP_TAG="${APP_TAG:-$OLD_TAG}"
 KNOWLEDGE_TAG="${KNOWLEDGE_TAG:-$OLD_TAG}"
 VALID='^[0-9a-f]{12}$'
 APP_CHANGED=0; KNOWLEDGE_CHANGED=0; SCHEMA_CHANGED=0
+# Compare from the image's source commit, not checkout HEAD; source may already
+# be updated while the running containers still have a previous release tag.
+APP_BASE="$OLD_SHA"; KNOWLEDGE_BASE="$OLD_SHA"
+if [[ "$APP_TAG" =~ $VALID ]] && git cat-file -e "$APP_TAG^{commit}" 2>/dev/null; then
+ APP_BASE="$APP_TAG"
+else APP_CHANGED=1
+fi
+if [[ "$KNOWLEDGE_TAG" =~ $VALID ]] && git cat-file -e "$KNOWLEDGE_TAG^{commit}" 2>/dev/null; then
+ KNOWLEDGE_BASE="$KNOWLEDGE_TAG"
+else KNOWLEDGE_CHANGED=1
+fi
+if ! git diff --quiet "$KNOWLEDGE_BASE" "$NEW_SHA" -- knowledge_service/; then KNOWLEDGE_CHANGED=1; fi
 # A code change rebuilds the shared app image; knowledge_service is independent.
 while IFS= read -r path; do
  case "$path" in
@@ -35,7 +47,7 @@ while IFS= read -r path; do
   docker-compose.*.yml|docker-compose.yml) ;; # Compose applies its own configuration hash
   *) APP_CHANGED=1 ;;
  esac
-done < <(git diff --name-only "$OLD_SHA" "$NEW_SHA")
+done < <(git diff --name-only "$APP_BASE" "$NEW_SHA")
 if [[ ! "$APP_TAG" =~ $VALID ]] || ! docker image inspect "livingruntime-app:$APP_TAG" >/dev/null 2>&1; then APP_CHANGED=1; fi
 if [[ ! "$KNOWLEDGE_TAG" =~ $VALID ]] || ! docker image inspect "livingruntime-knowledge:$KNOWLEDGE_TAG" >/dev/null 2>&1; then KNOWLEDGE_CHANGED=1; fi
 if [[ "${1:-}" == "--check" ]]; then
