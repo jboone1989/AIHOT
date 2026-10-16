@@ -18,7 +18,7 @@ export function KnowledgeAtlas({ initialKey = null }: { initialKey?: string | nu
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
-    const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [relationId, setRelationId] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<KnowledgeEdge | null>(null);
   const [history, setHistory] = useState<string[]>([]);
@@ -103,8 +103,11 @@ export function KnowledgeAtlas({ initialKey = null }: { initialKey?: string | nu
     </div>
     <div className="lr-atlas-body">
       <div className="lr-atlas-main">
-        {error?<div className="lr-atlas-state" role="alert"><p>{t("实体关系暂时无法读取","Unable to load entity relationships")}</p><button type="button" onClick={()=>setAttempt(v=>v+1)}>{t("重试","Retry")}</button></div>
-          :selected&&hasNetwork&&network.nodes.length?<><KnowledgeAtlasCanvas network={network} selectedKey={selected} onNode={focus} onRelation={id=>{setRelationId(id);trackAnalytics("graph_relation_select");}}/>{loading&&<div className="lr-atlas-caption" role="status">{t("正在补充邻近关系…","Updating nearby relations…")}</div>}</>
+        {selected&&hasNetwork&&network.nodes.length?<><KnowledgeAtlasCanvas network={network} selectedKey={selected} onNode={focus} onRelation={id=>{setRelationId(id);trackAnalytics("graph_relation_select");}}/>
+            <div className="lr-atlas-caption" role="status" aria-live="polite" style={{minHeight:"1.5em"}}>
+              {error?<>{t("邻近关系读取失败","Unable to update neighbors")} <button type="button" onClick={()=>setAttempt(v=>v+1)}>{t("重试","Retry")}</button></>:loading?t("正在补充邻近关系…","Updating nearby relations…"):"\u00a0"}
+            </div></>
+          :error?<div className="lr-atlas-state" role="alert"><p>{t("实体关系暂时无法读取","Unable to load entity relationships")}</p><button type="button" onClick={()=>setAttempt(v=>v+1)}>{t("重试","Retry")}</button></div>
           :loading?<div className="lr-atlas-state" role="status">{t("正在读取邻近关系…","Loading nearby relationships…")}</div>
           :<div className="lr-atlas-state" role="status">{selected?t("暂无可公开的邻近关系","No public neighbors yet"):t("从右侧搜索或选择一个实体开始探索","Search or select an entity to begin")}</div>}
         <div className="lr-atlas-caption">{t("按需展开实体的全部已公开关系，保留探索过的节点与连线。","Explore all published links of a node; previously discovered relations remain visible.")}</div>
