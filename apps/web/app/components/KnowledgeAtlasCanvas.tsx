@@ -3,13 +3,12 @@ import type { Core, StylesheetJson } from "cytoscape";
 import type { AtlasNetwork } from "../lib/knowledge-atlas";
 import { useText } from "./LanguageSwitch";
 
-const colors = ["#69d8c2", "#8baff8", "#d5a4f0", "#e6bb76", "#ec929e", "#8fc99c"];
-
 function createStyles(): StylesheetJson {
   return [
     { selector: "node", style: { label: "data(name)", width: "data(size)", height: "data(size)", "background-color": "data(color)", color: "#e6edf5", "font-size": 11, "min-zoomed-font-size": 8, "text-valign": "bottom", "text-margin-y": 5, "text-outline-color": "#111c2d", "text-outline-width": 2, "text-wrap": "ellipsis", "text-max-width": "140px" } },
     { selector: "edge", style: { width: 0.7, "line-color": "#698a9c", opacity: 0.3, "curve-style": "haystack" } },
     { selector: "edge[?expired]", style: { "line-style": "dashed", opacity: 0.15 } },
+    { selector: "node[?hub]", style: { "font-size": 22, "min-zoomed-font-size": 0, "font-weight": "bold", color: "#f3f6ff" } },
     { selector: ".chosen", style: { "background-color": "#fff1af", "border-width": 3, "border-color": "#ffffff", "font-size": 16, "font-weight": "bold", "z-index": 10 } },
     { selector: "edge:selected", style: { width: 3, "line-color": "#fff1af", opacity: 1 } },
   ];
@@ -35,13 +34,14 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
         container: container.current, style: createStyles(), pixelRatio: 1,
         minZoom: 0.03, maxZoom: 5, wheelSensitivity: 0.2,
         elements: [
-          ...network.nodes.map((n, i) => ({ data: { id: n.key, name: n.name, size: Math.min(38, 7 + Math.sqrt(n.degree) * 3), color: colors[i % colors.length] } })),
+          ...network.nodes.map(n => ({ data: { id: n.key, name: n.name, hub: n.degree >= 25, size: Math.min(48, 8 + Math.sqrt(n.degree) * 3), color: n.degree >= 25 ? "#d5a4f0" : n.degree >= 8 ? "#8baff8" : "#69d8c2" } })),
           ...network.links.map(l => ({ data: { id: "r:" + l.id, key: l.id, source: l.source, target: l.target, expired: !!l.invalidAt } })),
         ],
-        layout: { name: "cose", animate: true, randomize: true, refresh: 15, numIter: 160, initialTemp: 120, coolingFactor: 0.97, componentSpacing: 70, nodeRepulsion: 6000, idealEdgeLength: 65, padding: 35 },
+        layout: { name: "preset" },
       });
       cy.current = instance;
       instance.one("layoutstop", () => { if (!disposed) { instance.fit(undefined, 35); setReady(true); } });
+      instance.layout({ name: "cose", animate: true, randomize: true, refresh: 15, numIter: 160, initialTemp: 120, coolingFactor: 0.97, componentSpacing: 70, nodeRepulsion: 6000, idealEdgeLength: 65, padding: 35 }).run();
       instance.on("tap", "node", e => callbacks.current.onNode(e.target.id()));
       instance.on("tap", "edge", e => callbacks.current.onRelation(e.target.data("key")));
       resize = new ResizeObserver(() => { instance.resize(); instance.fit(undefined, 35); });
