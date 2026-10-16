@@ -17,6 +17,17 @@ if(!existsSync(source)||lstatSync(source).isSymbolicLink())throw Error("Expected
 if(lstatSync(source).mode&0o077)throw Error("Refusing loose permissions on .env");
 const text=readFileSync(source,"utf8"),vars=parseEnv(text);
 const flags={AIHOT_ENVIRONMENT:target,AIHOT_ENV_FILE:dest,RECEIPT_AUTO_RELEASE_ENABLED:"false"};
+if(target==="production"){
+ const mapping={API:"livingruntime-api-1",WORKER:"livingruntime-worker-1",WEB:"livingruntime-web-1",KNOWLEDGE:"livingruntime-knowledge-1"};
+ for(const [service,container] of Object.entries(mapping)){
+  const image=execFileSync("docker",["inspect","-f","{{.Config.Image}}",container],{encoding:"utf8",timeout:10000}).trim();
+  const tag=/:(\\w{12})$/.exec(image)?.[1];
+  if(!tag)throw Error("Cannot identify runtime image tag for "+container);
+  flags["LRSITE_RELEASE_"+service]=tag;
+ }
+ flags.LRSITE_RELEASE_SETUP=flags.LRSITE_RELEASE_API;
+ flags.LRSITE_DEPLOYED_SHA=execFileSync("git",["rev-parse",flags.LRSITE_RELEASE_API+"^{commit}"],{encoding:"utf8",timeout:10000}).trim();
+}
 const out=text.trimEnd()+"\n"+Object.entries(flags).filter(([k])=>!Object.hasOwn(vars,k))
   .map(([k,v])=>k+"="+v).join("\n")+"\n";
 for(const [key,value] of Object.entries(flags)){
