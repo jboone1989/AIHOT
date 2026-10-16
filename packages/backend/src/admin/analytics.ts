@@ -2,7 +2,7 @@
 import { sql } from "../db.ts";
 
 export async function analyticsOverview() {
-  const [totals, daily, events, content, languages, referrers, performance, effective] = await Promise.all([
+  const [totals, daily, events, content, languages, referrers, performance, effective, ingestion] = await Promise.all([
     sql`SELECT
       COUNT(*) FILTER (WHERE event_name='page_view')::int AS page_views,
       COUNT(DISTINCT session_id) FILTER (WHERE event_name='page_view')::int AS sessions,
@@ -44,9 +44,11 @@ export async function analyticsOverview() {
       HAVING BOOL_OR(event_name = 'story_open')
         AND BOOL_OR(event_name IN ('graph_node_select', 'source_open'))
     ) AS qualified`,
+    sql`SELECT COUNT(*)::int AS total_events, MAX(occurred_at)::text AS last_event_at FROM product_analytics_events`,
   ]);
   return {
     periodDays: 30, asOf: new Date().toISOString(),
+    ingestion: ingestion[0] ?? {total_events: 0, last_event_at: null},
     totals: totals[0] ?? {},
     weeklyEffectiveExplorers: Number(effective[0]?.sessions ?? 0),
     daily, events, content, languages, referrers,
