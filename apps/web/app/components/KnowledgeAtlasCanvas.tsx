@@ -31,43 +31,80 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const t = useText();
+  const focusRef = useRef(selectedKey);
+  focusRef.current = selectedKey;
+  // Keep one Cytoscape instance for the lifetime of the explorer. Recreating it
+  // on every selection discards node coordinates, zoom and user orientation.
   useEffect(() => {
     let disposed = false;
     let resize: ResizeObserver | undefined;
-    setReady(false); setFailed(false);
     import("cytoscape").then(({ default: cytoscape }) => {
       if (disposed || !container.current) return;
-      const hubs = new Set([...network.nodes].sort((a, b) => b.degree - a.degree).slice(0, 8).filter(n => n.degree >= 8).map(n => n.key));
       const instance = cytoscape({
         container: container.current, style: createStyles(), pixelRatio: 1,
         minZoom: 0.2, maxZoom: 5, wheelSensitivity: 0.2,
-        elements: [
-          ...network.nodes.map((n, i) => { const nearby = network.nodes.filter(v => v.key !== selectedKey); const index = nearby.findIndex(v => v.key === n.key); const ring = Math.floor(index / 16); const ringCount = Math.min(16, nearby.length - ring * 16); const ringAngle = -Math.PI / 2 + (index % 16) * 2 * Math.PI / Math.max(1, ringCount); const radius = 130 + ring * 110; return { data: { id: n.key, name: n.name, hub: hubs.has(n.key), size: n.key === selectedKey ? 48 : Math.min(35, 14 + Math.sqrt(n.degree) * 3), color: n.key === selectedKey ? "#e5c36f" : n.degree >= 8 ? "#8baff8" : "#69d8c2" }, position: n.key === selectedKey ? { x: 0, y: 0 } : { x: Math.cos(ringAngle) * radius, y: Math.sin(ringAngle) * radius } }; }),
-          ...network.links.map(l => ({ data: { id: "r:" + l.id, key: l.id, source: l.source, target: l.target, expired: !!l.invalidAt } })),
-        ],
-        layout: { name: "preset" },
+        elements: [], layout: { name: "preset" },
       });
       cy.current = instance;
-      instance.on("zoom", () => readableLabels(instance, network.nodes.length > 120));
-      instance.on("mouseover", "node", e => { e.target.addClass("hovered"); readableLabels(instance, network.nodes.length > 120); });
-      instance.on("mouseout", "node", e => { e.target.removeClass("hovered"); readableLabels(instance, network.nodes.length > 120); });
-      instance.fit(undefined, 35);
-      if (selectedKey && instance.getElementById(selectedKey).length) instance.center(instance.getElementById(selectedKey));
-      setReady(true);
+      instance.on("zoom", () => readableLabels(instance, false));
+      instance.on("mouseover", "node", e => { e.target.addClass("hovered"); readableLabels(instance, false); });
+      instance.on("mouseout", "node", e => { e.target.removeClass("hovered"); readableLabels(instance, false); });
       instance.on("tap", "node", e => callbacks.current.onNode(e.target.id()));
       instance.on("tap", "edge", e => callbacks.current.onRelation(e.target.data("key")));
-      resize = new ResizeObserver(() => { instance.resize(); instance.fit(undefined, 35); if (selectedKey) instance.center(instance.getElementById(selectedKey)); });
+      resize = new ResizeObserver(() => instance.resize());
       resize.observe(container.current);
+      setReady(true);
     }).catch(() => { if (!disposed) setFailed(true); });
     return () => { disposed = true; resize?.disconnect(); cy.current?.destroy(); cy.current = null; };
-  }, [network, selectedKey]);
+  }, []);
   useEffect(() => {
     const instance = cy.current;
-    if (!instance) return;
+    if (!instance || !ready) return;
+    const existing = new Set(instance.nodes().map(n => n.id()));
+    const desired = new Set(network.nodes.map(n => n.key));
+    const centerNode = selectedKey ? instance.getElementById(selectedKey) : null;
+    const anchor = centerNode && centerNode.length ? centerNode.position() : { x: 0, y: 0 };
+    // Place only genuinely new neighbors. Existing nodes NEVER change coordinates.
+    const newcomers = network.nodes.filter(n => !existing.has(n.key));
+    const firstLoad = existing.size === 0;
+    instance.batch(() => {
+      for (const n of network.nodes) {
+        const old = instance.getElementById(n.key);
+        if (old.length) {
+          old.data({ name: n.name, size: n.key === selectedKey ? 48 : Math.min(35, 14 + Math.sqrt(n.degree) * 3) });
+        }
+      }
+      newcomers.forEach((n, i) => {
+        const angle = -Math.PI / 2 + i * Math.PI * (3 - Math.sqrt(5));
+        const radius = 135 + Math.floor(i / 14) * 105;
+        const position = n.key === selectedKey && firstLoad ? { x: 0, y: 0 } : {
+          x: anchor.x + Math.cos(angle) * radius,
+          y: anchor.y + Math.sin(angle) * radius,
+        };
+        instance.add({ group: "nodes", data: {
+          id: n.key, name: n.name, size: n.key === selectedKey ? 48 : Math.min(35, 14 + Math.sqrt(n.degree) * 3),
+          color: n.degree >= 8 ? "#8baff8" : "#69d8c2",
+        }, position });
+      });
+      const edgeIds = new Set(network.links.map(l => "r:" + l.id));
+      instance.edges().filter(e => !edgeIds.has(e.id())).remove();
+      for (const l of network.links) {
+        const id = "r:" + l.id;
+        if (!instance.getElementById(id).length && instance.getElementById(l.source).length && instance.getElementById(l.target).length) {
+          instance.add({ group: "edges", data: { id, key: l.id, source: l.source, target: l.target, expired: !!l.invalidAt } });
+        }
+      }
+      instance.nodes().filter(n => !desired.has(n.id())).remove();
+    });
     instance.nodes().removeClass("chosen");
-    if (selectedKey) instance.getElementById(selectedKey).addClass("chosen");
-    readableLabels(instance, network.nodes.length > 120);
-  }, [selectedKey, ready, network]);
+    if (selectedKey) {
+      const target = instance.getElementById(selectedKey);
+      target.addClass("chosen");
+      if (firstLoad) instance.fit(undefined, 45);
+      else if (target.length) instance.animate({ center: { eles: target }, duration: 350, easing: "ease-in-out" });
+    }
+    readableLabels(instance, false);
+  }, [network, selectedKey, ready]);
   const zoom = (factor: number) => { const instance = cy.current; if (instance) instance.zoom({ level: instance.zoom() * factor, renderedPosition: { x: instance.width() / 2, y: instance.height() / 2 } }); };
   return <div className="lr-atlas-map">
     <div ref={container} className="lr-atlas-canvas" role="img" aria-label={t(`知识网络：${network.nodes.length} 个实体，${network.links.length} 条关系；可通过实体目录进行键盘探索`, `Knowledge network: ${network.nodes.length} entities, ${network.links.length} relations; use the entity directory for keyboard exploration`)} />
