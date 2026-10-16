@@ -26,13 +26,15 @@ export interface KnowledgeStats {
   episodes: number; entities: number; relations: number; status?: string;
 }
 
-function layout(edges: KnowledgeEdge[]) {
+function layout(edges: KnowledgeEdge[], centerKey?: string) {
   const weights = new Map<string, { name: string; key: string; degree: number }>();
   for (const edge of edges) for (const node of [edge.subject, edge.object]) {
     const old = weights.get(node.key);
     weights.set(node.key, { key: node.key, name: node.name, degree: (old?.degree ?? 0) + 1 });
   }
-  const nodes = [...weights.values()].sort((a, b) => b.degree - a.degree || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)).slice(0, 15);
+  const sorted = [...weights.values()].sort((a, b) => b.degree - a.degree || a.key.localeCompare(b.key));
+  const center = centerKey ? sorted.find(n => n.key === centerKey) : undefined;
+  const nodes = [...(center ? [center] : []), ...sorted.filter(n => n.key !== center?.key)].slice(0, 15);
   const coords = new Map(nodes.map((node, i) => {
     const orbit = i === 0 ? 0 : i < 6 ? 1 : 2;
     const index = orbit === 1 ? i - 1 : i - 6;
@@ -64,7 +66,7 @@ export function KnowledgeCanvas({ edges, activeId, compact = false, selectedNode
 }) {
   const gridId = `lr-grid-${useId().replaceAll(":", "")}`;
   const [zoom, setZoom] = useState(1);
-  const { nodes, coords, visibleEdges } = useMemo(() => layout(edges), [edges]);
+  const { nodes, coords, visibleEdges } = useMemo(() => layout(edges, selectedNodeKey), [edges, selectedNodeKey]);
   const t=useText();
   const lang=useUiLanguage();
   if (!nodes.length) return (
@@ -176,7 +178,7 @@ export function KnowledgeExplorer({ graph, compact = false }: { graph: Knowledge
     <div className="lr-explorer-grid">
       <div className="lr-graph-frame">
         <div className="lr-graph-topline"><span><span className="lr-pulse" /> KNOWLEDGE MAP</span><span>GRAPHITI / NEO4J</span></div>
-        <KnowledgeCanvas edges={graph.edges} activeId={active?.id} selectedNodeKey={nodeKey ?? undefined} onSelectNode={(key) => { trackAnalytics("graph_node_select"); setNodeKey(current => current === key ? null : key); setSelected(null); }} compact={compact}/>
+        <KnowledgeCanvas edges={graph.edges} activeId={active?.id} selectedNodeKey={nodeKey ?? undefined} onSelectNode={(key) => { trackAnalytics("graph_node_select"); setNodeKey(key); setSelected(null); }} compact={compact}/>
         <div className="lr-graph-bottomline">{t("点击节点查看关系 · 右侧打开档案 · 点击关系查看证据","Select a node to inspect links · Open its profile · Select a relation for evidence")}</div>
       </div>
       <div className="min-w-0">
