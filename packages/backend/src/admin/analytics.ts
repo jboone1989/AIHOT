@@ -1,8 +1,11 @@
 // Aggregated, non-identifying site metrics for the authenticated admin.
 import { sql } from "../db.ts";
 import { cloudflareReport } from "./cloudflare-analytics.ts";
+import { posthogReport } from "./posthog-analytics.ts";
+import { searchConsoleReport } from "./search-console-analytics.ts";
 
 export async function analyticsOverview() {
+  const external = Promise.all([cloudflareReport(), posthogReport(), searchConsoleReport()]);
   const [totals, daily, events, content, languages, referrers, performance, effective, ingestion] = await Promise.all([
     sql`SELECT
       COUNT(*) FILTER (WHERE event_name='page_view')::int AS page_views,
@@ -47,18 +50,14 @@ export async function analyticsOverview() {
     ) AS qualified`,
     sql`SELECT COUNT(*)::int AS total_events, MAX(occurred_at)::text AS last_event_at FROM product_analytics_events`,
   ]);
+  const [cloudflare, posthog, searchConsole] = await external;
   return {
-    cloudflare: await cloudflareReport(),
+    cloudflare, posthog, searchConsole,
     periodDays: 30, asOf: new Date().toISOString(),
     ingestion: ingestion[0] ?? {total_events: 0, last_event_at: null},
     totals: totals[0] ?? {},
     weeklyEffectiveExplorers: Number(effective[0]?.sessions ?? 0),
     daily, events, content, languages, referrers,
     performance: performance[0] ?? { samples: 0, mean_ms: null, p75_ms: null },
-    providers: {
-      cloudflare: Boolean(process.env.CLOUDFLARE_WEB_ANALYTICS_TOKEN),
-      posthog: Boolean(process.env.POSTHOG_PROJECT_TOKEN),
-      searchConsole: Boolean(process.env.GOOGLE_SITE_VERIFICATION),
-    },
   };
 }

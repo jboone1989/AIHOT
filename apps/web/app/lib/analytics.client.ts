@@ -81,12 +81,18 @@ export function trackAnalytics(name: EventName, options: {
   }).catch(() => {});
   if (current.posthogToken) {
     const host = current.posthogRegion === "eu" ? "https://eu.i.posthog.com" : "https://us.i.posthog.com";
-    void fetch(host + "/i/v0/e/", {
+    void fetch(host + "/capture/", {
       method: "POST", mode: "cors", credentials: "omit", keepalive: true,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        api_key: current.posthogToken, event: name, distinct_id: sessionId,
-        properties: { page_type: page, language, ...(contentId ? { content_id: contentId } : {}), ...(durationMs !== undefined ? { duration_ms: durationMs } : {}) },
+        api_key: current.posthogToken, event: name === "page_view" ? "$pageview" : name,
+        properties: {
+          distinct_id: sessionId, $session_id: sessionId, $process_person_profile: false,
+          source: "eventgraph", site_host: location.hostname, $host: location.hostname,
+          $current_url: location.origin + location.pathname, $pathname: location.pathname,
+          page_type: page, language, ...(referrer ? { $referring_domain: referrer } : {}),
+          ...(contentId ? { content_id: contentId } : {}), ...(durationMs !== undefined ? { duration_ms: durationMs } : {}),
+        },
       }),
     }).catch(() => {});
   }

@@ -3,11 +3,12 @@ import { SITE } from "@aihot/site";
 import type { Route } from "./+types/analytics";
 import { adminGet } from "../../lib/admin.server";
 import { AdminPage, Card, Stat } from "../../features/admin/ui";
+import { ExternalAnalytics, type ExternalAnalyticsData } from "../../features/admin/ExternalAnalytics";
 
 type Metric = { name: string; count: number; sessions: number };
 type Day = { day: string; page_views: number; sessions: number; graph_sessions: number };
-type Overview = {
-  cloudflare: {state: "unconfigured" | "ready" | "error"; pageViews: number | null; daily: Array<{day: string; pageViews: number}>; refreshedAt: string | null; message?: string};
+type Overview = ExternalAnalyticsData & {
+  cloudflare: {state: "unconfigured" | "ready" | "empty" | "error"; pageViews: number | null; daily: Array<{day: string; pageViews: number}>; refreshedAt: string | null; message?: string};
   periodDays: number; asOf: string; weeklyEffectiveExplorers: number;
   ingestion: {total_events: number; last_event_at: string | null};
   totals: { page_views?: number; sessions?: number; story_sessions?: number; graph_sessions?: number; source_sessions?: number; search_sessions?: number };
@@ -16,7 +17,6 @@ type Overview = {
   languages: Array<{ language: string; page_views: number }>;
   referrers: Array<{ host: string; page_views: number }>;
   performance: { samples: number; mean_ms: number | null; p75_ms: number | null };
-  providers: { cloudflare: boolean; posthog: boolean; searchConsole: boolean };
 };
 export async function loader({ request }: Route.LoaderArgs) {
   return adminGet<Overview>(request, "/api/admin/analytics");
@@ -30,11 +30,6 @@ const names: Record<string, string> = {
   graph_relation_select: "关系证据选择", source_open: "来源外链", search_submit: "站内搜索",
   navigation_complete: "页面切换", agent_access_open: "Agent 接入", feedback_open: "反馈入口",
 };
-const links = [
-  { title: "Cloudflare Web Analytics", url: "https://dash.cloudflare.com/", key: "cloudflare" as const, description: "独立访客、来源与 Web Vitals" },
-  { title: "Google Search Console", url: "https://search.google.com/search-console/", key: "searchConsole" as const, description: "搜索曝光、CTR、关键词与搜索排名" },
-  { title: "PostHog", url: "https://us.posthog.com/", key: "posthog" as const, description: "更详细的漏斗、路径与交互分析" },
-];
 export default function AnalyticsAdmin({ loaderData: a }: Route.ComponentProps) {
   const totals = a.totals;
   const hasData = a.ingestion.total_events > 0;
@@ -43,12 +38,14 @@ export default function AnalyticsAdmin({ loaderData: a }: Route.ComponentProps) 
   return (
     <AdminPage title="流量与行为" subtitle={<>最近 {a.periodDays} 天 · 更新于 {a.asOf.slice(0,16).replace("T", " ") + " UTC"} · 匿名会话统计，不等于独立访客数（UV）</>}>
       <Card className="mb-5" title="Cloudflare Web Analytics · 最近 7 天">
-        {a.cloudflare.state === "ready" ? <>
+        {a.cloudflare.state === "ready" || a.cloudflare.state === "empty" ? <>
           <p className="num text-[24px] font-semibold">{n(a.cloudflare.pageViews)} PV</p>
           <p className="text-[12px] text-ink-3">数据源：Cloudflare RUM（独立统计口径，不与站内 PV 相加）· 更新 {a.cloudflare.refreshedAt?.slice(0,16).replace("T"," ")} UTC</p>
+          {a.cloudflare.state === "empty" && <p className="text-[12px] text-ink-3">API 已连通，最近 7 天暂未返回页面浏览数据。</p>}
           <div className="mt-3 space-y-1">{a.cloudflare.daily.map(d => <div key={d.day} className="flex justify-between text-[12px]"><span>{d.day}</span><span className="num">{n(d.pageViews)} PV</span></div>)}</div>
         </> : <p className="text-[13px] text-ink-3">{a.cloudflare.message ?? "尚未取得 Cloudflare 数据"}</p>}
       </Card>
+      <ExternalAnalytics posthog={a.posthog} searchConsole={a.searchConsole}/>
       <div role="status" className="mb-5 rounded-panel border border-line bg-bg-sunk p-4 text-[13px] text-ink-2">{!hasData ? "尚未收到任何真实访问事件。数据采集未得到验证，所有指标暂不显示；不会使用模拟数据。" : `已收到 ${n(a.ingestion.total_events)} 条真实入库事件。最近一次：${a.ingestion.last_event_at ?? "未知"}。访客数不等于匿名会话数。`}</div>
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="7 天有效知识探索" value={metric(a.weeklyEffectiveExplorers)} hint="同一匿名会话：打开事件后选择 Graph 节点或访问原文"/>
@@ -86,15 +83,6 @@ export default function AnalyticsAdmin({ loaderData: a }: Route.ComponentProps) 
           {!a.referrers.length && <p className="text-ink-4 text-[13px]">尚无外部来源域名记录</p>}
         </Card>
       </div>
-      <Card className="mt-5" title="外部分析平台">
-        <div className="grid gap-3 md:grid-cols-3">
-          {links.map(item=><a key={item.key} href={item.url} target="_blank" rel="noopener noreferrer" className="rounded-panel border border-line px-4 py-3 hover:border-accent">
-            <strong className="block text-[13px] text-ink">{item.title} ↗</strong>
-            <span className="mt-1 block text-[12px] text-ink-3">{item.description}</span>
-            <span className="mt-2 block text-[12px] font-medium text-ink-4">{a.providers[item.key] ? "站点接入令牌已配置（数据需在平台验证）" : "未配置令牌"}</span>
-          </a>)}
-        </div>
-      </Card>
       <p className="mt-5 text-[12px] text-ink-4">浏览器开启 DNT/GPC 或禁用存储时不计入。匿名事件最长保留 90 天；UV、SEO 曝光及核心 Web 指标以对应外部平台为准。</p>
     </AdminPage>
   );
