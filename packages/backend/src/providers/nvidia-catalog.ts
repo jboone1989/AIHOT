@@ -29,7 +29,7 @@ export function nvidiaCapability(entry: string | NvidiaCatalogEntry): NvidiaCapa
   return "unknown";
 }
 export function nvidiaInventory(items: NvidiaCatalogEntry[]): Record<NvidiaCapability, string[]> {
-  const pools = Object.fromEntries(NVIDIA_CAPABILITIES.map(k=>[k,[]])) as Record<NvidiaCapability,string[]>;
+  const pools = Object.fromEntries(NVIDIA_CAPABILITIES.map(k=>[k,[]])) as unknown as Record<NvidiaCapability,string[]>;
   for (const item of items) {
     const id=item.id ?? "";
     const kind=nvidiaCapability(item);
