@@ -41,7 +41,7 @@ test("missing reporting credentials do not make requests or display zero metrics
   for (const report of [await posthogReport(), await searchConsoleReport()]) {
     assert.equal(report.state, "unconfigured"); assert.equal(report.data, null);
   }
-  assert.equal((await cloudflareReport()).pageViews, null);
+  assert.equal((await cloudflareReport()).data, null);
 });
 test("PostHog reads scoped aggregates, preserves whole-window distinct counts and caches", async t => {
   environment(t, { POSTHOG_PROJECT_ID: "667893", POSTHOG_PERSONAL_API_KEY: "test-key",
@@ -124,6 +124,6 @@ test("Cloudflare variables are bounded identifiers and GraphQL errors never beco
     return Response.json({errors:[{message:"cf-private"}]});
   });
   const report = await cloudflareReport();
-  assert.equal(report.state, "error"); assert.equal(report.pageViews, null);
+  assert.equal(report.state, "error"); assert.equal(report.data, null);
   assert.equal(JSON.stringify(report).includes("cf-private"), false);
 });

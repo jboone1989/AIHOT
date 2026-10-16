@@ -1,6 +1,6 @@
 import { Card, Stat } from "./ui";
 
-type Report<T> = { state: "unconfigured" | "ready" | "empty" | "error"; data: T | null; refreshedAt: string | null; message?: string };
+export type Report<T> = { state: "unconfigured" | "ready" | "empty" | "error"; data: T | null; refreshedAt: string | null; message?: string };
 type SearchRow = { clicks: number; impressions: number; ctr: number; position: number };
 export type ExternalAnalyticsData = {
   posthog: Report<{

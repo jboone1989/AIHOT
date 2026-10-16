@@ -3,12 +3,12 @@ import { SITE } from "@aihot/site";
 import type { Route } from "./+types/analytics";
 import { adminGet } from "../../lib/admin.server";
 import { AdminPage, Card, Stat } from "../../features/admin/ui";
-import { ExternalAnalytics, type ExternalAnalyticsData } from "../../features/admin/ExternalAnalytics";
+import { ExternalAnalytics, type ExternalAnalyticsData, type Report } from "../../features/admin/ExternalAnalytics";
 
 type Metric = { name: string; count: number; sessions: number };
 type Day = { day: string; page_views: number; sessions: number; graph_sessions: number };
 type Overview = ExternalAnalyticsData & {
-  cloudflare: {state: "unconfigured" | "ready" | "empty" | "error"; pageViews: number | null; daily: Array<{day: string; pageViews: number}>; refreshedAt: string | null; message?: string};
+  cloudflare: Report<{pageViews: number; daily: Array<{day: string; pageViews: number}>}>;
   periodDays: number; asOf: string; weeklyEffectiveExplorers: number;
   ingestion: {total_events: number; last_event_at: string | null};
   totals: { page_views?: number; sessions?: number; story_sessions?: number; graph_sessions?: number; source_sessions?: number; search_sessions?: number };
@@ -38,11 +38,11 @@ export default function AnalyticsAdmin({ loaderData: a }: Route.ComponentProps) 
   return (
     <AdminPage title="流量与行为" subtitle={<>最近 {a.periodDays} 天 · 更新于 {a.asOf.slice(0,16).replace("T", " ") + " UTC"} · 匿名会话统计，不等于独立访客数（UV）</>}>
       <Card className="mb-5" title="Cloudflare Web Analytics · 最近 7 天">
-        {a.cloudflare.state === "ready" || a.cloudflare.state === "empty" ? <>
-          <p className="num text-[24px] font-semibold">{n(a.cloudflare.pageViews)} PV</p>
+        {a.cloudflare.data ? <>
+          <p className="num text-[24px] font-semibold">{n(a.cloudflare.data.pageViews)} PV</p>
           <p className="text-[12px] text-ink-3">数据源：Cloudflare RUM（独立统计口径，不与站内 PV 相加）· 更新 {a.cloudflare.refreshedAt?.slice(0,16).replace("T"," ")} UTC</p>
           {a.cloudflare.state === "empty" && <p className="text-[12px] text-ink-3">API 已连通，最近 7 天暂未返回页面浏览数据。</p>}
-          <div className="mt-3 space-y-1">{a.cloudflare.daily.map(d => <div key={d.day} className="flex justify-between text-[12px]"><span>{d.day}</span><span className="num">{n(d.pageViews)} PV</span></div>)}</div>
+          <div className="mt-3 space-y-1">{a.cloudflare.data.daily.map(d => <div key={d.day} className="flex justify-between text-[12px]"><span>{d.day}</span><span className="num">{n(d.pageViews)} PV</span></div>)}</div>
         </> : <p className="text-[13px] text-ink-3">{a.cloudflare.message ?? "尚未取得 Cloudflare 数据"}</p>}
       </Card>
       <ExternalAnalytics posthog={a.posthog} searchConsole={a.searchConsole}/>

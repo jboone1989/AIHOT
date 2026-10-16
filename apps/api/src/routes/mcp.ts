@@ -15,7 +15,7 @@ import { config } from "@aihot/backend/config";
 import { cachedByKey } from "@aihot/backend/lib/cache";
 import { logError } from "@aihot/backend/lib/log-error";
 import { dailyAnswer, entityAnswer, hotAnswer, latestAnswer, periodAnswer, searchAnswer, searchItems, storyAnswer, storyGraphAnswer } from "@aihot/backend/publication/agent";
-import { publicEntityProfile, publicStoryGraph } from "@aihot/backend/publication/knowledge";
+import { entityProfile, publicStoryGraph } from "@aihot/backend/publication/knowledge";
 import { v1Items } from "@aihot/backend/publication/v1";
 import { SearchBusyError } from "@aihot/backend/publication/pool";
 import { resolveStory, v1HotTopics, v1Story } from "@aihot/backend/publication/stories";
@@ -256,7 +256,7 @@ function registerTools(server: McpServer, say: typeof ok) {
       annotations: ANNOTATIONS,
     },
     safe(T.entity, async (args) => {
-      const profile = await recent(`entity:${args.key}`, () => publicEntityProfile(args.key));
+      const profile = await recent(`entity:${args.key}`, () => entityProfile(args.key));
       if (!profile.entity) {
         return profile.status === "unavailable"
           ? fail("unavailable", "知识图谱暂时无法访问，请稍后再试。")
