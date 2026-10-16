@@ -66,8 +66,7 @@ jobs:
       - name: Release shell and environment syntax
         run: |
           bash -n scripts/deploy-prod.sh
-          node --check scripts/check-environment.mjs
-          node --check scripts/split-environment.mjs
+          python3 -m py_compile scripts/check-environment.py scripts/split-environment.py
       - name: Typecheck
         run: npm run typecheck
       - name: Build web
