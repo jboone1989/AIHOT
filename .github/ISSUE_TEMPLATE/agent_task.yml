@@ -1,0 +1,15 @@
+name: 交给 Agent / Agent task
+description: 给 Claude 或 ChatGPT 的一件具体工作，见 docs/agent-collab.md。挂 agent:codex 或 agent:claude 标签后对方接手。
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: 请做什么
+      description: 一件具体的事，写清验收方式。
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 已知情况
+      description: 相关的文件、提交、PR，已经试过的办法和检查结果。
