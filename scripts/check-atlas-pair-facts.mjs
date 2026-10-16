@@ -36,7 +36,7 @@ try {
   assert.equal(visible.count,1,"one visual edge for the entire pair");
   assert.equal(visible.edgeCount,facts.length,"edge count preserves every fact");
   assert.equal(visible.label,String(facts.length));
-  await page.evaluate(id => document.querySelector(".lr-atlas-canvas")._cyreg.cy.getElementById(id).emit("tap"),pairId);
+  await page.evaluate(id => { document.querySelector(".lr-atlas-canvas")._cyreg.cy.getElementById(id).emit("tap"); return true; },pairId);
   await page.locator('[data-testid="atlas-pair-facts"] article').first().waitFor({timeout:15000});
   await page.waitForFunction(n=>document.querySelectorAll('[data-testid="atlas-pair-facts"] article').length===n,facts.length,{timeout:15000});
   const after = await page.evaluate(id => {
