@@ -4,7 +4,7 @@ import type { Route } from "./+types/topic";
 import type { TopicPage } from "@aihot/contracts/site";
 import { cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { breadcrumbLd, pageMeta, titled, topicLd } from "../lib/seo";
+import { breadcrumbLd, localized, pageMeta, titled, topicLd } from "../lib/seo";
 import { DayList, Pagination } from "../features/feed/DayList";
 import { BrandMark } from "../components/BrandMark";
 import { EmptyState } from "../components/ui/Page";
@@ -13,7 +13,7 @@ import { beijingDate } from "@aihot/contracts/time";
 import { monthDay, monthDayTime } from "../lib/format";
 import { PhoneBar } from "../components/shell/PhoneBar";
 import { useUiLanguage } from "../components/LanguageSwitch";
-import { EnglishTopic } from "../components/EnglishPages";
+import { EnglishTopic, enDescription, enTopic } from "../components/EnglishPages";
 import { FollowControls } from "../components/FollowButton";
 import { inNav } from "../components/shell/nav";
 import type { Screen } from "../components/shell/screens";
@@ -55,7 +55,7 @@ function description(data: TopicPage, parts: Part[]): string {
   return text.length > 150 ? `${text.slice(0, 149)}…` : text;
 }
 
-export function meta({ loaderData }: Route.MetaArgs) {
+export function meta({ loaderData, location }: Route.MetaArgs) {
   if (!loaderData) return [{ title: titled("主题不存在") }, { name: "robots", content: "noindex" }];
   const data = loaderData.data;
   const { topic, page } = data;
@@ -64,7 +64,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
   const text = page > 1 ? `${topic.name}的精选归档第 ${page} 页。${topic.definition}` : description(data, parts);
   // Under the topics page only while it is a way in, as the back link.
   const crumbs = breadcrumbLd([{ name: SITE.name, path: "/" }, ...(inNav("/topics") ? [{ name: "主题", path: "/topics" }] : []), { name: topic.name, path: `/topics/${topic.slug}` }]);
-  return pageMeta({
+  return localized(pageMeta({
     title: page > 1
       ? `${topic.name} 精选 · 第 ${page} 页`
       : `${topic.name} 最新动态${parts.length ? `与${parts.map((p) => p.name).join("、")}` : ""}`,
@@ -84,6 +84,10 @@ export function meta({ loaderData }: Route.MetaArgs) {
           }),
           crumbs,
         ],
+  }), location.pathname, {
+    title: `${enTopic(topic)} · Latest reports`,
+    description: `${enDescription(topic)}: the latest selected reports, with links to their original sources and an RSS feed.`,
+    noindex: !topic.indexable,
   });
 }
 

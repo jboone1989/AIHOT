@@ -41,6 +41,16 @@ export default [
   route("more", "routes/more.tsx"),
   route("starred", "routes/starred.tsx"),
   route("agent", "routes/agent.tsx"),
+  // The English edition (lib/edition.ts): the same pages at stable /en addresses.
+  route("en", "routes/home.tsx", { id: "en-home" }),
+  route("en/hot", "routes/hot.tsx", { id: "en-hot" }),
+  route("en/knowledge", "routes/knowledge.tsx", { id: "en-knowledge" }),
+  route("en/knowledge/entity/:key", "routes/knowledge-entity.tsx", { id: "en-knowledge-entity" }),
+  route("en/story/:publicId", "routes/story.tsx", { id: "en-story" }),
+  route("en/daily", "routes/report-latest.tsx", { id: "en-daily-latest" }),
+  route("en/daily/:key", "routes/report-detail.tsx", { id: "en-daily-detail" }),
+  route("en/topics", "routes/topics.tsx", { id: "en-topics" }),
+  route("en/topics/:slug", "routes/topic.tsx", { id: "en-topic" }),
   ...modulePages,
   route("admin/login", "routes/admin-login.tsx"),
   layout("routes/admin/layout.tsx", { id: "admin-layout" }, [

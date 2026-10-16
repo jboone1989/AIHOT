@@ -4,7 +4,8 @@ import type { ReportLatestPage } from "@aihot/contracts/site";
 import { REPORTS, subjectAfter, withSubject } from "@aihot/site";
 import { apiGet, cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { pageMeta, reportLd } from "../lib/seo";
+import { localized, pageMeta, reportLd } from "../lib/seo";
+import { chinesePath } from "../lib/edition";
 import { beijingDate } from "@aihot/contracts/time";
 import { EmptyState } from "../components/ui/Page";
 import { ReportLayout } from "../features/report/ReportLayout";
@@ -32,13 +33,17 @@ export function meta({ loaderData, location }: Route.MetaArgs) {
   const kind = loaderData?.kind ?? "daily";
   const description = `${REPORTS.descriptions[kind]}。`;
   const report = loaderData?.report;
-  return [...pageMeta({
+  const path = chinesePath(location.pathname);
+  return [...localized(pageMeta({
     title: withSubject(KIND_LABEL[kind]),
     description,
-    path: location.pathname,
+    path,
     image: `/og/pages/${kind}.png`,
     // The latest issue, described at this page's own address (its canonical).
-    jsonLd: report ? reportLd(report, location.pathname, report.lead?.leadParagraph ?? description) : undefined,
+    jsonLd: report ? reportLd(report, path, report.lead?.leadParagraph ?? description) : undefined,
+  }), location.pathname, {
+    title: "Daily brief",
+    description: "The latest daily brief: the day's most important reports with links to their original sources, and what changed in the knowledge graph.",
   }), feedLink(kind)];
 }
 

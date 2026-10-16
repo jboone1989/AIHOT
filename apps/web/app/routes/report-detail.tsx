@@ -4,7 +4,7 @@ import type { ReportDetail, ReportNavigationResponse, ReportKind } from "@aihot/
 import { SITE, subjectAfter } from "@aihot/site";
 import { apiGet, cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { pageMeta, reportLd, reportTitle, titled } from "../lib/seo";
+import { localized, pageMeta, reportLd, reportTitle, titled } from "../lib/seo";
 import { beijingDate } from "@aihot/contracts/time";
 import { ReportLayout } from "../features/report/ReportLayout";
 import { useUiLanguage } from "../components/LanguageSwitch";
@@ -36,18 +36,21 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return cachedPage(3600, { report, index, graph, today: beijingDate(Date.now()) });
 }
 
-export function meta({ loaderData }: Route.MetaArgs) {
+export function meta({ loaderData, location }: Route.MetaArgs) {
   if (!loaderData) return [{ title: titled("报告不存在") }, { name: "robots", content: "noindex" }];
   const r = loaderData.report;
   const description = r.lead?.leadParagraph ?? r.overview?.slice(0, 150) ?? `${SITE.name} ${r.key} ${subjectAfter("的", KIND_LABEL[r.kind])}。`;
   const path = `/${r.kind}/${r.key}`;
-  return [...pageMeta({
+  return [...localized(pageMeta({
     title: reportTitle(r),
     description,
     path,
     image: `/og/reports/${r.kind}/${r.key}.png`,
     type: "article",
     jsonLd: reportLd(r, path, description),
+  }), location.pathname, {
+    title: `Daily brief · ${r.key}`,
+    description: `The ${r.key} daily brief: the day's most important reports with links to their original sources, and what changed in the knowledge graph.`,
   }), feedLink(r.kind)];
 }
 

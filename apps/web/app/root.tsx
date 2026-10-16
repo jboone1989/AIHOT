@@ -10,8 +10,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { Route } from "./+types/root";
 import "./app.css";
 import { Sidebar } from "./components/shell/Sidebar";
-import { LanguageSwitch, useText } from "./components/LanguageSwitch";
+import { LanguageSwitch, setUiLanguage, useText } from "./components/LanguageSwitch";
 import { ClientLanguageMeta } from "./components/ClientLanguageMeta";
+import { isEnglishPath } from "./lib/edition";
 import { AnalyticsTracker } from "./components/AnalyticsTracker";
 import { TabBar } from "./components/shell/TabBar";
 import { PullToRefresh } from "./components/shell/PullToRefresh";
@@ -63,8 +64,9 @@ export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 export function Layout({ children }: { children: React.ReactNode }) {
   const site = useRouteLoaderData<typeof loader>("root");
   const [documentRelease] = useState(site?.release ?? null);
+  const english = isEnglishPath(useLocation().pathname);
   return (
-    <html lang={SITE.locale} suppressHydrationWarning>
+    <html lang={english ? "en" : SITE.locale} data-language={english ? "en" : undefined} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         {site?.adsenseAccount && <meta name="google-adsense-account" content={site.adsenseAccount} />}
@@ -103,6 +105,9 @@ function SiteShell({ changelogVersion, children }: { changelogVersion: string | 
   const t=useText();
   const [interactive, setInteractive] = useState(false);
   useEffect(() => setInteractive(true), []);
+  // A reader who arrives on the English edition keeps reading in English on pages without one.
+  const english = isEnglishPath(useLocation().pathname);
+  useEffect(() => { if (english) setUiLanguage("en"); }, [english]);
   return (
     <div className="flex min-h-dvh">
       <ClientLanguageMeta />

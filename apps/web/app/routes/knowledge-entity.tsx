@@ -3,7 +3,7 @@ import type { Route } from "./+types/knowledge-entity";
 import { beijingDate } from "@aihot/contracts/time";
 import { cachedPage, apiGet } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { pageMeta, siteUrl } from "../lib/seo";
+import { localized, pageMeta, siteUrl } from "../lib/seo";
 import { PhoneBar } from "../components/shell/PhoneBar";
 import type { Screen } from "../components/shell/screens";
 import { KnowledgeExplorer, type KnowledgeEdge, type KnowledgeGraph } from "../components/KnowledgeNetwork";
@@ -31,18 +31,24 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   return cachedPage(120, { profile });
 }
 
-export function meta({ loaderData, params }: Route.MetaArgs) {
+export function meta({ loaderData, params, location }: Route.MetaArgs) {
   const p = loaderData?.profile;
   const name = p?.entity?.name;
   const path = `/knowledge/entity/${encodeURIComponent(params.key)}`;
   // An entity with sourced relations is a page worth finding; an empty or unknown one is not.
   if (!name || !p.edges.length) return pageMeta({ title: `${name ?? "实体档案"} · 知识网络`, path, noindex: true });
   const current = p.edges.filter((e) => !e.invalidAt).length;
-  return pageMeta({
+  const summary = p.entity?.summary ?? null;
+  return localized(pageMeta({
     title: `${name} · 实体档案`,
-    description: p.entity?.summary?.slice(0, 150) ?? `${name} 在知识图谱中的 ${p.edges.length} 条关系（当前有效 ${current} 条），以及相关事件和来源报道。`,
+    description: summary?.slice(0, 150) ?? `${name} 在知识图谱中的 ${p.edges.length} 条关系（当前有效 ${current} 条），以及相关事件和来源报道。`,
     path,
     jsonLd: [{ "@context": "https://schema.org", "@type": "Thing", name, url: `${siteUrl()}${path}` }],
+  }), location.pathname, {
+    title: `${name} · Entity profile`,
+    description: summary && !hasHan(summary) ? summary.slice(0, 150) : `${name}: ${p.edges.length} relations in the knowledge graph (${current} current), with the related events and source reports.`,
+    // An entity known only by a Chinese name has no English page worth indexing.
+    noindex: hasHan(name),
   });
 }
 

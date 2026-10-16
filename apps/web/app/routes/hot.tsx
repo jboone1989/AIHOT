@@ -1,10 +1,11 @@
 import { Link, useLoaderData } from "react-router";
+import type { Route } from "./+types/hot";
 import { IntentLink } from "../components/ui/IntentLink";
 import type { HotEntryView, HotResponse } from "@aihot/contracts/site";
 import { subjectAfter, withSubject } from "@aihot/site";
 import { cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { pageMeta } from "../lib/seo";
+import { localized, pageMeta } from "../lib/seo";
 import { monthDayTime, localizedMonthDayTime } from "../lib/format";
 import { Badge } from "../components/ui/Badge";
 import { EmptyState } from "../components/ui/Page";
@@ -25,12 +26,15 @@ export async function loader({ request }: { request: Request }) {
   return cachedPage(120, { hot: await loadOr404<HotResponse>("/api/site/hot", { signal: request.signal }) });
 }
 
-export function meta() {
-  return pageMeta({
+export function meta({ location }: Route.MetaArgs) {
+  return localized(pageMeta({
     title: withSubject("热点榜"),
     description: `${subjectAfter("过去 48 小时", "圈")}讨论最多的 10 个事件：热度指数、趋势与组成热度的公开来源。`,
     path: "/hot",
     image: "/og/pages/hot.png",
+  }), location.pathname, {
+    title: "Trending events",
+    description: "The 10 most-discussed events of the past 48 hours, with their trend and the public sources behind each one.",
   });
 }
 

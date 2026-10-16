@@ -4,7 +4,7 @@ import type { Route } from "./+types/home";
 import type { HotResponse, ReportIndexResponse, SiteStats, TimelineResponse } from "@aihot/contracts/site";
 import { cachedPage, loadOr404, apiGet } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { filterParams, hasFeedFilters, itemListLd, listPath, pageMeta, readFilters, siteLd } from "../lib/seo";
+import { filterParams, hasFeedFilters, itemListLd, listPath, localized, pageMeta, readFilters, siteLd } from "../lib/seo";
 import { inNav } from "../components/shell/nav";
 import type { Screen } from "../components/shell/screens";
 import { Timeline } from "../features/feed/Timeline";
@@ -44,14 +44,17 @@ export async function loader({ request }: Route.LoaderArgs) {
   return cachedPage(60, { data, filters, graph, stats, hot: hot?.entries ?? [], site, storyGraph, daily: dailies?.items[0] ?? null }, upstream);
 }
 
-export function meta({ loaderData }: Route.MetaArgs) {
+export function meta({ loaderData, location }: Route.MetaArgs) {
   const path = listPath("/", loaderData ? filterParams(loaderData.filters) : {});
   const titles = loaderData?.data.cards.map(c => c.item.title) ?? [];
-  return pageMeta({
+  return localized(pageMeta({
     title: "事件观察",
     description: "实时追踪 AI、加密与金融事件，沿报道时间线深入长期知识关系与原始证据。",
     path, noindex: hasFeedFilters(loaderData?.filters),
     jsonLd: path === "/" ? [...siteLd(), itemListLd("/", "事件观察", titles)] : undefined,
+  }), location.pathname, {
+    title: "Event intelligence for AI, crypto and finance",
+    description: "Follow AI, crypto and finance events as they develop, with the knowledge-graph relations behind them and links to every original source.",
   });
 }
 
