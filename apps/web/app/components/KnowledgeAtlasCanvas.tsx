@@ -11,6 +11,7 @@ function createStyles(): StylesheetJson {
     { selector: "node[?hub]", style: { "font-size": 22, "min-zoomed-font-size": 0, "font-weight": "bold", color: "#f3f6ff" } },
     { selector: ".chosen", style: { "background-color": "#fff1af", "border-width": 3, "border-color": "#ffffff", "font-size": 16, "font-weight": "bold", "z-index": 10 } },
     { selector: "edge:selected", style: { width: 3, "line-color": "#fff1af", opacity: 1 } },
+    { selector: "edge.traversed-edge", style: { width: 4, "line-color": "#ffe28c", opacity: 1, "z-index": 100, "line-cap": "round" } },
   ];
 }
 
@@ -18,11 +19,12 @@ function readableLabels(instance: Core, dense: boolean) {
   const zoom = instance.zoom();
   instance.nodes().style({ "font-size": 11 / zoom, "text-margin-y": 4 / zoom, "text-outline-width": 1.6 / zoom, "text-max-width": `${120 / zoom}px`, "min-zoomed-font-size": dense && zoom < 1.1 ? 1000 : 0 });
   instance.nodes("[?hub], .chosen, .hovered").style({ "font-size": 13 / zoom, "min-zoomed-font-size": 0 });
-  instance.edges().style("width", Math.min(16, 0.55 / zoom));
+  instance.edges().not(".traversed-edge").style("width", Math.min(16, 0.55 / zoom));
+  instance.edges(".traversed-edge").style("width", Math.min(20, 4 / zoom));
 }
 
-export function KnowledgeAtlasCanvas({ network, selectedKey, homeKey, onNode, onRelation }: {
-  network: AtlasNetwork; selectedKey: string | null; homeKey?: string | null;
+export function KnowledgeAtlasCanvas({ network, selectedKey, activeLinkId, homeKey, onNode, onRelation }: {
+  network: AtlasNetwork; selectedKey: string | null; activeLinkId?: string | null; homeKey?: string | null;
   onNode: (key: string) => void; onRelation: (key: string) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
@@ -131,6 +133,19 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, homeKey, onNode, on
     if (!ready || !instance || !selectedKey) return;
     centerOnce(instance, selectedKey, focused.current !== null);
   }, [selectedKey, ready]);
+  // The clicked row identifies one specific factual relation (not all edges
+  // between the same pair). Apply a class without changing coordinates or pan.
+  useEffect(() => {
+    const instance = cy.current;
+    if (!ready || !instance) return;
+    instance.edges(".traversed-edge").removeClass("traversed-edge");
+    if (activeLinkId) {
+      const edge = instance.getElementById("r:" + activeLinkId);
+      if (edge.length) edge.addClass("traversed-edge");
+    }
+    readableLabels(instance, false);
+  }, [activeLinkId, network, ready]);
+
   const returnHome = () => {
     if (!homeKey) return;
     if (selectedKey !== homeKey) {
