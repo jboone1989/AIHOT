@@ -24,6 +24,8 @@ export function KnowledgeAtlas({ initialKey = null }: { initialKey?: string | nu
   const [factsLoading, setFactsLoading] = useState(false);
   const [factsError, setFactsError] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+  const detailPanel = useRef<HTMLElement>(null);
+  const revealDetails = useRef(false);
   const current = useRef<string | null>(selected);
   current.current = selected;
   useEffect(() => {
@@ -103,6 +105,21 @@ export function KnowledgeAtlas({ initialKey = null }: { initialKey?: string | nu
     setQuery("");
     trackAnalytics("graph_node_select");
   };
+  useEffect(() => {
+    if (activePairKey && revealDetails.current) {
+      revealDetails.current = false;
+      detailPanel.current?.scrollIntoView({behavior:"smooth",block:"nearest"});
+    }
+  }, [activePairKey]);
+  const openPair = (key:string) => {
+    if (activePairKey === key) {
+      detailPanel.current?.scrollIntoView({behavior:"smooth",block:"nearest"});
+      return;
+    }
+    revealDetails.current = true;
+    setActivePairKey(key);
+    trackAnalytics("graph_relation_select");
+  };
   const back=()=>setHistory(v=>{
     setActivePairKey(null);
     const next=[...v], key=next.pop();
@@ -124,7 +141,7 @@ export function KnowledgeAtlas({ initialKey = null }: { initialKey?: string | nu
     </div>
     <div className="lr-atlas-body">
       <div className="lr-atlas-main">
-        {selected&&hasNetwork&&network.nodes.length?<><KnowledgeAtlasCanvas network={network} selectedKey={selected} activePairKey={activePairKey} homeKey={initialKey} onNode={focus} onPair={key=>{setActivePairKey(key);trackAnalytics("graph_relation_select");}}/>
+        {selected&&hasNetwork&&network.nodes.length?<><KnowledgeAtlasCanvas network={network} selectedKey={selected} activePairKey={activePairKey} homeKey={initialKey} onNode={focus} onPair={openPair}/>
             <div className="lr-atlas-caption" role="status" aria-live="polite" style={{minHeight:"1.5em"}}>
               {error?<>{t("邻近关系读取失败","Unable to update neighbors")} <button type="button" onClick={()=>setAttempt(v=>v+1)}>{t("重试","Retry")}</button></>:loading?t("正在补充邻近关系…","Updating nearby relations…"):"\u00a0"}
             </div></>
@@ -145,12 +162,12 @@ export function KnowledgeAtlas({ initialKey = null }: { initialKey?: string | nu
           {query||!selected?centers.map(n=><button className="lr-atlas-node-row" type="button" key={n.key} onClick={()=>focus(n.key)}><strong>{n.name}</strong><span>↗</span></button>)
           :adjacentPairs.map(pair=>{const other=pair.a===selected?pair.b:pair.a;return <div className={`lr-atlas-connection ${pair.key===activePairKey?"is-active":""}`} key={pair.key}>
             <button type="button" aria-pressed={pair.key===activePairKey} onClick={()=>focus(other,pair.key)}><strong>{names.get(other)??other}</strong><span>{pair.links.length} {t("条事实","facts")}</span></button>
-            <button type="button" onClick={()=>{setActivePairKey(pair.key);trackAnalytics("graph_relation_select");}}>{t("查看事实","Facts")} ↗</button>
+            <button type="button" onClick={()=>openPair(pair.key)}>{t("查看事实","Facts")} ↗</button>
           </div>;})}
         </div>
       </aside>
     </div>
-    {activePair&&<section className="lr-atlas-evidence" aria-label={t("实体之间的全部事实和来源","All facts and sources for this connection")}>
+    {activePair&&<section ref={detailPanel} className="lr-atlas-evidence" aria-label={t("实体之间的全部事实和来源","All facts and sources for this connection")}>
       <div className="lr-atlas-list-heading">
         {names.get(activePair.a)??activePair.a} ↔ {names.get(activePair.b)??activePair.b} · {activePair.links.length} {t("条关系记录","relation records")}
         <button type="button" onClick={()=>setActivePairKey(null)}>{t("关闭","Close")} ×</button>
