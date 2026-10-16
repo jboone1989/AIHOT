@@ -12,7 +12,7 @@ async function main() {
       SELECT g.article_id,g.revision,g.episode_id,s.name AS source
       FROM graphiti_ingestions g JOIN articles a ON a.id=g.article_id
       JOIN sources s ON s.id=a.source_id
-      ORDER BY g.ingested_at DESC LIMIT 15`,
+      ORDER BY a.discovered_at DESC LIMIT 15`,
     sql<{id:string;revision:number;source:string}[]>`
       SELECT a.id,a.revision,s.name AS source FROM articles a
       JOIN sources s ON s.id=a.source_id

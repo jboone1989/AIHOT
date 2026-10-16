@@ -226,6 +226,7 @@ test('Agent tabs finish offline with matching canonical; invalid direct tabs and
   }finally{await context.close();}
 });
 
+// Opening search also records an analytics event and may refresh the market strip; everything else must be the suggestions read.
 test('phone suggestions load only on opening, use one small read, retry failures and update on reopening',async()=>{
   const context=await safari.newContext({viewport:{width:390,height:844}});const page=await context.newPage();
   try{
@@ -234,12 +235,12 @@ test('phone suggestions load only on opening, use one small read, retry failures
     let start=hits.length;
     await page.getByRole('button',{name:'搜索',exact:true}).click();
     await expect(page.getByRole('link',{name:'1 建议版本 1',exact:true})).toBeVisible();
-    assert.deepEqual(hits.slice(start).filter(x=>x.startsWith('/api/site/')),['/api/site/search/suggestions']);
+    assert.deepEqual(hits.slice(start).filter(x=>!/^\/api\/(analytics\/events|market\/spot)/.test(x)),['/api/site/search/suggestions']);
     await page.getByRole('button',{name:'取消',exact:true}).click();
     suggestionsVersion=2;start=hits.length;
     await page.getByRole('button',{name:'搜索',exact:true}).click();
     await expect(page.getByRole('link',{name:'1 建议版本 2',exact:true})).toBeVisible();
-    assert.deepEqual(hits.slice(start).filter(x=>x.startsWith('/api/site/')),['/api/site/search/suggestions']);
+    assert.deepEqual(hits.slice(start).filter(x=>!/^\/api\/(analytics\/events|market\/spot)/.test(x)),['/api/site/search/suggestions']);
     await page.getByRole('button',{name:'取消',exact:true}).click();
     failing='/api/site/search/suggestions';await page.getByRole('button',{name:'搜索',exact:true}).click();
     await expect(page.getByRole('link',{name:'1 建议版本 2',exact:true})).not.toBeVisible();
