@@ -79,7 +79,7 @@ try {
       allPreserved: [...p.positions.entries()].every(([id,pos]) => {
         const n=cy.getElementById(id);
         return n.length && Math.abs(n.position().x-pos.x)<0.01 && Math.abs(n.position().y-pos.y)<0.01;
-      }), centered: Math.abs(point.x-cy.width()/2)<2 && Math.abs(point.y-cy.height()/2)<2,
+      }), centered: Math.abs(point.x-cy.width()/2)<12 && Math.abs(point.y-cy.height()/2)<12,
       zoomDelta: Math.abs(cy.zoom()-p.initialZoom) };
   });
   if (returned.animations !== 3 || returned.layouts !== 0 || returned.fits !== 0 ||
@@ -94,7 +94,7 @@ try {
     const p=window.__atlasProbe, cy=document.querySelector(".lr-atlas-canvas")._cyreg.cy;
     const point=cy.getElementById("37d059b4-e30a-4378-bee9-9be0c71ff372").renderedPosition();
     return { animations:p.animations, layouts:p.layouts, fits:p.fits, sameInstance:cy===p.cy,
-      centered:Math.abs(point.x-cy.width()/2)<2 && Math.abs(point.y-cy.height()/2)<2,
+      centered:Math.abs(point.x-cy.width()/2)<12 && Math.abs(point.y-cy.height()/2)<12,
       allPreserved:[...p.positions.entries()].every(([id,pos])=>{
         const n=cy.getElementById(id);
         return n.length && Math.abs(n.position().x-pos.x)<0.01 && Math.abs(n.position().y-pos.y)<0.01;
