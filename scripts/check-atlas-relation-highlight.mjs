@@ -13,6 +13,7 @@ try {
   assert.ok(graph.links.length, "Omi must have a sourced relation");
   const link = graph.links[0];
   const target = link.source === omi ? link.target : link.source;
+  const pairId = "pair:" + [link.source,link.target].sort().join(":");
 
   await page.goto(origin + "/knowledge/entity/" + omi, { waitUntil: "domcontentloaded" });
   await page.locator(".lr-atlas-connection button").first().waitFor({ timeout: 12000 });
@@ -59,7 +60,7 @@ try {
   }, link.id);
   assert.equal(state.sameInstance, true);
   assert.equal(state.highlightedCount, 1, "only the traversed factual edge should glow");
-  assert.equal(state.highlightedId, "r:" + link.id);
+  assert.equal(state.highlightedId, pairId);
   assert.equal(state.styleColor.replaceAll(" ", ""), "rgb(255,226,140)");
   assert.equal(state.selectedRows, 1);
   assert.equal(state.initialPositionsUnchanged, true);
