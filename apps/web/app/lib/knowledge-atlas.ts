@@ -1,0 +1,24 @@
+export interface AtlasNode { key: string; name: string; degree: number }
+export interface AtlasLink { id: string; source: string; target: string; predicate: string; invalidAt: string | null }
+export interface AtlasNetwork { nodes: AtlasNode[]; links: AtlasLink[]; truncated: boolean; status?: string }
+
+/** Undirected exploration keeps the original directed facts; no inferred edges are added. */
+export function neighborhood(network: AtlasNetwork, key: string | null, hops: number): AtlasNetwork {
+  if (!key || hops === 0) return network;
+  const keys = new Set([key]);
+  for (let i = 0; i < hops; i++) {
+    const next = new Set(keys);
+    for (const link of network.links) {
+      if (keys.has(link.source)) next.add(link.target);
+      if (keys.has(link.target)) next.add(link.source);
+    }
+    for (const k of next) keys.add(k);
+  }
+  return { ...network, nodes: network.nodes.filter(n => keys.has(n.key)), links: network.links.filter(l => keys.has(l.source) && keys.has(l.target)) };
+}
+
+export function findEntities(nodes: AtlasNode[], query: string) {
+  const q = query.trim().toLocaleLowerCase();
+  return nodes.filter(n => !q || n.name.toLocaleLowerCase().includes(q))
+    .sort((a, b) => b.degree - a.degree || a.name.localeCompare(b.name) || a.key.localeCompare(b.key));
+}
