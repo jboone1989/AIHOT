@@ -2,8 +2,8 @@
 
 - **Production credentials** live only in the production host's `.env.production` (0600).
 - **Development credentials** live only in the development host's `.env.development` (0600).
-- For one-time migration, run `node scripts/split-environment.mjs production` on the production host and `node scripts/split-environment.mjs development` on the development host. This renames the existing private `.env` and leaves a compatibility symlink. Never commit environment files.
-- Both environments share versioned non-secret feature contracts in `config/environments/*.json`. Run `node scripts/check-environment.mjs --target=production --file=.env.production` before deploying. A missing credential fails closed and is reported by variable *name only*.
+- For one-time migration, run `python3 scripts/split-environment.py production` on the production host and `python3 scripts/split-environment.py development` on the development host. This renames the existing private `.env` and leaves a compatibility symlink. Never commit environment files.
+- Both environments share versioned non-secret feature contracts in `config/environments/*.json`. Run `python3 scripts/check-environment.py --target=production --file=.env.production` before deploying. A missing credential fails closed and is reported by variable *name only*.
 - Dev commands must pass `--env-file .env.development`; production deployment always uses `--env-file .env.production`.
 - `bash scripts/deploy-prod.sh --plan` identifies changed services; `--check` checks current production health and configuration; no argument deploys the fast-forward commit to only affected services.
 - **Runtime backend TypeScript changes** use an offline overlay on the previous immutable application image. No package install or OS update is required. **Frontend changes** must rebuild compiled assets; **dependency changes** build the affected full image on cn-dev and transfer only that image. Neo4j and PostgreSQL containers/volumes are never in ordinary release targets. A worker needs up to 210 seconds to finish an in-flight paid call gracefully.
