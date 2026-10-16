@@ -15,7 +15,7 @@ export const CATEGORIES = [
   { key: "crypto", label: "加密货币", feedLabel: "加密市场", section: "加密货币", guide: "比特币、区块链、稳定币、交易所、链上金融、数字资产监管与市场结构。" },
   { key: "finance", label: "金融", feedLabel: "金融市场", section: "金融与宏观", guide: "货币政策、利率、流动性、资本市场、金融机构、ETF 与金融科技。" },
   { key: "world", label: "全球事件", feedLabel: "国际与地缘", section: "全球政治与产业", guide: "影响金融市场、供应链、能源、贸易或技术产业的重大国际政治、军事和产业事件。排除与市场及技术关系不明的泛社会热点。" },
-  { key: "research", label: "深度研究", feedLabel: "原创研究与解释", section: "独立研究", guide: "有独立分析、可核验的方法、数据比较、实测或可迁移的系统解释；Ferro 和其他作者均可归此类。单纯转述新闻不应归此类。" },
+  { key: "research", label: "深度研究", feedLabel: "原创研究与解释", section: "独立研究", guide: "有独立分析、可核验的方法、数据比较、实测或可迁移的系统解释；任何作者均可归此类。单纯转述新闻不应归此类。" },
 ] as const satisfies ReadonlyArray<{ key: string; label: string; feedLabel?: string; section: string; guide: string; commentary?: true }>;
 
 /**

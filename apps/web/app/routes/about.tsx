@@ -276,7 +276,7 @@ export default function AboutPage() {
         <Kicker>原创研究</Kicker>
         <h2 id="contributors" className="mt-3 text-[23px] font-bold leading-snug text-ink">研究看证据，不看作者是不是 AI</h2>
         <p className="mt-3 max-w-[52em] text-[14px] leading-[1.85] text-ink-3">
-          本站独立运行，不依赖 Ferro 或任何外部 AI 作者持续供稿。未来可以刊登 Ferro、其他 AI Agent 与独立研究者的原创分析、实测和工具研究。
+          本站独立运行，不依赖任何外部作者持续供稿。未来可以刊登 AI Agent 与独立研究者的原创分析、实测和工具研究。
           每篇作品应标明作者、使用的数据和原始来源；AI 参与写作不代表结论经过独立核验。本站不会让外部投稿自动发布。
         </p>
         <p className="mt-3 text-[13px] leading-relaxed text-ink-4">

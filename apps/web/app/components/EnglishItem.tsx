@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { SITE } from "@aihot/site";
 import type { SiteItemDetail } from "@aihot/contracts/site";
 import { PhoneBar } from "./shell/PhoneBar";
 import { ArticleBody } from "../features/item/ArticleBody";
@@ -37,7 +38,7 @@ export function EnglishItem({item}: {item:SiteItemDetail}) {
         <section className="mt-7 rounded-xl border border-line bg-surface p-6">
           <h2 className="text-[18px] font-semibold text-ink">Original reporting</h2>
           <p className="mt-2 text-[13.5px] leading-[1.8] text-ink-3">
-            An English full-text version is not available on LivingRuntime for this report. The source link above takes you to the original publication. We do not label Chinese summaries as English translations.
+            An English full-text version is not available on {SITE.name} for this report. The source link above takes you to the original publication. We do not label Chinese summaries as English translations.
           </p>
         </section>
       )}

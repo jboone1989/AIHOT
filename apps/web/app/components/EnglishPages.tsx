@@ -1,5 +1,6 @@
 import { FollowControls } from "./FollowButton";
 import {Link} from "react-router";
+import {SITE} from "@aihot/site";
 import type {ReportDetail,ReportCitation,ReportIndexEntry,TopicSummary,TopicPage,TopicsResponse,SiteStats,ChangelogRelease} from "@aihot/contracts/site";
 import {DayList,Pagination} from "../features/feed/DayList";
 import {PhoneBar} from "./shell/PhoneBar";
@@ -23,7 +24,7 @@ function Header({eyebrow,title,description}:{eyebrow:string;title:string;descrip
 export function EnglishAbout({stats}:{stats:SiteStats|null}){
  const fields:[string,number][] = stats?[["Tracked sources",stats.sources],["Collected reports",stats.items],["Selected reports",stats.selected],["Published daily issues",stats.dailies]]:[];
  return <main className="pb-12"><PhoneBar back={{to:"/more",label:"More"}} title="About"/>
- <Header eyebrow="ABOUT LIVINGRUNTIME" title="Follow events. Connect the facts." description="LivingRuntime is an AI, crypto and financial intelligence network. It organizes original-source reporting into evolving events and connects documented facts in a persistent knowledge graph."/>
+ <Header eyebrow={`ABOUT ${SITE.name.toUpperCase()}`} title="Follow events. Connect the facts." description={`${SITE.name} is an AI, crypto and financial intelligence network. It organizes original-source reporting into evolving events and connects documented facts in a persistent knowledge graph.`}/>
  <div className="grid gap-3 sm:grid-cols-4">{fields.map(([k,v])=><div key={k} className="rounded-xl border border-line bg-surface p-4"><strong className="text-[25px] font-semibold">{v.toLocaleString("en-US")}</strong><p className="text-[12px] text-ink-4">{k}</p></div>)}</div>
  <div className="mt-7 grid gap-4 md:grid-cols-3">{[["Observe","News gathered from public sources, cross-checked and organized around events."],["Connect","Graphiti and Neo4j store evolving relationships extracted from evidence."],["Verify","Trace connections back to the reporting. AI-extracted facts may require verification."]].map(([h,d])=><section key={h} className="rounded-xl border border-line bg-surface p-5"><h2 className="font-bold">{h}</h2><p className="mt-2 text-[13px] leading-[1.8] text-ink-3">{d}</p></section>)}</div>
  <div className="mt-6 flex gap-5"><Link to="/knowledge" className="lr-inline-link">Knowledge Graph <IconArrowRight size={16}/></Link><Link to="/feedback" className="lr-inline-link">Feedback <IconArrowRight size={16}/></Link></div></main>;
