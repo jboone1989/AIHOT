@@ -14,6 +14,13 @@ function createStyles(): StylesheetJson {
   ];
 }
 
+function readableLabels(instance: Core, dense: boolean) {
+  const zoom = instance.zoom();
+  instance.nodes().style({ "font-size": 11 / zoom, "text-margin-y": 4 / zoom, "text-outline-width": 1.6 / zoom, "text-max-width": `${120 / zoom}px`, "min-zoomed-font-size": dense && zoom < 1.1 ? 1000 : 0 });
+  instance.nodes("[?hub], .chosen, .hovered").style({ "font-size": 13 / zoom, "min-zoomed-font-size": 0 });
+  instance.edges().style("width", Math.min(16, 0.55 / zoom));
+}
+
 export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation }: {
   network: AtlasNetwork; selectedKey: string | null; onNode: (key: string) => void; onRelation: (key: string) => void;
 }) {
@@ -30,18 +37,22 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
     setReady(false); setFailed(false);
     import("cytoscape").then(({ default: cytoscape }) => {
       if (disposed || !container.current) return;
+      const hubs = new Set([...network.nodes].sort((a, b) => b.degree - a.degree).slice(0, 8).filter(n => n.degree >= 8).map(n => n.key));
       const instance = cytoscape({
         container: container.current, style: createStyles(), pixelRatio: 1,
         minZoom: 0.03, maxZoom: 5, wheelSensitivity: 0.2,
         elements: [
-          ...network.nodes.map(n => ({ data: { id: n.key, name: n.name, hub: n.degree >= 25, size: Math.min(48, 8 + Math.sqrt(n.degree) * 3), color: n.degree >= 25 ? "#d5a4f0" : n.degree >= 8 ? "#8baff8" : "#69d8c2" } })),
+          ...network.nodes.map(n => ({ data: { id: n.key, name: n.name, hub: hubs.has(n.key), size: Math.min(48, 8 + Math.sqrt(n.degree) * 3), color: n.degree >= 25 ? "#d5a4f0" : n.degree >= 8 ? "#8baff8" : "#69d8c2" } })),
           ...network.links.map(l => ({ data: { id: "r:" + l.id, key: l.id, source: l.source, target: l.target, expired: !!l.invalidAt } })),
         ],
         layout: { name: "preset" },
       });
       cy.current = instance;
+      instance.on("zoom", () => readableLabels(instance, network.nodes.length > 120));
+      instance.on("mouseover", "node", e => { e.target.addClass("hovered"); readableLabels(instance, network.nodes.length > 120); });
+      instance.on("mouseout", "node", e => { e.target.removeClass("hovered"); readableLabels(instance, network.nodes.length > 120); });
       instance.one("layoutstop", () => { if (!disposed) { instance.fit(undefined, 35); setReady(true); } });
-      instance.layout({ name: "cose", animate: true, randomize: true, refresh: 15, numIter: 160, initialTemp: 120, coolingFactor: 0.97, componentSpacing: 70, nodeRepulsion: 6000, idealEdgeLength: 65, padding: 35 }).run();
+      instance.layout({ name: "cose", animate: true, randomize: true, refresh: 15, numIter: 160, initialTemp: 120, coolingFactor: 0.97, componentSpacing: 15, nodeRepulsion: 6000, idealEdgeLength: 65, padding: 35 }).run();
       instance.on("tap", "node", e => callbacks.current.onNode(e.target.id()));
       instance.on("tap", "edge", e => callbacks.current.onRelation(e.target.data("key")));
       resize = new ResizeObserver(() => { instance.resize(); instance.fit(undefined, 35); });
@@ -54,7 +65,8 @@ export function KnowledgeAtlasCanvas({ network, selectedKey, onNode, onRelation 
     if (!instance) return;
     instance.nodes().removeClass("chosen");
     if (selectedKey) instance.getElementById(selectedKey).addClass("chosen");
-  }, [selectedKey, ready]);
+    readableLabels(instance, network.nodes.length > 120);
+  }, [selectedKey, ready, network]);
   const zoom = (factor: number) => { const instance = cy.current; if (instance) instance.zoom({ level: instance.zoom() * factor, renderedPosition: { x: instance.width() / 2, y: instance.height() / 2 } }); };
   return <div className="lr-atlas-map">
     <div ref={container} className="lr-atlas-canvas" role="img" aria-label={t(`知识网络：${network.nodes.length} 个实体，${network.links.length} 条关系；可通过实体目录进行键盘探索`, `Knowledge network: ${network.nodes.length} entities, ${network.links.length} relations; use the entity directory for keyboard exploration`)} />
