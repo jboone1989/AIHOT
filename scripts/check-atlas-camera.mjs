@@ -48,7 +48,25 @@ try {
       result.layouts !== 0 || result.zoomDelta > 0.0001 ||
       result.totalEdges < 19 || result.pathname !== url.pathname)
     throw Error("Atlas camera/coordinate continuity regression: " + JSON.stringify(result));
-  console.log("PASS: one pan, zero relayouts, coordinates stable, neighbors retained");
+  const second = await page.locator(".lr-atlas-connection button").filter({ hasText: "Strategy" }).first();
+  await second.click();
+  await page.waitForFunction(() => document.querySelector(".lr-atlas-entity h3")?.textContent === "Strategy");
+  await page.waitForTimeout(850);
+  const afterSecond = await page.evaluate(() => {
+    const p = window.__atlasProbe;
+    const cy = document.querySelector(".lr-atlas-canvas")?._cyreg?.cy;
+    return { animations: p.animations, fits: p.fits, centers: p.centers, layouts: p.layouts,
+      allPreserved: [...p.positions.entries()].every(([id, pos]) => {
+        const node = cy.getElementById(id);
+        return node.length && Math.abs(node.position().x - pos.x) < 0.01 && Math.abs(node.position().y - pos.y) < 0.01;
+      }), sameInstance: cy === p.cy, edges: cy.edges().length, zoomDelta: Math.abs(p.initialZoom - cy.zoom()) };
+  });
+  console.log("SECOND_CLICK", JSON.stringify(afterSecond));
+  if (afterSecond.animations !== 2 || afterSecond.fits !== 0 || afterSecond.centers !== 0 ||
+      afterSecond.layouts !== 0 || !afterSecond.allPreserved || !afterSecond.sameInstance ||
+      afterSecond.edges < 19 || afterSecond.zoomDelta > 0.0001)
+    throw Error("Repeated selection continuity regression: " + JSON.stringify(afterSecond));
+  console.log("PASS: two selections, exactly one pan per click, zero relayouts, coordinates stable");
 } finally {
   await browser.close();
 }
