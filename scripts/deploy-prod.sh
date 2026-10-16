@@ -31,9 +31,9 @@ for path in "${CHANGED[@]}"; do
  case "$path" in
   apps/api/*) API=1;app_files+=("$path");;
   apps/worker/*) WORKER=1;app_files+=("$path");;
-  apps/web/*) WEB=1;app_files+=("$path");;
+  apps/web/*) APP_FULL=1;WEB=1;app_files+=("$path");;
   packages/backend/*) API=1;WORKER=1;app_files+=("$path");;
-  packages/contracts/*|site/*|industry/*|modules/*) API=1;WORKER=1;WEB=1;app_files+=("$path");;
+  packages/contracts/*|site/*|industry/*|modules/*) APP_FULL=1;API=1;WORKER=1;WEB=1;app_files+=("$path");;
   knowledge_service/requirements.txt|knowledge_service/Dockerfile) KNOW_FULL=1;KNOWLEDGE=1;;
   knowledge_service/*) KNOWLEDGE=1;know_files+=("$path");;
   scripts/migrate.ts|database/migrations/*) SETUP=1;app_files+=("$path");;
