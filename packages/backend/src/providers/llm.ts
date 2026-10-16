@@ -4,6 +4,7 @@
 // (site/models.ts).
 import type { z } from "zod";
 import { PRESETS } from "@aihot/site/models";
+import { nvidiaCapability } from "./nvidia-catalog.ts";
 import { config, credential } from "../config.ts";
 import { sha256 } from "../lib/ids.ts";
 import { assertAccepted, paidRequest, ProviderRejectedError, rejectReceivedResponse } from "./receipts.ts";
@@ -126,21 +127,22 @@ function isConnectFailure(error: unknown): boolean {
   return ["ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "UND_ERR_CONNECT_TIMEOUT", "CERT_HAS_EXPIRED"].includes(code ?? "");
 }
 
-/** A text model ID on NVIDIA's hosted catalogue (not an embedding, safety, vision or code model). */
-export const isNvidiaTextModel = (id: string) => /^[a-z0-9._-]+\/[a-z0-9._-]+$/i.test(id)
-  && /gpt-oss|nemotron|glm-|gemma-|llama-|deepseek|mistral|qwen|kimi|granite/i.test(id)
-  && !/embed|rerank|retriev|audio|speech|video|image|diffusion|safety|guard|moderation|ocr|vlm|vision|detector|coder|codegemma|codellama|reward/i.test(id);
+/** Only text and vision chat families are eligible for /chat/completions. */
+export const isNvidiaTextModel=(id:string)=>nvidiaCapability(id)==="text";
+export const isNvidiaChatModel=(id:string)=>["text","vision"].includes(nvidiaCapability(id));
 
 export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): Promise<ChatJsonResult<z.infer<S>>> {
   // A healthy model chosen by the NVIDIA monitor can be addressed directly by ID.
   // Dynamic routing only accepts compatible text model IDs on our NVIDIA endpoint.
   const dynamicId = opts.model.startsWith("nvidia:") ? opts.model.slice(7) : "";
-  const spec: ModelSpec | undefined = MODELS[opts.model] ?? (isNvidiaTextModel(dynamicId) ? {
+  const knownNvidia = Object.values(MODELS).find(m=>m.service==="nvidia"&&m.model===dynamicId);
+  const spec: ModelSpec | undefined = MODELS[opts.model] ?? (isNvidiaChatModel(dynamicId) ? {
     key: opts.model, service: "nvidia", model: dynamicId, baseUrlEnv: "NVIDIA_BASE_URL",
     apiKeyEnv: "NVIDIA_API_KEY", jsonMode: false,
-    extra: dynamicId.startsWith("nvidia/nemotron-3.5-lightning")
+    vision: nvidiaCapability(dynamicId)==="vision",
+    extra: knownNvidia?.extra ?? (dynamicId.startsWith("nvidia/nemotron-3.5-lightning")
       ? { chat_template_kwargs: { enable_thinking: false } }
-      : dynamicId.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : undefined,
+      : dynamicId.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : undefined),
   } : undefined);
   if (!spec) throw new Error(`Unknown model ${opts.model}`);
   if (!config.modelCallsEnabled) throw new Error("Model calls are disabled (MODEL_CALLS_ENABLED=false)");

@@ -3,55 +3,57 @@
 import { z } from "zod";
 import { sql } from "../db.ts";
 import { credential } from "../config.ts";
-import { chatJson, isNvidiaTextModel, ModelOutputError, MODELS } from "./llm.ts";
+import { chatJson, isNvidiaChatModel, ModelOutputError, MODELS } from "./llm.ts";
+import { nvidiaCapability, nvidiaInventory, type NvidiaCapability, type NvidiaCatalogEntry } from "./nvidia-catalog.ts";
 import { BudgetExceededError, ProviderRejectedError, ReceiptUnknownError } from "./receipts.ts";
-import { eligibleFallback, modelCircuitOpen, trafficFailureRate, conservativeFailureRisk, EMPTY_TRAFFIC, VERIFIED_FALLBACKS, probeAttemptTag, type ModelTraffic } from "./nvidia-routing.ts";
+import { eligibleFallback, modelCircuitOpen, trafficFailureRate, conservativeFailureRisk, EMPTY_TRAFFIC, probeAttemptTag, type ModelTraffic } from "./nvidia-routing.ts";
 
 const KEY="nvidia.model_pool.v1";
-const TTL=4*3600_000, CATALOG_TTL=2*3600_000, MAX=100;
+const TTL=4*3600_000, CATALOG_TTL=2*3600_000;
 const preferred=[
  "openai/gpt-oss-20b","nvidia/nemotron-3.5-lightning-30b-a3b",
  "z-ai/glm-5.3-flash","google/gemma-4-31b-it","deepseek-ai/deepseek-v4.1-flash",
  "mistralai/mistral-nemotron","nvidia/nemotron-3-super-120b-a12b",
  "meta/llama-3.3-70b-instruct","openai/gpt-oss-120b"
 ];
-export type Health={model:string;ok:boolean;checkedAt:string;lastOk?:string;latencyMs?:number;reason?:string;samples:number};
-export type Pool={catalogVersion?:number;catalogAt:string|null;catalogCount:number;candidates:string[];health:Record<string,Health>;probes:number};
+export type Health={model:string;ok:boolean;checkedAt:string;lastOk?:string;latencyMs?:number;reason?:string;samples:number;visionVerified?:boolean};
+export type Pool={catalogVersion?:number;catalogAt:string|null;catalogCount:number;candidates:string[];inventory?:Record<NvidiaCapability,string[]>;health:Record<string,Health>;probes:number};
 const empty=():Pool=>({catalogAt:null,catalogCount:0,candidates:preferred,health:{},probes:0});
 const age=(t:string|null|undefined,now:number)=>t?now-Date.parse(t):Infinity;
 export function healthyModels(s:Pool,now=Date.now()):Health[]{
  return Object.values(s.health).filter(h=>h.ok&&age(h.lastOk,now)<TTL&&s.candidates.includes(h.model))
   .sort((a,b)=>(a.latencyMs??99999)-(b.latencyMs??99999));
 }
+/** Request and fallback must belong to the same capability pool; real healthy evidence
+ * admits any matching text model, rather than a permanent three-name whitelist. */
 export function chooseModel(s:Pool,preferredModel:string,now=Date.now(),traffic:Record<string,ModelTraffic>={}):string|null{
  const spec=MODELS[preferredModel], wanted=spec?.model??"";
- const sameCapability=(model:string)=>!spec?.vision || Object.values(MODELS).some(m=>m.service==="nvidia"&&m.model===model&&m.vision===true);
+ const capability: NvidiaCapability=spec?.vision?"vision":"text";
  const candidates=healthyModels(s,now).filter(h=>
-   eligibleFallback(h.model,wanted)&&sameCapability(h.model)&&!modelCircuitOpen(traffic[h.model]??EMPTY_TRAFFIC));
- // Keep the user's configured model unless actual telemetry has opened its circuit.
- if(candidates.some(h=>h.model===wanted))return wanted;
- // Among verified backups, favor observed success rather than one fast synthetic ping.
- return candidates.sort((a,b)=>conservativeFailureRisk(traffic[a.model]??EMPTY_TRAFFIC)-
+   nvidiaCapability(h.model)===capability &&
+   (capability!=="vision"||h.visionVerified===true) &&
+   eligibleFallback(h.model,wanted));
+ const viable=candidates.filter(h=>!modelCircuitOpen(traffic[h.model]??EMPTY_TRAFFIC));
+ if(viable.some(h=>h.model===wanted))return wanted;
+ return viable.sort((a,b)=>conservativeFailureRisk(traffic[a.model]??EMPTY_TRAFFIC)-
    conservativeFailureRisk(traffic[b.model]??EMPTY_TRAFFIC)||
    (a.latencyMs??99999)-(b.latencyMs??99999))[0]?.model??null;
 }
-export function nextProbe(s:Pool,now=Date.now(),discover=false):string|null{
- // Only probe models that can actually be routed to real tasks. The hosted catalog
- // contains dozens of unrelated or costly options; discovering those is opt-in.
- const approved=VERIFIED_FALLBACKS.filter(id=>s.candidates.includes(id));
- const list=(discover
-   ? [...approved,...s.candidates.filter(id=>!approved.includes(id as typeof approved[number]))]
-   : approved).filter(isNvidiaTextModel);
- const recheck=list.filter(id=>s.health[id]?.ok&&age(s.health[id]!.checkedAt,now)>=50*60_000);
- const approvedDue=approved.filter(id=>!s.health[id]||age(s.health[id]!.checkedAt,now)>=20*60_000);
- if(approvedDue.length)return approvedDue.sort((a,b)=>age(s.health[b]?.checkedAt,now)-age(s.health[a]?.checkedAt,now))[0]!;
- if(recheck.length)return recheck.sort((a,b)=>age(s.health[b]?.checkedAt,now)-age(s.health[a]?.checkedAt,now))[0]!;
- const due=list.filter(id=>!s.health[id]||age(s.health[id]!.checkedAt,now)>=20*60_000);
- return due.sort((a,b)=>{
-   if(!s.health[a]&&s.health[b])return -1;
-   if(s.health[a]&&!s.health[b])return 1;
-   return age(s.health[b]?.checkedAt,now)-age(s.health[a]?.checkedAt,now);
- })[0]??null;
+/** One real probe per tick, prioritizing untested candidates across both chat pools. */
+export function nextProbe(s:Pool,now=Date.now(),discover=true):string|null{
+ const list=[...new Set(s.candidates)].filter(isNvidiaChatModel);
+ const fresh=healthyModels(s,now);
+ const refresh=list.filter(id=>s.health[id]?.ok && age(s.health[id]!.checkedAt,now)>=50*60_000)
+   .sort((a,b)=>Date.parse(s.health[a]!.checkedAt)-Date.parse(s.health[b]!.checkedAt));
+ const untested=discover?list.filter(id=>!s.health[id]):[];
+ // Continuous rotation: retain enough fresh working models while spending one
+ // in four probe slots on unexplored models. Failures are retried after cooldown.
+ if(refresh.length && (fresh.length<3 || s.probes%4!==0))return refresh[0]!;
+ if(untested.length)return untested[0]!;
+ if(refresh.length)return refresh[0]!;
+ const failed=list.filter(id=>s.health[id]&&!s.health[id]!.ok&&age(s.health[id]!.checkedAt,now)>=60*60_000)
+   .sort((a,b)=>Date.parse(s.health[a]!.checkedAt)-Date.parse(s.health[b]!.checkedAt));
+ return failed[0]??null;
 }
 let cached:{at:number;data:Pool}|null=null;
 async function read():Promise<Pool>{
@@ -94,24 +96,35 @@ export async function availableModel(preferredModel:string):Promise<string>{
 export async function poolOverview(){
  const [s,traffic]=await Promise.all([read(),recentModelTraffic()]);
  return {catalogCount:s.catalogCount,catalogAt:s.catalogAt,candidates:s.candidates.length,probes:s.probes,
- healthy:healthyModels(s).map(h=>({model:h.model,latencyMs:h.latencyMs,checkedAt:h.checkedAt,
+ inventory:Object.fromEntries(Object.entries(s.inventory??nvidiaInventory(s.candidates.map(id=>({id})))).map(([k,ids])=>[k,{total:ids.length,healthy:ids.filter(id=>s.health[id]?.ok && age(s.health[id]?.lastOk,Date.now())<TTL).length}])),
+ healthy:healthyModels(s).map(h=>({model:h.model,capability:nvidiaCapability(h.model),visionVerified:!!h.visionVerified,latencyMs:h.latencyMs,checkedAt:h.checkedAt,
    circuitOpen:modelCircuitOpen(traffic[h.model]??EMPTY_TRAFFIC),
    failureRate:trafficFailureRate(traffic[h.model]??EMPTY_TRAFFIC),
    last2h:traffic[h.model]??EMPTY_TRAFFIC})),
+ models:Object.entries(s.inventory??nvidiaInventory(s.candidates.map(id=>({id})))).flatMap(([capability,ids])=>
+   ids.map(id=>{
+     const h=s.health[id];
+     const current=!!h?.ok&&age(h.lastOk,Date.now())<TTL&&(capability!=="vision"||h.visionVerified===true);
+     return {model:id,capability,status:current?"healthy":!h?"untested":h.ok?"stale":"failed",
+       latencyMs:h?.latencyMs??null,reason:h?.reason??null,checkedAt:h?.checkedAt??null};
+   })),
  lastChecks:Object.values(s.health).map(h=>({model:h.model,ok:h.ok,reason:h.reason,checkedAt:h.checkedAt}))};
 }
 async function catalog(s:Pool){
- if(s.catalogVersion===2&&age(s.catalogAt,Date.now())<CATALOG_TTL)return;
+ if(s.catalogVersion===3&&age(s.catalogAt,Date.now())<CATALOG_TTL)return;
  const key=credential("models","NVIDIA_API_KEY"),url=credential("models","NVIDIA_BASE_URL");
  if(!key||!url)throw Error("NVIDIA not configured");
  const response=await fetch(url.replace(/\/$/,"")+"/models",{
    headers:{authorization:"Bearer "+key,accept:"application/json"},signal:AbortSignal.timeout(10000)});
  if(!response.ok)throw Error("NVIDIA catalog HTTP "+response.status);
- const data=await response.json() as {data?:Array<{id?:string}>};
- const all=(data.data??[]).map(x=>x.id??"").filter(Boolean);
- const ids=[...new Set(all.filter(isNvidiaTextModel))];
- s.catalogVersion=2;s.catalogCount=all.length;s.catalogAt=new Date().toISOString();
- s.candidates=[...preferred.filter(x=>ids.includes(x)),...ids.filter(x=>!preferred.includes(x))].slice(0,MAX);
+ const data=await response.json() as {data?:NvidiaCatalogEntry[]};
+ const all=(data.data??[]).filter(x=>x.id);
+ const inventory=nvidiaInventory(all);
+ // Retain every discovered entry; unknown/specialized models stay visible but cannot
+ // accidentally be called as a chat completion or substituted for embeddings.
+ s.inventory=inventory;s.catalogVersion=3;s.catalogCount=all.length;s.catalogAt=new Date().toISOString();
+ const chat=[...inventory.text,...inventory.vision];
+ s.candidates=[...preferred.filter(x=>chat.includes(x)),...chat.filter(x=>!preferred.includes(x))];
 }
 // A successfully completed real editorial call is stronger evidence than a
 // synthetic health ping. Reuse existing durable receipts without extra API cost.
@@ -122,7 +135,7 @@ async function mergeLiveSuccesses(s:Pool):Promise<void>{
      AND updated_at > now() - interval '4 hours'
    GROUP BY model`;
  for(const r of rows){
-   if(!isNvidiaTextModel(r.model)||!s.candidates.includes(r.model))continue;
+   if(!isNvidiaChatModel(r.model)||!s.candidates.includes(r.model))continue;
    const at=new Date(r.last_ok).toISOString();
    const old=s.health[r.model];
    if(old && Date.parse(old.checkedAt)>=Date.parse(at))continue;
@@ -138,16 +151,18 @@ export async function probeNvidiaPool(){
  const s=structuredClone(await read());
  try{await catalog(s);}catch(e){console.warn("NVIDIA catalogue refresh skipped",String(e).slice(0,120));}
  await mergeLiveSuccesses(s);
- const model=nextProbe(s,Date.now(),process.env.NVIDIA_MODEL_DISCOVERY_PROBES_ENABLED==="true");
+ const model=nextProbe(s,Date.now(),process.env.NVIDIA_MODEL_DISCOVERY_PROBES_ENABLED!=="false");
  if(!model){await save(s);return {state:"no_candidate",catalogCount:s.catalogCount};}
  let reason="ok",ok=false;const started=Date.now();
  try {
+   const vision=nvidiaCapability(model)==="vision";
+   const image=[{type:"text" as const,text:prompt},{type:"image_url" as const,image_url:{url:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jcWQAAAAASUVORK5CYII="}}];
    const result=await chatJson({model:"nvidia:"+model,purpose:"nvidia_model_probe",
      subject:"nvidia:"+model+":"+new Date().toISOString().slice(0,16),
      // subject is audit-only; attemptTag is part of the durable logical key.
      // Without this a year-old successful probe is reused in 3ms as false proof of health.
      attemptTag:probeAttemptTag(new Date()),
-     promptVersion:"nvidia-probe.v1",system:"Return JSON only.",user:prompt,
+     promptVersion:"nvidia-probe.v2",system:"Return JSON only.",user:vision?image:prompt,
      schema,temperature:0,maxTokens:512,timeoutMs:18000});
    ok=/[\u4e00-\u9fff]/.test(result.data.titleZh+result.data.summaryZh);
    if(!ok)reason="non_chinese";
@@ -160,7 +175,7 @@ export async function probeNvidiaPool(){
  }
  const old=s.health[model];s.health[model]={model,ok,checkedAt:new Date().toISOString(),
    lastOk:ok?new Date().toISOString():old?.lastOk,latencyMs:ok?Date.now()-started:old?.latencyMs,
-   reason,samples:(old?.samples??0)+1};
+   reason,samples:(old?.samples??0)+1,visionVerified:ok&&nvidiaCapability(model)==="vision"?true:old?.visionVerified};
  s.probes++;await save(s);
  return {state:reason,model,latencyMs:Date.now()-started,healthy:healthyModels(s).length,catalogCount:s.catalogCount,candidates:s.candidates.length};
 }

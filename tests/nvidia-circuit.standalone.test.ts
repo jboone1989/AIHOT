@@ -20,7 +20,7 @@ test("real unknown receipts open circuit while one failure cannot",()=>{
  assert.equal(modelCircuitOpen(counts(7,1)),false);
  assert.equal(modelCircuitOpen(counts(14,0)),false);
 });
-test("unsafe primary is replaced only by a verified approved fallback",()=>{
+test("unsafe primary is replaced only by a healthy same-capability fallback",()=>{
  const state=pool();
  const traffic={
   "nvidia/nemotron-3.5-lightning-30b-a3b":counts(18,46),
@@ -30,10 +30,10 @@ test("unsafe primary is replaced only by a verified approved fallback",()=>{
  assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now,traffic),"openai/gpt-oss-20b");
  assert.ok(conservativeFailureRisk(traffic["openai/gpt-oss-20b"]!)<conservativeFailureRisk(traffic["z-ai/glm-5.3-flash"]!));
  assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now),"nvidia/nemotron-3.5-lightning-30b-a3b");
- assert.equal(eligibleFallback("meta/llama-3.3-70b-instruct","nvidia/nemotron-3.5-lightning-30b-a3b"),false);
+ assert.equal(eligibleFallback("meta/llama-3.3-70b-instruct","nvidia/nemotron-3.5-lightning-30b-a3b"),true);
  state.health["openai/gpt-oss-20b"]!.ok=false;
  state.health["z-ai/glm-5.3-flash"]!.ok=false;
- assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now,traffic),null);
+ assert.equal(chooseModel(state,"nvidia-nemotron-lightning",now,traffic),"meta/llama-3.3-70b-instruct");
 });
 test("vision-required capability never changes to text-only GPT-OSS",()=>{
  const state=pool();
@@ -45,8 +45,8 @@ test("vision-required capability never changes to text-only GPT-OSS",()=>{
 test("unobserved models are not preferred over strongly verified successes",()=>{
  assert.ok(conservativeFailureRisk(counts(0,0))>conservativeFailureRisk(counts(35,1)));
 });
-test("approved models are probed before unknown catalog entries",()=>{
+test("catalog text models are queued for eventual verification",()=>{
  const state=pool();
  state.health={};
- assert.equal(nextProbe(state,now),"openai/gpt-oss-20b");
+ assert.equal(nextProbe(state,now),candidates[0]);
 });

@@ -62,7 +62,8 @@ async def lifespan(app: FastAPI):
     ))
     embedder = NvidiaEmbedder(config=OpenAIEmbedderConfig(
         api_key=key, base_url=base,
-        embedding_model="nvidia/nemotron-3-embed-1b", embedding_dim=2048,
+        embedding_model=os.environ.get("GRAPHITI_EMBEDDING_MODEL", "nvidia/nemotron-3-embed-1b"),
+        embedding_dim=int(os.environ.get("GRAPHITI_EMBEDDING_DIM", "2048")),
     ))
     graph = Graphiti(
         os.environ["NEO4J_URI"], os.environ.get("NEO4J_USER", "neo4j"),

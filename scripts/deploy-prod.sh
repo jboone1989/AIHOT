@@ -1,101 +1,107 @@
 #!/usr/bin/env bash
-# One-command VM09 release: build immutable images on cn-dev, transfer them over
-# existing SSH, then recreate the SAME Compose services without database restore.
+# Immutable, incremental release from cn-dev -> VM09. No DB/Neo4j restart, no data import.
 set -Eeuo pipefail
-
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 DEV="ubuntu@43.142.127.40"
 DEV_ROOT="/home/ubuntu/livingruntime-aihot"
 SSH=(ssh -o BatchMode=yes -o ConnectTimeout=12 -o ServerAliveInterval=15 "${DEV}")
-COMPOSE=(docker compose
-  -f docker-compose.yml
-  -f docker-compose.production.yml
-  -f docker-compose.knowledge.yml
-  -f docker-compose.release.yml
-  --profile knowledge)
-
-if [[ "${1:-}" != "" && "${1:-}" != "--check" ]]; then
-  echo "Usage: bash scripts/deploy-prod.sh [--check]" >&2
-  exit 2
-fi
-if ! git diff --quiet || ! git diff --cached --quiet; then
-  echo "Refusing deployment with uncommitted tracked source changes" >&2
-  exit 1
-fi
+COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.production.yml
+ -f docker-compose.knowledge.yml -f docker-compose.release.yml --profile knowledge)
+START=$SECONDS
+[[ "${1:-}" == "" || "${1:-}" == "--check" ]] || { echo "Usage: $0 [--check]" >&2; exit 2; }
+git diff --quiet && git diff --cached --quiet || { echo "Dirty checkout; abort" >&2; exit 1; }
 test -f .env && test -f scripts/production-smoke.py
 command -v docker >/dev/null
-git fetch origin main
-SHA="$(git rev-parse origin/main)"
-TAG="${SHA:0:12}"
-if [[ ! "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
-  echo "Invalid source commit ID" >&2; exit 1
-fi
+python3 scripts/production-env-check.py .env --role production --compare config/environments/production.flags.env.example --enforce
+git fetch github main
+NEW_SHA="$(git rev-parse FETCH_HEAD)"
+OLD_SHA="$(git rev-parse HEAD)"
+[[ "$NEW_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
+TAG="${NEW_SHA:0:12}"
+read_tag() { sed -n "s/^$1=//p" .env | tail -n1; }
+OLD_TAG="$(read_tag LRSITE_RELEASE)"
+APP_TAG="$(read_tag LRSITE_APP_RELEASE)"
+KNOWLEDGE_TAG="$(read_tag LRSITE_KNOWLEDGE_RELEASE)"
+APP_TAG="${APP_TAG:-$OLD_TAG}"
+KNOWLEDGE_TAG="${KNOWLEDGE_TAG:-$OLD_TAG}"
+VALID='^[0-9a-f]{12}$'
+APP_CHANGED=0; KNOWLEDGE_CHANGED=0; SCHEMA_CHANGED=0
+# A code change rebuilds the shared app image; knowledge_service is independent.
+while IFS= read -r path; do
+ case "$path" in
+  knowledge_service/*) KNOWLEDGE_CHANGED=1 ;;
+  database/migrations/*) APP_CHANGED=1; SCHEMA_CHANGED=1 ;;
+  docs/*|.github/*|tests/*|apps/web/tests/*|README*|AGENTS.md|CLAUDE.md|CONTRIBUTING.md|SECURITY.md|NOTICE|LICENSE|.env.example|scripts/deploy-prod.sh|scripts/production-env-check.py|scripts/production-smoke.py) ;;
+  docker-compose.*.yml|docker-compose.yml) ;; # Compose applies its own configuration hash
+  *) APP_CHANGED=1 ;;
+ esac
+done < <(git diff --name-only "$OLD_SHA" "$NEW_SHA")
+if [[ ! "$APP_TAG" =~ $VALID ]] || ! docker image inspect "livingruntime-app:$APP_TAG" >/dev/null 2>&1; then APP_CHANGED=1; fi
+if [[ ! "$KNOWLEDGE_TAG" =~ $VALID ]] || ! docker image inspect "livingruntime-knowledge:$KNOWLEDGE_TAG" >/dev/null 2>&1; then KNOWLEDGE_CHANGED=1; fi
 if [[ "${1:-}" == "--check" ]]; then
-  "${COMPOSE[@]}" config --quiet
-  "${SSH[@]}" "git -C '$DEV_ROOT' rev-parse --is-inside-work-tree"
-  python3 scripts/production-smoke.py
-  echo "Preflight OK. Remote source version: $SHA"
-  exit 0
+ echo "Source old=$OLD_SHA new=$NEW_SHA rebuild_app=$APP_CHANGED rebuild_knowledge=$KNOWLEDGE_CHANGED migrate=$SCHEMA_CHANGED"
+ LRSITE_APP_RELEASE="${APP_TAG:-$TAG}" LRSITE_KNOWLEDGE_RELEASE="${KNOWLEDGE_TAG:-$TAG}" "${COMPOSE[@]}" config --quiet
+ "${SSH[@]}" "git -C '$DEV_ROOT' rev-parse --is-inside-work-tree"
+ python3 scripts/production-smoke.py
+ exit 0
 fi
-
-echo "[1/5] Build immutable application and Graphiti images on cn-dev: $TAG"
-"${SSH[@]}" "bash -s -- '$SHA' '$TAG' '$DEV_ROOT'" <<'BUILD_ON_DEV'
+if [[ "$APP_CHANGED" == 1 || "$KNOWLEDGE_CHANGED" == 1 ]]; then
+ echo "[1/5] Build only changed images on cn-dev"
+ "${SSH[@]}" "bash -s -- '$NEW_SHA' '$TAG' '$DEV_ROOT' '$APP_CHANGED' '$KNOWLEDGE_CHANGED'" <<'BUILD_ON_DEV'
 set -Eeuo pipefail
-SHA="$1"; TAG="$2"; ROOT="$3"
-[[ "$SHA" =~ ^[0-9a-f]{40}$ && "$TAG" =~ ^[0-9a-f]{12}$ ]]
-git -C "$ROOT" fetch origin main
-[[ "$(git -C "$ROOT" rev-parse origin/main)" == "$SHA" ]] || {
-  echo "Remote source does not match the requested release" >&2; exit 1;
-}
+SHA="$1"; TAG="$2"; ROOT="$3"; APP="$4"; KNOWLEDGE="$5"
+git -C "$ROOT" fetch https://github.com/jboone1989/AIHOT.git main
+[[ "$(git -C "$ROOT" rev-parse FETCH_HEAD)" == "$SHA" ]] || { echo "Source mismatch" >&2; exit 1; }
 TMP="$(mktemp -d /tmp/livingruntime-build.XXXXXXXX)"
 trap 'rm -rf "$TMP"' EXIT
 git -C "$ROOT" archive "$SHA" | tar -xf - -C "$TMP"
-docker build -t "livingruntime-app:$TAG" -f "$TMP/Dockerfile" "$TMP"
-docker build -t "livingruntime-knowledge:$TAG" -f "$TMP/knowledge_service/Dockerfile" "$TMP"
-docker image inspect "livingruntime-app:$TAG" "livingruntime-knowledge:$TAG" >/dev/null
+if [[ "$APP" == 1 ]]; then docker build -t "livingruntime-app:$TAG" -f "$TMP/Dockerfile" "$TMP"; fi
+if [[ "$KNOWLEDGE" == 1 ]]; then docker build -t "livingruntime-knowledge:$TAG" -f "$TMP/knowledge_service/Dockerfile" "$TMP"; fi
 BUILD_ON_DEV
-
-echo "[2/5] Stream only the built images from cn-dev to VM09 over SSH"
-"${SSH[@]}" "docker image save livingruntime-app:$TAG livingruntime-knowledge:$TAG | gzip -1" \
-  | gzip -dc | docker image load
-docker image inspect "livingruntime-app:$TAG" "livingruntime-knowledge:$TAG" >/dev/null
-
-echo "[3/5] Advance only this release directory to the exact image commit"
-git merge --ff-only origin/main
-[[ "$(git rev-parse HEAD)" == "$SHA" ]] || exit 1
-
-echo "[4/5] Select release images and restart existing Compose services"
-python3 - "$TAG" <<'SET_VERSION'
+ echo "[2/5] Transfer only changed image(s)"
+ if [[ "$APP_CHANGED" == 1 ]]; then
+  "${SSH[@]}" "docker image save livingruntime-app:$TAG | gzip -1" | gzip -dc | docker image load
+  APP_TAG="$TAG"
+ fi
+ if [[ "$KNOWLEDGE_CHANGED" == 1 ]]; then
+  "${SSH[@]}" "docker image save livingruntime-knowledge:$TAG | gzip -1" | gzip -dc | docker image load
+  KNOWLEDGE_TAG="$TAG"
+ fi
+else
+ echo "[1–2/5] No image changes: reuse existing app and knowledge images"
+fi
+echo "[3/5] Advance checkout and pin per-service release image"
+git merge --ff-only "$NEW_SHA"
+[[ "$(git rev-parse HEAD)" == "$NEW_SHA" ]] || exit 1
+python3 - "$APP_TAG" "$KNOWLEDGE_TAG" <<'WRITE_RELEASE'
 from pathlib import Path
-import os, re, sys
-tag=sys.argv[1]
-assert re.fullmatch(r"[0-9a-f]{12}",tag)
+import os,re,sys
+app,knowledge=sys.argv[1:]
+assert all(re.fullmatch(r"[0-9a-f]{12}", tag) for tag in (app,knowledge))
 p=Path(".env")
-assert p.is_file() and p.stat().st_mode & 0o077 == 0
 data=p.read_text()
-if re.search(r"^LRSITE_RELEASE=",data,re.M):
-    data=re.sub(r"^LRSITE_RELEASE=.*$", "LRSITE_RELEASE="+tag, data, flags=re.M)
-else:
-    data += "\nLRSITE_RELEASE="+tag+"\n"
+for key,tag in {"LRSITE_APP_RELEASE":app,"LRSITE_KNOWLEDGE_RELEASE":knowledge,"LRSITE_RELEASE":app}.items():
+ if re.search(r"^"+key+r"=",data,re.M):
+  data=re.sub(r"^"+key+r"=.*$",key+"="+tag,data,flags=re.M)
+ else:data+="\n"+key+"="+tag+"\n"
 p.write_text(data)
 os.chmod(p,0o600)
-print("Release pinned:",tag)
-SET_VERSION
+WRITE_RELEASE
+python3 scripts/production-env-check.py .env --role production --compare config/environments/production.flags.env.example --enforce
 "${COMPOSE[@]}" config --quiet
-"${COMPOSE[@]}" up -d --no-build --pull never \
-  db api web worker knowledge-neo4j knowledge
-
-echo "[5/5] Verify substantive content and graph data before success"
+echo "[4/5] Apply schema migration only if migration files changed"
+if [[ "$SCHEMA_CHANGED" == 1 ]]; then
+ "${COMPOSE[@]}" run --rm --no-deps setup
+fi
+# Compose compares image/config hashes; no --force-recreate, no --build, and
+# no dependencies => PostgreSQL and Neo4j are never recreated for an app release.
+echo "[4/5] Reconcile only application services and Graphiti config"
+"${COMPOSE[@]}" up -d --no-deps --no-build --pull never api worker web knowledge
+echo "[5/5] Verify real site content and graph"
 OK=0
 for n in 1 2 3 4 5 6 7 8 9 10; do
-  if python3 scripts/production-smoke.py; then
-    OK=1
-    break
-  fi
-  sleep 6
+ if python3 scripts/production-smoke.py; then OK=1; break; fi
+ sleep 6
 done
-if [[ "$OK" != "1" ]]; then
-  echo "Deployment health check failed; no database volumes were replaced" >&2
-  exit 1
-fi
-echo "SUCCESS: VM09 production updated to $SHA (Docker Compose, existing data volumes)"
+[[ "$OK" == 1 ]] || { echo "Smoke failed; persisted volumes were not altered" >&2; exit 1; }
+echo "SUCCESS: $NEW_SHA app=$APP_TAG knowledge=$KNOWLEDGE_TAG elapsed=${SECONDS}s"

@@ -40,6 +40,35 @@ export default function ModelsAdmin({ loaderData: m }: Route.ComponentProps) {
       subtitle="每项能力当前用哪个模型、来自哪里（后台切换 > 环境变量 > 代码默认），以及近期的成功率、耗时与费用。切换只影响之后的新任务，已有结果不重算；换精选模型前先看 SelectBench 同批对比。"
       actions={<FilterChips param="days" options={[{ value: "1", label: "24 小时" }, { value: "", label: "7 天" }, { value: "30", label: "30 天" }]} />}
     >
+      <Card title="NVIDIA 模型目录与能力池" pad={false}>
+        <div className="p-4 space-y-3">
+          <div className="text-sm text-ink-3">目录模型 {num(m.nvidiaPool.catalogCount)} 个 · 对话候选 {num(m.nvidiaPool.candidates)} 个 · 探测 {num(m.nvidiaPool.probes)} 次。目录出现不代表可调用；只有新近验证通过的模型才参与路由。</div>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(m.nvidiaPool.inventory).map(([type, n]) => (
+              <span key={type} className="rounded-md bg-layer-2 px-3 py-1.5 text-xs">
+                {type}：{n.healthy}/{n.total} 可用
+              </span>
+            ))}
+          </div>
+          <details>
+            <summary className="cursor-pointer text-sm text-accent">查看各模型状态（含未验证及失败项）</summary>
+            <div className="mt-3">
+              <DataTable
+                dense
+                rows={m.nvidiaPool.models}
+                rowKey={(x) => x.model}
+                columns={[
+                  { key: "m", label: "模型", render: (x) => <span className="font-mono text-xs">{x.model}</span> },
+                  { key: "c", label: "能力池", render: (x) => x.capability },
+                  { key: "s", label: "状态", render: (x) => x.status },
+                  { key: "l", label: "探测耗时", render: (x) => secs(x.latencyMs) },
+                  { key: "r", label: "诊断", render: (x) => x.reason ?? "—" },
+                ]}
+              />
+            </div>
+          </details>
+        </div>
+      </Card>
       <div className="grid grid-cols-1 gap-5">
         {m.capabilities.map((c) => {
           const total = c.usage.reduce((a, u) => a + u.calls, 0);

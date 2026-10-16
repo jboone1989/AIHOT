@@ -63,6 +63,26 @@ jobs:
           echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
           /usr/lib/postgresql/17/bin/pg_dump --version
           /usr/lib/postgresql/17/bin/pg_restore --version
+      - name: Release script validation
+        run: |
+          bash -n scripts/deploy-prod.sh
+          python3 -m py_compile scripts/production-env-check.py
+          python3 - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          spec=importlib.util.spec_from_file_location("envcheck","scripts/production-env-check.py")
+          assert spec and spec.loader
+          envcheck=importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(envcheck)
+          prod=envcheck.read_env(Path("config/environments/production.flags.env.example"))
+          assert any("NVIDIA_API_KEY" in issue for issue in envcheck.errors(prod,"production"))
+          prod.update({"NVIDIA_API_KEY":"testing-only","NVIDIA_BASE_URL":"https://test.invalid"})
+          assert not envcheck.errors(prod,"production")
+          prod["MODEL_CALLS_ENABLED"]="false"
+          assert envcheck.errors(prod,"production")
+          PY
+      - name: NVIDIA pool regression tests
+        run: node --import ./tests/standalone.ts --test tests/nvidia*.standalone.test.ts
       - name: Typecheck
         run: npm run typecheck
       - name: Build web

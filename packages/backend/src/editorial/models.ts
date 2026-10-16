@@ -8,6 +8,7 @@ import { sql } from "../db.ts";
 import { serverModules } from "../modules.ts";
 import { MODELS } from "../providers/llm.ts";
 import { availableModel } from "../providers/nvidia-pool.ts";
+import { nvidiaCapability } from "../providers/nvidia-catalog.ts";
 
 export interface Capability {
   /** The step's name on the admin page, with an explanation in full-width brackets if it needs one; alerts use the name alone. */
@@ -75,7 +76,7 @@ export function modelSupportsVision(model: string): boolean {
   if (MODELS[model]) return MODELS[model].vision === true;
   // The healthy NVIDIA pool resolves a preset to its concrete service model ID.
   const dynamicId=model.startsWith("nvidia:")?model.slice(7):"";
-  return !!dynamicId && Object.values(MODELS).some(m=>m.service==="nvidia"&&m.model===dynamicId&&m.vision===true);
+  return !!dynamicId && nvidiaCapability(dynamicId)==="vision";
 }
 
 /** Whether a step can use a registered model. A model that reads images writes text as well. */
@@ -88,8 +89,11 @@ export async function modelFor(capability: CapabilityKey | (string & {})): Promi
   const c = capabilities()[capability];
   if (!c) throw new Error(`unknown model step: ${capability}`);
   const chosen = (await overrides())[capability] ?? process.env[c.env] ?? c.default;
-  if (process.env.NVIDIA_MODEL_POOL_ENABLED === "true" && MODELS[chosen]?.service === "nvidia")
-    return availableModel(chosen);
+  if (process.env.NVIDIA_MODEL_POOL_ENABLED === "true") {
+    if (MODELS[chosen]?.service === "nvidia") return availableModel(chosen);
+    if (chosen === "default" && process.env.NVIDIA_POOL_ROUTE_DEFAULT === "true")
+      return availableModel(c.vision ? "nvidia-glm-5.3-flash" : "nvidia-gpt-oss-20b");
+  }
   return MODELS[chosen] ? chosen : c.default;
 }
 
