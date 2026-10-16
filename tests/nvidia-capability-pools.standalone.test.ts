@@ -22,6 +22,14 @@ test("newly discovered, independently verified text model can be used as fallbac
  assert.equal(chooseModel(state,"nvidia-gpt-oss-20b",now),candidates[1]);
  assert.equal(nextProbe(state,now),null);
 });
+test("text tasks may use image-capable chat models after text validation",()=>{
+ const vision="z-ai/glm-5.3-flash",text="openai/gpt-oss-20b";
+ const state:Pool={catalogAt:null,catalogCount:80,candidates:[vision,text],probes:0,health:{
+  [vision]:h(vision,false),[text]:{...h(text),ok:false}
+ }};
+ assert.equal(chooseModel(state,"nvidia-gpt-oss-20b",now),vision);
+ assert.equal(chooseModel(state,"nvidia-glm-5.3-flash",now),null);
+});
 test("vision task cannot use text evidence or a text-only fallback",()=>{
  const vision="z-ai/glm-5.3-flash",text="openai/gpt-oss-20b";
  const state:Pool={catalogAt:null,catalogCount:80,candidates:[vision,text],probes:0,health:{[vision]:h(vision),[text]:h(text)}};
