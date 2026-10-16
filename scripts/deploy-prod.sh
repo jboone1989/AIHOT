@@ -40,7 +40,7 @@ if [[ ! "$APP_TAG" =~ $VALID ]] || ! docker image inspect "livingruntime-app:$AP
 if [[ ! "$KNOWLEDGE_TAG" =~ $VALID ]] || ! docker image inspect "livingruntime-knowledge:$KNOWLEDGE_TAG" >/dev/null 2>&1; then KNOWLEDGE_CHANGED=1; fi
 if [[ "${1:-}" == "--check" ]]; then
  echo "Source old=$OLD_SHA new=$NEW_SHA rebuild_app=$APP_CHANGED rebuild_knowledge=$KNOWLEDGE_CHANGED migrate=$SCHEMA_CHANGED"
- "${COMPOSE[@]}" config --quiet
+ LRSITE_APP_RELEASE="${APP_TAG:-$TAG}" LRSITE_KNOWLEDGE_RELEASE="${KNOWLEDGE_TAG:-$TAG}" "${COMPOSE[@]}" config --quiet
  "${SSH[@]}" "git -C '$DEV_ROOT' rev-parse --is-inside-work-tree"
  python3 scripts/production-smoke.py
  exit 0

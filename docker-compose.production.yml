@@ -1,6 +1,6 @@
 # LivingRuntime production application stack. Cloudflare Tunnel is the independent edge.
 # Apply with:
-# docker compose -f docker-compose.yml -f docker-compose.production.yml up -d --build
+# Production releases: bash scripts/deploy-prod.sh (build on cn-dev; reconcile only changed services)
 #
 # The public listener is LOOPBACK ONLY; expose through the existing Cloudflare Tunnel.
 # PostgreSQL and app state persist in named volumes. Neo4j/Graphiti are optional and

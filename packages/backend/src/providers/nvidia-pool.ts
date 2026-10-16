@@ -40,16 +40,20 @@ export function chooseModel(s:Pool,preferredModel:string,now=Date.now(),traffic:
    (a.latencyMs??99999)-(b.latencyMs??99999))[0]?.model??null;
 }
 /** One real probe per tick, prioritizing untested candidates across both chat pools. */
-export function nextProbe(s:Pool,now=Date.now(),_discover=false):string|null{
+export function nextProbe(s:Pool,now=Date.now(),discover=true):string|null{
  const list=[...new Set(s.candidates)].filter(isNvidiaChatModel);
- const due=list.filter(id=>!s.health[id]||age(s.health[id]!.checkedAt,now)>=20*60_000);
- // Prefer new candidates; select older checks next, never continuously hammer a failing model.
- return due.sort((a,b)=>{
-   if(!s.health[a]&&!s.health[b])return 0;
-   if(!s.health[a])return -1;
-   if(!s.health[b])return 1;
-   return Date.parse(s.health[a]!.checkedAt)-Date.parse(s.health[b]!.checkedAt);
- })[0]??null;
+ const fresh=healthyModels(s,now);
+ const refresh=list.filter(id=>s.health[id]?.ok && age(s.health[id]!.checkedAt,now)>=50*60_000)
+   .sort((a,b)=>Date.parse(s.health[a]!.checkedAt)-Date.parse(s.health[b]!.checkedAt));
+ const untested=discover?list.filter(id=>!s.health[id]):[];
+ // Continuous rotation: retain enough fresh working models while spending one
+ // in four probe slots on unexplored models. Failures are retried after cooldown.
+ if(refresh.length && (fresh.length<3 || s.probes%4!==0))return refresh[0]!;
+ if(untested.length)return untested[0]!;
+ if(refresh.length)return refresh[0]!;
+ const failed=list.filter(id=>s.health[id]&&!s.health[id]!.ok&&age(s.health[id]!.checkedAt,now)>=60*60_000)
+   .sort((a,b)=>Date.parse(s.health[a]!.checkedAt)-Date.parse(s.health[b]!.checkedAt));
+ return failed[0]??null;
 }
 let cached:{at:number;data:Pool}|null=null;
 async function read():Promise<Pool>{
@@ -140,7 +144,7 @@ export async function probeNvidiaPool(){
  const s=structuredClone(await read());
  try{await catalog(s);}catch(e){console.warn("NVIDIA catalogue refresh skipped",String(e).slice(0,120));}
  await mergeLiveSuccesses(s);
- const model=nextProbe(s);
+ const model=nextProbe(s,Date.now(),process.env.NVIDIA_MODEL_DISCOVERY_PROBES_ENABLED!=="false");
  if(!model){await save(s);return {state:"no_candidate",catalogCount:s.catalogCount};}
  let reason="ok",ok=false;const started=Date.now();
  try {
