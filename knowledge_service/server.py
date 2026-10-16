@@ -282,3 +282,44 @@ async def graph_overview():
         routing_="r",
     )
     return await relation_results(rows)
+
+
+def article_ids(names):
+    return [name.removeprefix("aihot:").split(":r")[0] for name in names if name]
+
+
+@app.get("/network")
+async def graph_network():
+    """Lightweight atlas, including isolated entities. Reads never call a model."""
+    nodes, _, _ = await app.state.graph.driver.execute_query(
+        "MATCH (n:Entity {group_id:'aihot'}) "
+        "WITH n ORDER BY n.uuid LIMIT 10001 "
+        "OPTIONAL MATCH (ep:Episodic {group_id:'aihot'})-[:MENTIONS]->(n) "
+        "RETURN n.uuid AS key, n.name AS name, collect(DISTINCT ep.name) AS articles "
+        "ORDER BY key", routing_="r",
+    )
+    links, _, _ = await app.state.graph.driver.execute_query(
+        "MATCH (s:Entity {group_id:'aihot'})-[r:RELATES_TO {group_id:'aihot'}]->(o:Entity {group_id:'aihot'}) "
+        "WITH s,o,r ORDER BY r.uuid LIMIT 20001 "
+        "OPTIONAL MATCH (ep:Episodic {group_id:'aihot'}) WHERE ep.uuid IN coalesce(r.episodes,[]) "
+        "RETURN r.uuid AS id, s.uuid AS source, o.uuid AS target, r.name AS predicate, "
+        "r.invalid_at AS invalid_at, collect(DISTINCT ep.name) AS articles ORDER BY id",
+        routing_="r",
+    )
+    return {
+        "nodes": [{"key": n["key"], "name": n["name"], "articleIds": article_ids(n["articles"])} for n in nodes[:10000]],
+        "links": [{"id": r["id"], "source": r["source"], "target": r["target"],
+                   "predicate": r["predicate"] or "RELATED_TO",
+                   "invalidAt": r["invalid_at"].isoformat() if r["invalid_at"] else None,
+                   "articleIds": article_ids(r["articles"])} for r in links[:20000]],
+        "truncated": len(nodes) > 10000 or len(links) > 20000,
+    }
+
+
+@app.get("/relations/{uuid}")
+async def graph_relation(uuid: str):
+    rows, _, _ = await app.state.graph.driver.execute_query(
+        "MATCH (s:Entity)-[r:RELATES_TO {uuid:$uuid,group_id:'aihot'}]->(o:Entity) "
+        "RETURN " + EDGE_COLUMNS + " LIMIT 1", uuid=uuid, routing_="r",
+    )
+    return await relation_results(rows)

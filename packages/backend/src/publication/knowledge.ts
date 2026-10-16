@@ -2,7 +2,7 @@
 // events (stories) those reports belong to. Graphiti owns the relations; this database owns what is
 // public, so a cited report that was withdrawn, held back or never published is left out here.
 import { sql } from "../db.ts";
-import { graphChanges, graphForEntity, graphForStory, graphOverview, graphSearch, graphStats, type GraphChanges } from "../knowledge/graphiti.ts";
+import { graphChanges, graphForEntity, graphForStory, graphNetwork, graphOverview, graphRelation, graphSearch, graphStats, type GraphChanges } from "../knowledge/graphiti.ts";
 import { cached, cachedByKey } from "../lib/cache.ts";
 import { publicSourceName } from "./rules.ts";
 import { storyReportCondition } from "./scope.ts";
@@ -145,3 +145,30 @@ export async function publicGraphOverview(now?: Date) {
 export const publicGraphStats = () => graphStats();
 /** A search of the graph, for the token-holding search endpoint. */
 export const searchGraph = (q: string, limit: number) => graphSearch(q, limit);
+
+/** Public atlas: isolated nodes need a public mention; links need their own public evidence. */
+async function readPublicNetwork(now = new Date()) {
+  const graph = await graphNetwork();
+  const ids = [...new Set([...graph.nodes, ...graph.links].flatMap(item => item.articleIds))];
+  const { reports } = await citedReports(ids, now);
+  const publicIds = new Set(reports.map(r => r.id));
+  const allowed = (ids: string[]) => ids.some(id => publicIds.has(id));
+  const linked = new Set<string>();
+  const nodeIds = new Set(graph.nodes.map(n => n.key));
+  const links = graph.links.filter(l => allowed(l.articleIds) && nodeIds.has(l.source) && nodeIds.has(l.target))
+    .map(({ articleIds: _, ...link }) => { linked.add(link.source); linked.add(link.target); return link; });
+  const degree = new Map<string, number>();
+  for (const l of links) for (const key of new Set([l.source, l.target])) degree.set(key, (degree.get(key) ?? 0) + 1);
+  const nodes = graph.nodes.filter(n => linked.has(n.key) || allowed(n.articleIds))
+    .map(n => ({ key: n.key, name: n.name, degree: degree.get(n.key) ?? 0 }));
+  return { nodes, links, truncated: graph.truncated, status: graph.status ?? "ok" };
+}
+
+const network = cached(() => readPublicNetwork(), { freshMs: 60_000, maxStaleMs: 60_000 });
+export async function publicGraphNetwork(now?: Date) { return now ? readPublicNetwork(now) : network.get(); }
+
+export async function publicGraphRelation(key: string, now = new Date()) {
+  const graph = await graphRelation(key);
+  const { reports } = await citedReports(citedArticleIds(graph), now);
+  return { ...graph, edges: withPublicEvidence(graph.edges, new Set(reports.map(r => r.id))) };
+}
