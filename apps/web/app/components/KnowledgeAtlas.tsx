@@ -29,7 +29,7 @@ export function KnowledgeAtlas({ initialKey = null }: { initialKey?: string | nu
     if (sharedKey) setSelected(sharedKey);
   }, []);
   useEffect(() => {
-    const onPop = () setSelected(new URLSearchParams(window.location.search).get("entity") ?? initialKey);
+    const onPop = () => setSelected(new URLSearchParams(window.location.search).get("entity") ?? initialKey);
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [initialKey]);
