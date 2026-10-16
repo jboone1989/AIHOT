@@ -16,10 +16,24 @@ const preferred=[
  "mistralai/mistral-nemotron","nvidia/nemotron-3-super-120b-a12b",
  "meta/llama-3.3-70b-instruct","openai/gpt-oss-120b"
 ];
-export type Health={model:string;ok:boolean;checkedAt:string;lastOk?:string;latencyMs?:number;reason?:string;samples:number;visionVerified?:boolean};
+export type Health={model:string;ok:boolean;checkedAt:string;lastOk?:string;latencyMs?:number;reason?:string;samples:number;visionVerified?:boolean;visionCheckedAt?:string;visionLastOk?:string;visionReason?:string};
 export type Pool={catalogVersion?:number;catalogAt:string|null;catalogCount:number;candidates:string[];inventory?:Record<NvidiaCapability,string[]>;health:Record<string,Health>;probes:number};
 const empty=():Pool=>({catalogAt:null,catalogCount:0,candidates:preferred,health:{},probes:0});
 const age=(t:string|null|undefined,now:number)=>t?now-Date.parse(t):Infinity;
+const freshVision=(h:Health,now=Date.now())=>h.visionVerified===true&&age(h.visionLastOk,now)<TTL;
+/** A failed image request must never erase independent, fresh proof of text use. */
+export function updateProbeHealth(old:Health|undefined,model:string,kind:"text"|"vision",ok:boolean,reason:string,when:string,elapsed:number):Health{
+ const image=kind==="vision";
+ const retainText=image&&!ok&&!!old?.ok;
+ return {model,ok:ok||retainText,checkedAt:when,lastOk:ok?when:old?.lastOk,
+   latencyMs:ok?elapsed:old?.latencyMs,
+   reason:retainText?old?.reason??"text_check_retained":reason,
+   samples:(old?.samples??0)+1,
+   visionVerified:image?ok:old?.visionVerified,
+   visionCheckedAt:image?when:old?.visionCheckedAt,
+   visionLastOk:image&&ok?when:old?.visionLastOk,
+   visionReason:image?reason:old?.visionReason};
+}
 export function healthyModels(s:Pool,now=Date.now()):Health[]{
  return Object.values(s.health).filter(h=>h.ok&&age(h.lastOk,now)<TTL&&s.candidates.includes(h.model))
   .sort((a,b)=>(a.latencyMs??99999)-(b.latencyMs??99999));
@@ -31,7 +45,7 @@ export function chooseModel(s:Pool,preferredModel:string,now=Date.now(),traffic:
  const capability: NvidiaCapability=spec?.vision?"vision":"text";
  const candidates=healthyModels(s,now).filter(h=>
    (capability==="text" ? ["text","vision"].includes(nvidiaCapability(h.model)) :
-    nvidiaCapability(h.model)==="vision" && h.visionVerified===true) &&
+    nvidiaCapability(h.model)==="vision" && freshVision(h,now)) &&
    eligibleFallback(h.model,wanted));
  const viable=candidates.filter(h=>!modelCircuitOpen(traffic[h.model]??EMPTY_TRAFFIC));
  if(viable.some(h=>h.model===wanted))return wanted;
@@ -96,15 +110,15 @@ export async function availableModel(preferredModel:string):Promise<string>{
 export async function poolOverview(){
  const [s,traffic]=await Promise.all([read(),recentModelTraffic()]);
  return {catalogCount:s.catalogCount,catalogAt:s.catalogAt,candidates:s.candidates.length,probes:s.probes,
- inventory:Object.fromEntries(Object.entries(s.inventory??nvidiaInventory(s.candidates.map(id=>({id})))).map(([k,ids])=>[k,{total:ids.length,healthy:ids.filter(id=>s.health[id]?.ok && age(s.health[id]?.lastOk,Date.now())<TTL && (k!=="vision" || s.health[id]?.visionVerified===true)).length}])),
- healthy:healthyModels(s).map(h=>({model:h.model,capability:nvidiaCapability(h.model),visionVerified:!!h.visionVerified,latencyMs:h.latencyMs,checkedAt:h.checkedAt,
+ inventory:Object.fromEntries(Object.entries(s.inventory??nvidiaInventory(s.candidates.map(id=>({id})))).map(([k,ids])=>[k,{total:ids.length,healthy:ids.filter(id=>s.health[id]?.ok && age(s.health[id]?.lastOk,Date.now())<TTL && (k!=="vision" || (s.health[id] && freshVision(s.health[id]!)))).length}])),
+ healthy:healthyModels(s).map(h=>({model:h.model,capability:nvidiaCapability(h.model),visionVerified:freshVision(h),latencyMs:h.latencyMs,checkedAt:h.checkedAt,
    circuitOpen:modelCircuitOpen(traffic[h.model]??EMPTY_TRAFFIC),
    failureRate:trafficFailureRate(traffic[h.model]??EMPTY_TRAFFIC),
    last2h:traffic[h.model]??EMPTY_TRAFFIC})),
  models:Object.entries(s.inventory??nvidiaInventory(s.candidates.map(id=>({id})))).flatMap(([capability,ids])=>
    ids.map(id=>{
      const h=s.health[id];
-     const current=!!h?.ok&&age(h.lastOk,Date.now())<TTL&&(capability!=="vision"||h.visionVerified===true);
+     const current=!!h?.ok&&age(h.lastOk,Date.now())<TTL&&(capability!=="vision"||freshVision(h));
      return {model:id,capability,status:current?"healthy":!h?"untested":h.ok?"stale":"failed",
        latencyMs:h?.latencyMs??null,reason:h?.reason??null,checkedAt:h?.checkedAt??null};
    })),
@@ -141,7 +155,8 @@ async function mergeLiveSuccesses(s:Pool):Promise<void>{
    if(old && Date.parse(old.checkedAt)>=Date.parse(at))continue;
    s.health[r.model]={model:r.model,ok:true,checkedAt:at,lastOk:at,
      latencyMs:old?.latencyMs??7000,reason:"real_completed_request",
-     samples:Math.max(old?.samples??0,r.samples),visionVerified:old?.visionVerified};
+     samples:Math.max(old?.samples??0,r.samples),visionVerified:old?.visionVerified,
+     visionCheckedAt:old?.visionCheckedAt,visionLastOk:old?.visionLastOk,visionReason:old?.visionReason};
  }
 }
 const schema=z.object({label:z.literal("PASS"),titleZh:z.string().min(4),summaryZh:z.string().min(6)});
@@ -153,16 +168,20 @@ export async function probeNvidiaPool(){
  await mergeLiveSuccesses(s);
  const model=nextProbe(s,Date.now(),process.env.NVIDIA_MODEL_DISCOVERY_PROBES_ENABLED!=="false");
  if(!model){await save(s);return {state:"no_candidate",catalogCount:s.catalogCount};}
+ // Prove text first for new multimodal IDs. Try image only occasionally after
+ // the text task works, and preserve its independent health if image fails.
+ const prior=s.health[model];
+ const probeImage=nvidiaCapability(model)==="vision"&&!!prior?.ok&&
+   (!prior.visionCheckedAt||age(prior.visionCheckedAt,Date.now())>=4*3600_000);
  let reason="ok",ok=false;const started=Date.now();
  try {
-   const vision=nvidiaCapability(model)==="vision";
    const image=[{type:"text" as const,text:prompt},{type:"image_url" as const,image_url:{url:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jcWQAAAAASUVORK5CYII="}}];
    const result=await chatJson({model:"nvidia:"+model,purpose:"nvidia_model_probe",
      subject:"nvidia:"+model+":"+new Date().toISOString().slice(0,16),
      // subject is audit-only; attemptTag is part of the durable logical key.
      // Without this a year-old successful probe is reused in 3ms as false proof of health.
      attemptTag:probeAttemptTag(new Date()),
-     promptVersion:"nvidia-probe.v2",system:"Return JSON only.",user:vision?image:prompt,
+     promptVersion:"nvidia-probe.v2",system:"Return JSON only.",user:probeImage?image:prompt,
      schema,temperature:0,maxTokens:512,timeoutMs:18000});
    ok=/[\u4e00-\u9fff]/.test(result.data.titleZh+result.data.summaryZh);
    if(!ok)reason="non_chinese";
@@ -173,9 +192,7 @@ export async function probeNvidiaPool(){
      e instanceof ProviderRejectedError?"upstream_http":
      e instanceof ReceiptUnknownError||/timeout|abort/i.test(String(e))?"timeout":"unavailable";
  }
- const old=s.health[model];s.health[model]={model,ok,checkedAt:new Date().toISOString(),
-   lastOk:ok?new Date().toISOString():old?.lastOk,latencyMs:ok?Date.now()-started:old?.latencyMs,
-   reason,samples:(old?.samples??0)+1,visionVerified:ok&&nvidiaCapability(model)==="vision"?true:old?.visionVerified};
+ s.health[model]=updateProbeHealth(prior,model,probeImage?"vision":"text",ok,reason,new Date().toISOString(),Date.now()-started);
  s.probes++;await save(s);
  return {state:reason,model,latencyMs:Date.now()-started,healthy:healthyModels(s).length,catalogCount:s.catalogCount,candidates:s.candidates.length};
 }
