@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import http from 'node:http';
 import { after, test } from 'node:test';
 import { sql, closeDb } from '@aihot/backend/db';
-import { citedReports, entityProfile } from '@aihot/backend/publication/knowledge';
+import { citedReports, entityProfile, publicGraphOverview } from '@aihot/backend/publication/knowledge';
 
 after(closeDb);
 
@@ -44,7 +44,7 @@ test('cited reports keep only public ones, newest first, grouped into live stori
   assert.deepEqual(await citedReports([]), { reports: [], stories: [] });
 
   // Graphiti can still hold a relationship after every report supporting it was withdrawn.
-  // Neither the website's entity API nor MCP may expose that relation.
+  // Neither the website's entity API, its overview sample nor MCP may expose that relation.
   const evidence = (articleId: string) => ({ articleId, url: '', source: 'src', quote: 'text', publishedAt: null });
   const edge = (id: string, articleIds: string[]) => ({
     id, subject: { key: 'profile-filter-check', name: 'Entity A', kind: 'entity' },
@@ -66,6 +66,11 @@ test('cited reports keep only public ones, newest first, grouped into live stori
     assert.deepEqual(profile.edges.map((e) => e.id), ['shared']);
     assert.deepEqual(profile.edges[0]!.evidence.map((e) => e.articleId), ['ep-old']);
     assert.deepEqual(profile.reports.map((r) => r.id), ['ep-old']);
+    // The overview sample on the home and /knowledge pages filters the same way.
+    const overview = await publicGraphOverview(new Date());
+    assert.deepEqual(overview.edges.map((e) => e.id), ['shared']);
+    assert.deepEqual(overview.edges[0]!.evidence.map((e) => e.articleId), ['ep-old']);
+    assert.equal(overview.entities, 2);
   } finally {
     delete process.env.GRAPHITI_API_URL;
     server.closeAllConnections();

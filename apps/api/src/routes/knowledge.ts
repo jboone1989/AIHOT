@@ -1,6 +1,6 @@
 import type {FastifyInstance} from "fastify";
-import {graphStats,graphSearch,graphOverview} from "@aihot/backend/knowledge/graphiti";
-import {dailyGraphChanges,entityProfile,publicStoryGraph} from "@aihot/backend/publication/knowledge";
+import {graphStats,graphSearch} from "@aihot/backend/knowledge/graphiti";
+import {dailyGraphChanges,entityProfile,publicGraphOverview,publicStoryGraph} from "@aihot/backend/publication/knowledge";
 import {timingSafeEqual} from "node:crypto";
 
 export function registerKnowledge(app:FastifyInstance){
@@ -17,7 +17,7 @@ export function registerKnowledge(app:FastifyInstance){
     return reply.header("Cache-Control","no-store").send(await graphSearch(q,limit));
   });
   app.get("/api/site/knowledge/overview",async(_req,reply)=>
-    reply.header("Cache-Control","public, max-age=60").send(await graphOverview()));
+    reply.header("Cache-Control","public, max-age=60").send(await publicGraphOverview()));
   app.get("/api/site/knowledge/stats",async(_req,reply)=>
     reply.header("Cache-Control","public, max-age=60").send(await graphStats()));
   app.get<{Params:{publicId:string}}>("/api/site/knowledge/stories/:publicId",async(req,reply)=>{

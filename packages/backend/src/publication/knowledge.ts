@@ -2,8 +2,8 @@
 // events (stories) those reports belong to. Graphiti owns the relations; this database owns what is
 // public, so a cited report that was withdrawn, held back or never published is left out here.
 import { sql } from "../db.ts";
-import { graphChanges, graphForEntity, graphForStory, type GraphChanges } from "../knowledge/graphiti.ts";
-import { cachedByKey } from "../lib/cache.ts";
+import { graphChanges, graphForEntity, graphForStory, graphOverview, type GraphChanges } from "../knowledge/graphiti.ts";
+import { cached, cachedByKey } from "../lib/cache.ts";
 import { publicSourceName } from "./rules.ts";
 import { storyReportCondition } from "./scope.ts";
 
@@ -125,4 +125,18 @@ export async function publicStoryGraph(publicId: string, now = new Date()) {
   const graph = await graphForStory(publicId);
   const { reports } = await citedReports(citedArticleIds(graph), now);
   return { ...graph, status: graph.status ?? "ok", edges: withPublicEvidence(graph.edges, new Set(reports.map((r) => r.id))) };
+}
+
+/** The overview sample (site home and /knowledge): Graphiti's latest relations, each with evidence that is public now. */
+async function readPublicOverview(now = new Date()) {
+  const graph = await graphOverview();
+  const { reports } = await citedReports(citedArticleIds(graph), now);
+  const edges = withPublicEvidence(graph.edges, new Set(reports.map((r) => r.id)));
+  return { ...graph, entities: new Set(edges.flatMap((e) => [e.subject.key, e.object.key])).size, edges };
+}
+
+const overview = cached(() => readPublicOverview(), { freshMs: 60_000, maxStaleMs: 60_000 });
+
+export async function publicGraphOverview(now?: Date) {
+  return now ? readPublicOverview(now) : overview.get();
 }
