@@ -32,17 +32,18 @@ function layout(edges: KnowledgeEdge[]) {
     const old = weights.get(node.key);
     weights.set(node.key, { key: node.key, name: node.name, degree: (old?.degree ?? 0) + 1 });
   }
-  const nodes = [...weights.values()].sort((a, b) => b.degree - a.degree || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)).slice(0, 15);
+  const sorted = [...weights.values()].sort((a, b) => b.degree - a.degree || a.key.localeCompare(b.key));
+  const nodes = sorted;
   const coords = new Map(nodes.map((node, i) => {
-    const orbit = i === 0 ? 0 : i < 6 ? 1 : 2;
-    const index = orbit === 1 ? i - 1 : i - 6;
-    const count = orbit === 1 ? Math.min(5, nodes.length - 1) : Math.max(1, nodes.length - 6);
-    const angle = -Math.PI / 2 + 2 * Math.PI * index / count + (orbit === 2 ? 0.19 : 0);
-    const radiusX = orbit === 1 ? 160 : orbit === 2 ? 320 : 0;
-    const radiusY = orbit === 1 ? 112 : orbit === 2 ? 176 : 0;
+    const orbit = i === 0 ? 0 : Math.floor((i - 1) / 12) + 1;
+    const index = i === 0 ? 0 : (i - 1) % 12;
+    const count = Math.min(12, nodes.length - 1 - (orbit - 1) * 12);
+    const angle = -Math.PI / 2 + 2 * Math.PI * index / Math.max(1, count) + orbit * 0.17;
+    const radiusX = orbit * 195;
+    const radiusY = orbit * 135;
     return [node.key, { x: 390 + Math.cos(angle) * radiusX, y: 225 + Math.sin(angle) * radiusY }] as const;
   }));
-  return { nodes, coords, visibleEdges: edges.filter(e => coords.has(e.subject.key) && coords.has(e.object.key)).slice(0, 30) };
+  return { nodes, coords, visibleEdges: edges.filter(e => coords.has(e.subject.key) && coords.has(e.object.key)) };
 }
 
 function shortName(value: string) {
@@ -79,7 +80,8 @@ export function KnowledgeCanvas({ edges, activeId, compact = false, selectedNode
   if (selectedNodeKey) related.add(selectedNodeKey);
   const box = viewBox([...coords.values()]);
   const grid = gridId;
-  const focusBox = { x: box.x + (box.w - box.w / zoom) / 2, y: box.y + (box.h - box.h / zoom) / 2, w: box.w / zoom, h: box.h / zoom };
+  const target = (selectedNodeKey && coords.get(selectedNodeKey)) || { x: box.x + box.w / 2, y: box.y + box.h / 2 };
+  const focusBox = { x: target.x - box.w / zoom / 2, y: target.y - box.h / zoom / 2, w: box.w / zoom, h: box.h / zoom };
   return (
     <div className={`lr-graph-canvas relative ${compact ? "lr-graph-compact" : ""}`}>
       <svg viewBox={`${focusBox.x} ${focusBox.y} ${focusBox.w} ${focusBox.h}`} role="group" aria-label={lang==="en"?`Knowledge network with ${nodes.length} entities and ${visibleEdges.length} relationships`:`知识关系网络，包含 ${nodes.length} 个可见实体、${visibleEdges.length} 条可见关系`}>
@@ -176,7 +178,7 @@ export function KnowledgeExplorer({ graph, compact = false }: { graph: Knowledge
     <div className="lr-explorer-grid">
       <div className="lr-graph-frame">
         <div className="lr-graph-topline"><span><span className="lr-pulse" /> KNOWLEDGE MAP</span><span>GRAPHITI / NEO4J</span></div>
-        <KnowledgeCanvas edges={graph.edges} activeId={active?.id} selectedNodeKey={nodeKey ?? undefined} onSelectNode={(key) => { trackAnalytics("graph_node_select"); setNodeKey(current => current === key ? null : key); setSelected(null); }} compact={compact}/>
+        <KnowledgeCanvas edges={graph.edges} activeId={active?.id} selectedNodeKey={nodeKey ?? undefined} onSelectNode={(key) => { trackAnalytics("graph_node_select"); setNodeKey(key); setSelected(null); }} compact={compact}/>
         <div className="lr-graph-bottomline">{t("点击节点查看关系 · 右侧打开档案 · 点击关系查看证据","Select a node to inspect links · Open its profile · Select a relation for evidence")}</div>
       </div>
       <div className="min-w-0">
