@@ -6,7 +6,8 @@ import { pageReuse } from "../lib/page-reuse";
 import { localized, pageMeta, siteUrl } from "../lib/seo";
 import { PhoneBar } from "../components/shell/PhoneBar";
 import type { Screen } from "../components/shell/screens";
-import { KnowledgeExplorer, type KnowledgeEdge, type KnowledgeGraph } from "../components/KnowledgeNetwork";
+import { type KnowledgeEdge, type KnowledgeGraph } from "../components/KnowledgeNetwork";
+import { KnowledgeAtlas } from "../components/KnowledgeAtlas";
 import { IntentLink } from "../components/ui/IntentLink";
 import { IconArrowLeft, IconArrowRight } from "../components/icons";
 import { useText, useUiLanguage } from "../components/LanguageSwitch";
@@ -126,9 +127,9 @@ export default function KnowledgeEntity() {
           </div>
         )}
       </header>
-      {name && data.edges.length > 0 && (
+      {name && (
         <>
-          <div className="mt-7"><KnowledgeExplorer graph={{ entities: data.entities, edges: data.edges, status: data.status }} /></div>
+          <div className="mt-7"><KnowledgeAtlas initialKey={data.entity!.key} /></div>
           <div className="lr-entity-grid mt-8">
             <section aria-labelledby="entity-timeline">
               <div className="lr-section-head"><h2 id="entity-timeline">{t("关系变化", "Relation timeline")}</h2><small className="mono text-[11px] text-ink-4">{t("按生效时间", "BY VALID-FROM DATE")}</small></div>
