@@ -17,7 +17,7 @@ test("catalog is not all chat models",()=>{
 test("capability preference with verified low-latency fallback",()=>{
  const s=pool();
  assert.equal(chooseModel(s,"nvidia-gpt-oss-20b",at),"openai/gpt-oss-20b");
- assert.equal(chooseModel(s,"nvidia-glm-5.3-flash",at),"nvidia/nemotron-3.5-lightning-30b-a3b");
+ assert.equal(chooseModel(s,"nvidia-glm-5.3-flash",at),null); // Do not silently route image-capable tasks to a text-only model.
  assert.equal(nextProbe(s,at),"google/gemma-4-31b-it");
 });
 test("stale or recently failed models cannot be selected",()=>{

@@ -72,7 +72,10 @@ export function invalidateModelCache() {
 
 /** Whether a registered model explicitly declares image input support. Unspecified means text-only. */
 export function modelSupportsVision(model: string): boolean {
-  return MODELS[model]?.vision === true;
+  if (MODELS[model]) return MODELS[model].vision === true;
+  // The healthy NVIDIA pool resolves a preset to its concrete service model ID.
+  const dynamicId=model.startsWith("nvidia:")?model.slice(7):"";
+  return !!dynamicId && Object.values(MODELS).some(m=>m.service==="nvidia"&&m.model===dynamicId&&m.vision===true);
 }
 
 /** Whether a step can use a registered model. A model that reads images writes text as well. */
