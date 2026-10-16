@@ -57,5 +57,11 @@ try {
   assert.deepEqual(after.selectedEdges,[pairId]);
   assert.equal(after.cards,facts.length);
   assert.ok(after.sourceLinks>=facts.length,"every fact must expose its source");
+  await page.waitForTimeout(400);
+  const panelVisible = await page.evaluate(() => {
+    const box = document.querySelector(".lr-atlas-evidence")?.getBoundingClientRect();
+    return !!box && box.top < window.innerHeight && box.bottom > 0;
+  });
+  assert.ok(panelVisible,"clicking the main line must reveal the fact panel on screen");
   console.log("PAIR_FACTS_PASS",JSON.stringify({before,visible,after}));
 } finally { await browser.close(); }
