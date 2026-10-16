@@ -79,6 +79,13 @@ docker compose run --rm setup && docker compose up -d
 
 下面按时间从新到旧列出每次更新要注意的事。
 
+#### EventGraph：删除旧的本地知识图谱原型（2026 年 10 月 16 日）
+
+四个新迁移 `0097`–`0100` **删除表和其中的数据**：`knowledge_claims`、`knowledge_extractions`、`knowledge_entities`（改用 Graphiti 之前的本地图谱原型）和 `knowledge_sync`（已删除的 `scripts/graphiti-sync.ts` 的导入进度）。现在的图谱数据在 Graphiti/Neo4j 里，导入记录在 `graphiti_ingestions`，都不受影响。要保留旧原型的数据，先按[备份](#备份)导出这四张表再升级。
+
+- 删除了 `scripts/knowledge-extract.ts`、`scripts/knowledge-check.ts`、`scripts/graphiti-sync.ts`；手动导入一篇改用 `node scripts/graphiti-verify.ts ingest`（需 `GRAPHITI_INGEST_ENABLED=true`、`MODEL_CALLS_ENABLED=true`）。
+- 首页和 `/knowledge` 的图谱样本只显示有当前公开报道作证据的关系。
+
 #### EventGraph：英文版的原创文字（2026 年 10 月 16 日）
 
 两个新迁移 `0095_english_copies.sql`、`0096_story_english.sql`（新表，不动已有数据）。选填的新环境变量 `ENGLISH_MODEL`，不填用 `LLM_*`。

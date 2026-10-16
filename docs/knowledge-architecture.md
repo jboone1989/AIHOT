@@ -46,9 +46,7 @@ docker compose exec -T -e GRAPHITI_INGEST_ENABLED=true -e MODEL_CALLS_ENABLED=tr
 
 `graphiti_ingestions` holds only the AIHot document revision and Graphiti episode
 identifier; the worker's `knowledge.graphiti.ingest` uses the same records. The
-tables of the earlier prototype (`knowledge_entities`, `knowledge_claims`,
-`knowledge_extractions`, `knowledge_sync`) are no longer read or written by any
-code; their rows are kept as historical data, not Graphiti records.
+earlier local prototype's tables were dropped in migrations 0097–0100.
 
 ## Acceptance
 
