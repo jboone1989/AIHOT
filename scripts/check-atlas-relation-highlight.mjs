@@ -16,6 +16,7 @@ try {
 
   await page.goto(origin + "/knowledge/entity/" + omi, { waitUntil: "domcontentloaded" });
   await page.locator(".lr-atlas-connection button").first().waitFor({ timeout: 12000 });
+  await page.waitForFunction(() => !!document.querySelector(".lr-atlas-canvas")?._cyreg?.cy, null, { timeout: 12000 });
   await page.evaluate(() => {
     const cy = document.querySelector(".lr-atlas-canvas")?._cyreg?.cy;
     if (!cy) throw Error("Cytoscape is unavailable");
