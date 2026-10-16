@@ -1,6 +1,6 @@
 import type {FastifyInstance} from "fastify";
-import {graphForStory,graphStats,graphSearch,graphOverview} from "@aihot/backend/knowledge/graphiti";
-import {dailyGraphChanges,entityProfile} from "@aihot/backend/publication/knowledge";
+import {graphStats,graphSearch,graphOverview} from "@aihot/backend/knowledge/graphiti";
+import {dailyGraphChanges,entityProfile,publicStoryGraph} from "@aihot/backend/publication/knowledge";
 import {timingSafeEqual} from "node:crypto";
 
 export function registerKnowledge(app:FastifyInstance){
@@ -23,7 +23,7 @@ export function registerKnowledge(app:FastifyInstance){
   app.get<{Params:{publicId:string}}>("/api/site/knowledge/stories/:publicId",async(req,reply)=>{
     const {publicId}=req.params;
     if(!/^[a-f0-9-]{36}$/i.test(publicId))return reply.code(400).send({error:"invalid_story"});
-    return reply.header("Cache-Control","public, max-age=120").send(await graphForStory(publicId));
+    return reply.header("Cache-Control","public, max-age=120").send(await publicStoryGraph(publicId));
   });
   app.get<{Params:{key:string}}>("/api/site/knowledge/entities/:key",async(req,reply)=>{
     const key=req.params.key;
