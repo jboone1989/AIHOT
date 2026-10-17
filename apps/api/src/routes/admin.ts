@@ -8,6 +8,8 @@ import { navCounts } from "@aihot/backend/admin/navigation";
 import { listAudit } from "@aihot/backend/audit";
 import { importSelectBenchRun, listSelectBenchRuns, selectBenchRun } from "@aihot/backend/admin/selectbench";
 import { modelsOverview, switchModel } from "@aihot/backend/admin/models";
+import {listProviders,createProvider,updateProvider} from "@aihot/backend/providers/registry/repository";
+import {probeConfiguredProvider} from "@aihot/backend/providers/registry/probe";
 import { contentChain, overrideFields, rerun, searchContent, setSeoIndexed, setVisibility } from "@aihot/backend/admin/content";
 import { detachFromFact, mergeStories } from "@aihot/backend/events/corrections";
 import { banSource, eraseFeedback, feedbackScreenshot, listFeedback, unbanSource, updateFeedback } from "@aihot/backend/admin/feedback";
@@ -114,6 +116,22 @@ export function registerAdmin(app: FastifyInstance) {
   app.post("/api/admin/models/:capability", adminHandler(async (req, _reply, admin) => {
     const b = body<{ model: string | null; reason: string }>(req);
     return switchModel(param(req, "capability"), b.model ?? null, String(b.reason ?? ""), actorOf(admin));
+  }));
+
+  // Individual model-provider configurations (same CSRF/auth/audit path as all other admin changes).
+  app.get("/api/admin/model-providers",adminHandler(async ()=>({providers:await listProviders()})));
+  app.post("/api/admin/model-providers",adminHandler(async (req,_reply,admin)=>{
+    const data=body<{vendor:string;modelId:string}>(req);
+    return createProvider(data.vendor,data.modelId,actorOf(admin));
+  }));
+  app.patch("/api/admin/model-providers",adminHandler(async (req,_reply,admin)=>{
+    const data=body<{vendor:string;modelId:string;version:number;reason:string;changes:import("@aihot/backend/providers/registry/types").ProviderChanges}>(req);
+    return updateProvider(data.vendor,data.modelId,data.changes,data.version,data.reason,actorOf(admin));
+  }));
+
+  app.post("/api/admin/model-providers/probe",adminHandler(async(req,_reply,admin)=>{
+    const data=body<{vendor:string;modelId:string;capability:string}>(req);
+    return probeConfiguredProvider(data.vendor,data.modelId,data.capability,actorOf(admin));
   }));
 
   // SelectBench

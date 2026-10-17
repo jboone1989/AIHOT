@@ -162,6 +162,8 @@ async function mergeLiveSuccesses(s:Pool):Promise<void>{
 const schema=z.object({label:z.literal("PASS"),titleZh:z.string().min(4),summaryZh:z.string().min(6)});
 const prompt='模拟消息：An AI research lab publishes an open-source model with reduced energy use in translation tests. 返回JSON对象：label固定为PASS，titleZh为中文标题，summaryZh为中文简短摘要。不允许添加未给出的事实。';
 export async function probeNvidiaPool(){
+ // Legacy global health probe is disabled when independent DB providers own the model lifecycle.
+ if(process.env.MODEL_PROVIDER_REGISTRY_ENABLED==="true")return {state:"per_provider_registry",healthy:0};
  if(process.env.NVIDIA_MODEL_POOL_ENABLED!=="true"||process.env.MODEL_CALLS_ENABLED!=="true")return {state:"disabled"};
  const s=structuredClone(await read());
  try{await catalog(s);}catch(e){console.warn("NVIDIA catalogue refresh skipped",String(e).slice(0,120));}

@@ -342,8 +342,17 @@ export interface AdminModelUsage {
   estimate: { amount: number; currency: string } | null;
 }
 
+export interface AdminProviderProfile {
+ vendor:string; modelId:string; adapter:"chat"|"embedding"|"document"|"safety"|"special"|"unconfigured";
+ endpoint:string|null; credentialEnv:string; capabilities:string[]; requestDefaults:Record<string,unknown>;
+ timeoutMs:number; stream:boolean; complexity:"light"|"medium"|"heavy";
+ documentationUrl:string|null; notes:string|null; enabled:boolean; routeEnabled:boolean;
+ version:number; updatedAt:string;
+ checks:Array<{capability:string;status:string;verifiedAt:string|null;latencyMs:number|null}>;
+}
 export interface AdminModels {
   days: number;
+  providers: AdminProviderProfile[];
   nvidiaPool: {
     catalogCount: number;
     catalogAt: string | null;

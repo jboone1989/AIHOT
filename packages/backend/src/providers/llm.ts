@@ -5,6 +5,8 @@
 import type { z } from "zod";
 import { PRESETS } from "@aihot/site/models";
 import { nvidiaCapability } from "./nvidia-catalog.ts";
+import {getProvider} from "./registry/repository.ts";
+import {ChatProvider,instantiateProvider,parseSseCompletion as parseProviderStream} from "./registry/adapter.ts";
 import { config, credential } from "../config.ts";
 import { sha256 } from "../lib/ids.ts";
 import { assertAccepted, paidRequest, ProviderRejectedError, rejectReceivedResponse } from "./receipts.ts";
@@ -21,6 +23,9 @@ export interface ModelSpec {
   reasoningTokens?: number;
   jsonMode: boolean;
   vision?: boolean;
+  endpoint?: string;
+  stream?: boolean;
+  timeoutMs?: number;
 }
 
 function extraFromEnv(value: string | undefined): Record<string, unknown> | undefined {
@@ -134,19 +139,39 @@ export const isNvidiaChatModel=(id:string)=>["text","vision"].includes(nvidiaCap
 export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): Promise<ChatJsonResult<z.infer<S>>> {
   // A healthy model chosen by the NVIDIA monitor can be addressed directly by ID.
   // Dynamic routing only accepts compatible text model IDs on our NVIDIA endpoint.
-  const dynamicId = opts.model.startsWith("nvidia:") ? opts.model.slice(7) : "";
+  const registryEnabled=process.env.MODEL_PROVIDER_REGISTRY_ENABLED==="true";
+  const dynamicId = opts.model.startsWith("nvidia:") ? opts.model.slice(7) :
+    registryEnabled&&MODELS[opts.model]?.service==="nvidia" ? MODELS[opts.model]!.model : "";
   const knownNvidia = Object.values(MODELS).find(m=>m.service==="nvidia"&&m.model===dynamicId);
-  const spec: ModelSpec | undefined = MODELS[opts.model] ?? (isNvidiaChatModel(dynamicId) ? {
+  // Each NVIDIA model is now resolved from its own database provider profile when opted in.
+  // The old presets remain a compatibility path until development validates every adapter.
+  const inputCapability=Array.isArray(opts.user)&&opts.user.some(part=>part.type==="image_url")?"vision":"text";
+  const registered=dynamicId&&registryEnabled
+    ? await getProvider("nvidia",dynamicId):null;
+  const provider=registered&&registered.enabled&&registered.routeEnabled&&
+     ["chat","document","safety"].includes(registered.adapter) && registered.endpoint
+     ? instantiateProvider(registered):null;
+  if(dynamicId&&registryEnabled&&(!(provider instanceof ChatProvider)||
+     !registered?.checks.some(c=>c.status==="verified"&&c.capability===inputCapability&&c.verifiedAt&&
+        Date.now()-Date.parse(c.verifiedAt)<86400000)))
+    throw new Error("NVIDIA provider needs a recent successful "+inputCapability+" check: "+dynamicId);
+  const spec: ModelSpec | undefined = (provider instanceof ChatProvider ? {
+    key:opts.model,service:"nvidia",model:dynamicId,baseUrlEnv:"NVIDIA_BASE_URL",
+    apiKeyEnv:"NVIDIA_API_KEY",jsonMode:false,
+    vision:registered?.capabilities.includes("vision"),extra:registered?.requestDefaults,
+    endpoint:registered?.endpoint??undefined,stream:registered?.stream,
+    timeoutMs:registered?.timeoutMs,
+  } : isNvidiaChatModel(dynamicId)&&!registryEnabled ? {
     key: opts.model, service: "nvidia", model: dynamicId, baseUrlEnv: "NVIDIA_BASE_URL",
     apiKeyEnv: "NVIDIA_API_KEY", jsonMode: false,
     vision: nvidiaCapability(dynamicId)==="vision",
     extra: knownNvidia?.extra ?? (dynamicId.startsWith("nvidia/nemotron-3.5-lightning")
       ? { chat_template_kwargs: { enable_thinking: false } }
       : dynamicId.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : undefined),
-  } : undefined);
+  } : MODELS[opts.model]);
   if (!spec) throw new Error(`Unknown model ${opts.model}`);
   if (!config.modelCallsEnabled) throw new Error("Model calls are disabled (MODEL_CALLS_ENABLED=false)");
-  const baseUrl = credential("models", spec.baseUrlEnv);
+  const baseUrl = spec.endpoint ?? credential("models", spec.baseUrlEnv);
   const apiKey = credential("models", spec.apiKeyEnv);
   if (!baseUrl || !apiKey || !spec.model) throw new Error(`Model ${opts.model} is not configured (${spec.baseUrlEnv}, ${spec.apiKeyEnv}${spec.key === "default" ? ", LLM_MODEL" : ""})`);
 
@@ -165,6 +190,7 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
     max_tokens: maxTokens,
     ...(spec.jsonMode && opts.json !== false ? { response_format: { type: "json_object" } } : {}),
     ...(spec.extra ?? {}),
+    ...(spec.stream ? {stream:true} : {}),
   };
 
   const receipt = await paidRequest(
@@ -179,13 +205,20 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
     },
     async () => {
       const started = Date.now();
+      if(provider instanceof ChatProvider){
+        const output=await provider.request(body,inputCapability);
+        const json=output.data;
+        return {response:{...json,_latencyMs:Date.now()-started},
+          requestId:(json.id as string|undefined)??output.requestId,
+          usage:(json.usage as Record<string,unknown>|undefined)??null,cost:null};
+      }
       let res: Response;
       try {
-        res = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
+        res = await fetch(spec.endpoint ?? `${baseUrl.replace(/\/$/, "")}/chat/completions`, {
           method: "POST",
           headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
           body: JSON.stringify(body),
-          signal: AbortSignal.timeout(opts.timeoutMs ?? 120_000),
+          signal: AbortSignal.timeout(opts.timeoutMs ?? spec.timeoutMs ?? 120_000),
         });
       } catch (error) {
         if (isConnectFailure(error)) throw new ProviderRejectedError(`connect failed: ${String(error)}`, null, true);
@@ -195,7 +228,7 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
       assertAccepted(spec.service, res.status, text);
       let json: Record<string, unknown>;
       try {
-        json = JSON.parse(text);
+        json = spec.stream ? parseProviderStream(text) : JSON.parse(text);
         if (!json || typeof json !== "object" || Array.isArray(json)) throw new Error("Expected a response object");
       } catch {
         json = { unparsable: text.slice(0, 20000) };
