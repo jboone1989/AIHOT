@@ -145,15 +145,16 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
   const knownNvidia = Object.values(MODELS).find(m=>m.service==="nvidia"&&m.model===dynamicId);
   // Each NVIDIA model is now resolved from its own database provider profile when opted in.
   // The old presets remain a compatibility path until development validates every adapter.
+  const inputCapability=Array.isArray(opts.user)&&opts.user.some(part=>part.type==="image_url")?"vision":"text";
   const registered=dynamicId&&registryEnabled
     ? await getProvider("nvidia",dynamicId):null;
   const provider=registered&&registered.enabled&&registered.routeEnabled&&
      ["chat","document","safety"].includes(registered.adapter) && registered.endpoint
      ? instantiateProvider(registered):null;
   if(dynamicId&&registryEnabled&&(!(provider instanceof ChatProvider)||
-     !registered?.checks.some(c=>c.status==="verified"&&c.capability==="text"&&c.verifiedAt&&
+     !registered?.checks.some(c=>c.status==="verified"&&c.capability===inputCapability&&c.verifiedAt&&
         Date.now()-Date.parse(c.verifiedAt)<86400000)))
-    throw new Error("NVIDIA provider needs a recent successful text check: "+dynamicId);
+    throw new Error("NVIDIA provider needs a recent successful "+inputCapability+" check: "+dynamicId);
   const spec: ModelSpec | undefined = (provider instanceof ChatProvider ? {
     key:opts.model,service:"nvidia",model:dynamicId,baseUrlEnv:"NVIDIA_BASE_URL",
     apiKeyEnv:"NVIDIA_API_KEY",jsonMode:false,
@@ -205,7 +206,7 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
     async () => {
       const started = Date.now();
       if(provider instanceof ChatProvider){
-        const output=await provider.request(body,"text");
+        const output=await provider.request(body,inputCapability);
         const json=output.data;
         return {response:{...json,_latencyMs:Date.now()-started},
           requestId:(json.id as string|undefined)??output.requestId,
