@@ -8,7 +8,7 @@ import { navCounts } from "@aihot/backend/admin/navigation";
 import { listAudit } from "@aihot/backend/audit";
 import { importSelectBenchRun, listSelectBenchRuns, selectBenchRun } from "@aihot/backend/admin/selectbench";
 import { modelsOverview, switchModel } from "@aihot/backend/admin/models";
-import {listProviders,createProvider,updateProvider} from "@aihot/backend/providers/registry/repository";
+import {listProviders,createProvider,updateProvider,deleteProvider} from "@aihot/backend/providers/registry/repository";
 import {probeConfiguredProvider} from "@aihot/backend/providers/registry/probe";
 import { contentChain, overrideFields, rerun, searchContent, setSeoIndexed, setVisibility } from "@aihot/backend/admin/content";
 import { detachFromFact, mergeStories } from "@aihot/backend/events/corrections";
@@ -127,6 +127,11 @@ export function registerAdmin(app: FastifyInstance) {
   app.patch("/api/admin/model-providers",adminHandler(async (req,_reply,admin)=>{
     const data=body<{vendor:string;modelId:string;version:number;reason:string;changes:import("@aihot/backend/providers/registry/types").ProviderChanges}>(req);
     return updateProvider(data.vendor,data.modelId,data.changes,data.version,data.reason,actorOf(admin));
+  }));
+
+  app.delete("/api/admin/model-providers",adminHandler(async(req,_reply,admin)=>{
+    const data=body<{vendor:string;modelId:string;version:number;reason:string}>(req);
+    return deleteProvider(data.vendor,data.modelId,data.version,data.reason,actorOf(admin));
   }));
 
   app.post("/api/admin/model-providers/probe",adminHandler(async(req,_reply,admin)=>{
