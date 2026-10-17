@@ -21,7 +21,7 @@ test("each of the 81 model IDs has a separate database configuration, disabled b
  assert.ok(seed.providers.every((p:{vendor:string})=>p.vendor==="nvidia"));
  assert.match(sql,/enabled boolean NOT NULL DEFAULT false/);
  assert.match(sql,/route_enabled boolean NOT NULL DEFAULT false/);
- assert.match(sql,/CREATE TABLE model_provider_checks/);
+ assert.match(readFileSync(new URL("../database/migrations/0102_model_provider_checks.sql",import.meta.url),"utf8"),/CREATE TABLE model_provider_checks/);
 });
 test("independent provider-specific config allows official timeouts and safe params",()=>{
  const p=profile("nvidia/nemotron-3-super-120b-a12b","heavy");
@@ -49,7 +49,7 @@ test("text route requires independent recent text evidence and disabled provider
 test("streaming models separate reasoning content from final answer and require DONE",()=>{
  const raw=[
  'data: {"choices":[{"delta":{"reasoning_content":"thought"},"finish_reason":null}]}',
- 'data: {"choices":[{"delta":{"content":"{\"label\":\"OK\"}"},"finish_reason":"stop"}]}',
+ 'data: '+JSON.stringify({choices:[{delta:{content:'{"label":"OK"}'},finish_reason:'stop'}]}),
  'data: [DONE]'
  ].join("\n");
  const r=parseSseCompletion(raw);
