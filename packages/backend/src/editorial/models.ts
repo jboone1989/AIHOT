@@ -8,6 +8,7 @@ import { sql } from "../db.ts";
 import { serverModules } from "../modules.ts";
 import { MODELS } from "../providers/llm.ts";
 import { availableModel } from "../providers/nvidia-pool.ts";
+import {selectConfiguredProviderForStage} from "../providers/registry/selection.ts";
 import { nvidiaCapability } from "../providers/nvidia-catalog.ts";
 
 export interface Capability {
@@ -90,6 +91,10 @@ export async function modelFor(capability: CapabilityKey | (string & {})): Promi
   if (!c) throw new Error(`unknown model step: ${capability}`);
   const chosen = (await overrides())[capability] ?? process.env[c.env] ?? c.default;
   if (process.env.NVIDIA_MODEL_POOL_ENABLED === "true") {
+    const nvidiaChosen=MODELS[chosen]?.service==="nvidia" ||
+      (chosen==="default"&&process.env.NVIDIA_POOL_ROUTE_DEFAULT==="true");
+    if(nvidiaChosen&&process.env.MODEL_PROVIDER_REGISTRY_ENABLED==="true")
+      return selectConfiguredProviderForStage(capability);
     if (MODELS[chosen]?.service === "nvidia") return availableModel(chosen);
     if (chosen === "default" && process.env.NVIDIA_POOL_ROUTE_DEFAULT === "true")
       return availableModel(c.vision ? "nvidia-glm-5.3-flash" : "nvidia-gpt-oss-20b");
