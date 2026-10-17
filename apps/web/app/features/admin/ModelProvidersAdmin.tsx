@@ -19,6 +19,7 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
  const [stream,setStream]=useState(false);
  const [reason,setReason]=useState("");
  const [newId,setNewId]=useState("");
+ const [probeCap,setProbeCap]=useState("text");
  const [editorError,setEditorError]=useState("");
  const current=providers.find(p=>p.modelId===selected)??providers[0];
  const filtered=useMemo(()=>providers.filter(p=>p.modelId.toLowerCase().includes(search.toLowerCase())||
@@ -29,6 +30,7 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
   setCapabilities(current.capabilities.join(", "));setDefaults(JSON.stringify(current.requestDefaults,null,2));
   setTimeout(current.timeoutMs/1000);setComplexity(current.complexity);setEnabled(current.enabled);
   setRouteEnabled(current.routeEnabled);setStream(current.stream);setReason("");setEditorError("");
+  setProbeCap(current.capabilities.includes("text")?"text":current.capabilities[0]??"text");
  },[current?.vendor,current?.modelId,current?.version]);
  async function save(){
   if(!current)return;
@@ -84,7 +86,15 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
    </div>
    {!!current.checks.length&&<p className="text-xs text-ink-3">验证：{current.checks.map(c=>c.capability+"="+c.status).join(" · ")}</p>}
    {label("修改原因（审计必填）",<input className={inputClass} value={reason} onChange={e=>setReason(e.target.value)}/>)}
-   {editorError&&<p role="alert" className="text-sm text-hot">{editorError}</p>}
+   <div className="flex flex-wrap items-end gap-2">
+    {label("独立能力探测",<select className={inputClass} value={probeCap} onChange={e=>setProbeCap(e.target.value)}>
+     {current.capabilities.map(cap=><option key={cap} value={cap}>{cap}</option>)}
+    </select>)}
+    <button className="rounded border px-3 py-2 text-sm disabled:opacity-50" disabled={busy||!current.enabled||!current.capabilities.includes(probeCap)}
+      onClick={()=>run("POST","/api/admin/model-providers/probe",{vendor:current.vendor,modelId:current.modelId,capability:probeCap},{label:"probe:"+current.modelId+":"+probeCap,success:"能力探测已完成"})}>验证此能力</button>
+    <span className="text-xs text-ink-3">每次真实调用消耗 API 配额；专用能力需模型级适配器</span>
+   </div>
+   {editorError&&<p role="alert" className="text-sm text-hot">{editorError}</p>
    <button className="rounded-md bg-ink-1 px-4 py-2 text-sm text-layer-1 disabled:opacity-50" disabled={busy} onClick={save}>保存 Provider</button>
   </div>}
   <details className="pt-2">
