@@ -8,7 +8,7 @@ function record(value:unknown):value is Record<string,unknown>{
  return !!value&&typeof value==="object"&&!Array.isArray(value);
 }
 export function checkProviderChanges(changes:ProviderChanges,old?:ProviderProfile):void{
- const accepted=new Set(["adapter","endpoint","capabilities","requestDefaults","timeoutMs","stream","complexity","documentationUrl","notes","enabled","routeEnabled"]);
+ const accepted=new Set(["adapter","endpoint","capabilities","requestDefaults","probeSpec","stream","complexity","documentationUrl","notes","enabled","routeEnabled"]);
  if(!record(changes)||Object.keys(changes).some(k=>!accepted.has(k)))bad("unknown provider configuration property");
  if(changes.adapter!==undefined&&!ADAPTERS.includes(changes.adapter))bad("invalid adapter");
  if(changes.complexity!==undefined&&!COMPLEXITIES.includes(changes.complexity))bad("invalid complexity");
@@ -17,6 +17,15 @@ export function checkProviderChanges(changes:ProviderChanges,old?:ProviderProfil
  if(changes.endpoint!==undefined&&changes.endpoint!==null){
   let url:URL;try{url=new URL(changes.endpoint)}catch{return bad("invalid provider endpoint")}
   if(url.protocol!=="https:"||url.username||url.password||url.port||url.search||url.hash||!allowedHosts.has(url.hostname)||!url.pathname.startsWith("/v1/"))bad("endpoint must be an approved NVIDIA HTTPS API path");
+ }
+ if(changes.probeSpec!==undefined&&changes.probeSpec!==null){
+  const p=changes.probeSpec;
+  if(!record(p)||!CAPABILITIES.includes(p.capability)||
+    !["chat","embedding","json"].includes(p.response)||!record(p.body)||
+    JSON.stringify(p).length>12000)bad("invalid provider test request");
+  if(Object.keys(p.body).some(k=>["authorization","api_key","apiKey","endpoint","url","credential"].includes(k)))
+    bad("test request cannot contain credentials or override endpoint");
+  if(p.source!==undefined&&(typeof p.source!=="string"||p.source.length>400))bad("invalid test source");
  }
  if(changes.requestDefaults!==undefined){
   if(!record(changes.requestDefaults)||Object.keys(changes.requestDefaults).length>24)bad("invalid request defaults");
