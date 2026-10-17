@@ -13,7 +13,6 @@ export function checkProviderChanges(changes:ProviderChanges,old?:ProviderProfil
  if(changes.adapter!==undefined&&!ADAPTERS.includes(changes.adapter))bad("invalid adapter");
  if(changes.complexity!==undefined&&!COMPLEXITIES.includes(changes.complexity))bad("invalid complexity");
  if(changes.capabilities!==undefined&&(!Array.isArray(changes.capabilities)||changes.capabilities.some(c=>!CAPABILITIES.includes(c))))bad("invalid capabilities");
- if(changes.timeoutMs!==undefined&&(!Number.isInteger(changes.timeoutMs)||changes.timeoutMs<1000||changes.timeoutMs>600000))bad("timeout must be 1–600 seconds");
  if(changes.endpoint!==undefined&&changes.endpoint!==null){
   let url:URL;try{url=new URL(changes.endpoint)}catch{return bad("invalid provider endpoint")}
   if(url.protocol!=="https:"||url.username||url.password||url.port||url.search||url.hash||!allowedHosts.has(url.hostname)||!url.pathname.startsWith("/v1/"))bad("endpoint must be an approved NVIDIA HTTPS API path");
