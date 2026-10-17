@@ -4,7 +4,7 @@ import {Button,Input,Select,Textarea} from "./ui";
 
 export type ProviderEditValues={
  adapter:AdminProviderProfile["adapter"];endpoint:string|null;capabilities:string[];
- requestDefaults:Record<string,unknown>;timeoutMs:number;stream:boolean;
+ requestDefaults:Record<string,unknown>;probeSpec:AdminProviderProfile['probeSpec'];stream:boolean;
  complexity:AdminProviderProfile["complexity"];documentationUrl:string|null;notes:string|null;
  enabled:boolean;routeEnabled:boolean;
 };
@@ -16,7 +16,7 @@ export function ProviderEditorDialog({provider,busy,readOnly,onClose,onSave}:{
  const [endpoint,setEndpoint]=useState(provider.endpoint??"");
  const [capabilities,setCapabilities]=useState(provider.capabilities.join(", "));
  const [defaults,setDefaults]=useState(JSON.stringify(provider.requestDefaults,null,2));
- const [timeout,setTimeout]=useState(String(provider.timeoutMs/1000));
+ const [testRequest,setTestRequest]=useState(provider.probeSpec?JSON.stringify(provider.probeSpec,null,2):"");
  const [complexity,setComplexity]=useState<ProviderEditValues["complexity"]>(provider.complexity);
  const [documentationUrl,setDocumentationUrl]=useState(provider.documentationUrl??"");
  const [notes,setNotes]=useState(provider.notes??"");
@@ -34,13 +34,13 @@ export function ProviderEditorDialog({provider,busy,readOnly,onClose,onSave}:{
   try{
    const requestDefaults=JSON.parse(defaults);
    if(requestDefaults===null||typeof requestDefaults!=="object"||Array.isArray(requestDefaults))throw Error("请求参数必须是 JSON 对象");
-   const timeoutMs=Number(timeout)*1000;
-   if(!Number.isInteger(timeoutMs)||timeoutMs<1000||timeoutMs>600000)throw Error("超时范围为 1–600 秒");
+   const probeSpec=testRequest.trim()?JSON.parse(testRequest):null;
+   if(probeSpec!==null&&(!probeSpec||typeof probeSpec!=="object"||Array.isArray(probeSpec)))throw Error("独立测试请求必须是 JSON 对象");
    if(!reason.trim())throw Error("请填写修改原因");
    const ok=await onSave({
     adapter,endpoint:endpoint.trim()||null,
     capabilities:capabilities.split(",").map(x=>x.trim()).filter(Boolean),
-    requestDefaults,timeoutMs,complexity,
+    requestDefaults,probeSpec,complexity,
     documentationUrl:documentationUrl.trim()||null,notes:notes.trim()||null,
     enabled,routeEnabled,stream,
    },reason.trim());
@@ -71,9 +71,11 @@ export function ProviderEditorDialog({provider,busy,readOnly,onClose,onSave}:{
     {field("API Endpoint",<Input disabled={readOnly} value={endpoint} onChange={e=>setEndpoint(e.target.value)}/>)}
     <div className="grid gap-3 sm:grid-cols-2">
      {field("能力（逗号分隔）",<Input disabled={readOnly} value={capabilities} onChange={e=>setCapabilities(e.target.value)}/>)}
-     {field("请求超时（秒）",<Input disabled={readOnly} type="number" min={1} max={600} value={timeout} onChange={e=>setTimeout(e.target.value)}/>)}
+     {field("测试配置状态",<Input disabled value={testRequest.trim()?"已配置独立请求":"待配置独立请求"}/>)}
     </div>
     {field("模型专用参数（JSON）",<Textarea disabled={readOnly} rows={4} className="font-mono text-xs" value={defaults} onChange={e=>setDefaults(e.target.value)}/>)}
+    {field("本 Provider 专用测试请求（JSON，留空表示未配置）",<Textarea disabled={readOnly} rows={5} className="font-mono text-xs" value={testRequest} onChange={e=>setTestRequest(e.target.value)} placeholder='{"capability":"text","body":{"messages":[{"role":"user","content":"Hello"}]},"response":"chat"}'/>)}
+    <p className="text-xs text-ink-3">测试不设手动超时；运行后表格显示实际返回耗时。</p>
     <div className="flex flex-wrap gap-5 text-sm">
      <label className="flex items-center gap-2"><input type="checkbox" disabled={readOnly} checked={enabled} onChange={e=>{setEnabled(e.target.checked);if(!e.target.checked)setRouteEnabled(false)}}/>启用</label>
      <label className="flex items-center gap-2"><input type="checkbox" disabled={readOnly} checked={stream} onChange={e=>setStream(e.target.checked)}/>流式输出</label>
