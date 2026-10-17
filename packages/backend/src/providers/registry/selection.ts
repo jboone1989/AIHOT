@@ -9,25 +9,25 @@ const weights:Record<string,"light"|"medium"|"heavy">={
 };
 const levels={light:0,medium:1,heavy:2};
 /** Pure choice across independent providers; URL, params and auth stay with the chosen row. */
-export function rankStageProviders(rows:ProviderProfile[],stage:Stage,now=Date.now()):ProviderProfile[]{
+export function rankStageProviders(rows:ProviderProfile[],stage:Stage,now=Date.now(),needsVision=false):ProviderProfile[]{
  const intended=levels[weights[stage]??"medium"];
- const eligible=rows.filter(p=>p.enabled&&p.routeEnabled&&p.endpoint&&
-   (p.adapter==="chat"||p.adapter==="document"||p.adapter==="safety")&&
-   p.capabilities.includes("text")&&p.checks.some(c=>c.capability==="text"&&
+ const wanted=needsVision?"vision":"text";
+ const eligible=rows.filter(p=>p.enabled&&p.routeEnabled&&p.endpoint&&p.adapter==="chat"&&
+   p.capabilities.includes(wanted)&&p.checks.some(c=>c.capability===wanted&&
      c.status==="verified"&&c.verifiedAt&&now-Date.parse(c.verifiedAt)<86400000));
  return eligible.sort((a,b)=>{
   const score=(p:ProviderProfile)=>{
    const diff=levels[p.complexity]-intended;
    // For cheap tasks prefer smaller; deep tasks prefer enough complexity.
    const tier=intended===0?levels[p.complexity]*100:diff<0?Math.abs(diff)*150:diff*70;
-   const latency=p.checks.find(c=>c.capability==="text")?.latencyMs??120000;
+   const latency=p.checks.find(c=>c.capability===wanted)?.latencyMs??120000;
    return tier+latency/1000;
   };
   return score(a)-score(b)||a.modelId.localeCompare(b.modelId);
  });
 }
-export async function selectConfiguredProviderForStage(stage:Stage):Promise<string>{
- const eligible=rankStageProviders(await listProviders(),stage);
+export async function selectConfiguredProviderForStage(stage:Stage,needsVision=false):Promise<string>{
+ const eligible=rankStageProviders(await listProviders(),stage,Date.now(),needsVision);
  if(!eligible[0])throw new BudgetExceededError("nvidia","waiting_for_verified_provider",300);
  return "nvidia:"+eligible[0].modelId;
 }
