@@ -30,9 +30,10 @@ const fail=(message:string,code=400):never=>{throw Object.assign(new Error(messa
 export async function updateProvider(vendor:string,id:string,changes:ProviderChanges,version:number,reason:string,actor:string):Promise<ProviderProfile>{
  if(!reason?.trim())fail("a reason is required");
  if(!Number.isInteger(version))fail("provider version required");
- const current=await getProvider(vendor,id);if(!current)fail("provider not found",404);
+ const current=await getProvider(vendor,id);
+ if(current===null)throw Object.assign(new Error("provider not found"),{statusCode:404});
  checkProviderChanges(changes,current);
- const next={...current,...changes};
+ const next:ProviderProfile={...current,...changes};
  if(next.routeEnabled){
   if(!next.enabled||!next.endpoint||next.adapter==="special"||next.adapter==="unconfigured")fail("provider is not configured for routing");
   // Check results are backend-owned. Operators cannot promote a model without
@@ -54,7 +55,8 @@ export async function createProvider(vendor:string,id:string,actor:string):Promi
  if(vendor!=="nvidia"||!/^[-\w.]+\/[-\w.]+$/i.test(id))fail("invalid NVIDIA model ID");
  await sql`INSERT INTO model_providers(vendor,model_id,adapter,credential_env,capabilities,enabled,route_enabled,updated_by)
  VALUES (${vendor},${id},'unconfigured','NVIDIA_API_KEY','[]'::jsonb,false,false,${actor}) ON CONFLICT DO NOTHING`;
- const result=await getProvider(vendor,id);if(!result)fail("cannot create provider",500);
+ const result=await getProvider(vendor,id);
+ if(result===null)throw Object.assign(new Error("cannot create provider"),{statusCode:500});
  await audit(actor,"model.provider.create",vendor+":"+id,"new provider",null,result);
  return result;
 }
