@@ -42,7 +42,7 @@ export async function updateProvider(vendor:string,id:string,changes:ProviderCha
  }
  const rows=await sql<Row[]>`UPDATE model_providers SET
   adapter=${next.adapter},endpoint=${next.endpoint},capabilities=${sql.json(next.capabilities)},
-  request_defaults=${sql.json(next.requestDefaults)},timeout_ms=${next.timeoutMs},stream=${next.stream},
+  request_defaults=${sql.json(next.requestDefaults as never)},timeout_ms=${next.timeoutMs},stream=${next.stream},
   complexity=${next.complexity},documentation_url=${next.documentationUrl},notes=${next.notes},
   enabled=${next.enabled},route_enabled=${next.routeEnabled},version=version+1,updated_at=now(),updated_by=${actor}
   WHERE vendor=${vendor} AND model_id=${id} AND version=${version} RETURNING *`;
