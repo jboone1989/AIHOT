@@ -55,6 +55,7 @@ export async function updateProvider(vendor:string,id:string,changes:ProviderCha
 }
 export async function createProvider(vendor:string,id:string,actor:string):Promise<ProviderProfile>{
  if(vendor!=="nvidia"||!/^[-\w.]+\/[-\w.]+$/i.test(id))fail("invalid NVIDIA model ID");
+ if(!isVerifiedFreeTrialProvider(id))fail("Only NVIDIA officially verified free trial API models may be added");
  await sql`INSERT INTO model_providers(vendor,model_id,adapter,credential_env,capabilities,enabled,route_enabled,updated_by)
  VALUES (${vendor},${id},'unconfigured','NVIDIA_API_KEY','[]'::jsonb,false,false,${actor}) ON CONFLICT DO NOTHING`;
  const result=await getProvider(vendor,id);
