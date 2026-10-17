@@ -1,0 +1,2433 @@
+{
+  "schema": "aihot.nvidia.model-documentation-crosscheck.v1",
+  "observed_at": "2026-10-17",
+  "origin": "Development NVIDIA /v1/models snapshot (81) and manually checked NVIDIA official reference index pages",
+  "guidance": "A catalogue ID is not proof of a live hosted endpoint; family_index_match is exact-ID string membership in the official docs' index. task_weight is an engineering evaluation hypothesis, not an NVIDIA performance claim.",
+  "family_indexes": {
+    "llm": "https://docs.api.nvidia.com/nim/reference/llm-apis",
+    "vision": "https://docs.api.nvidia.com/nim/reference/visual-models-apis",
+    "retrieval": "https://docs.api.nvidia.com/nim/reference/retrieval-apis"
+  },
+  "models": [
+    {
+      "id": "01-ai/yi-large",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 372,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "adept/fuyu-8b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 364,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "ai21labs/jamba-1.5-large-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 489,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "aisingapore/sea-lion-7b-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 156,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "bigcode/starcoder2-15b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 130,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "databricks/dbrx-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 157,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "deepseek-ai/deepseek-coder-6.7b-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 144,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "deepseek-ai/deepseek-v4.1-flash",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "timeout_or_network",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": null,
+            "latency_ms": 26003,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "google/codegemma-1.1-7b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 147,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "google/codegemma-7b",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 145,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "google/deplot",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 156,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "google/diffusiongemma-26b-a4b-it",
+      "official_index_family": "vision",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/diffusiongemma-26b-a4b-it-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "vision_chat",
+        "supported_inputs": "text_image_candidate",
+        "confidence": "documented"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "not_tested_adapter_unknown",
+        "has_200_response": false,
+        "first_probes": [],
+        "documentation_recheck": {
+          "endpoint": "/v1/chat/completions",
+          "documentation": "https://docs.api.nvidia.com/nim/reference/diffusiongemma-26b-a4b-it-infer",
+          "http": 200,
+          "latency_ms": 17585,
+          "text_output": true,
+          "embedding_dimensions": null,
+          "finish": "stop"
+        }
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "google/gemma-2b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 146,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "google/gemma-3-12b-it",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 147,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "google/gemma-3-4b-it",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 144,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "google/gemma-4-31b-it",
+      "official_index_family": "vision",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/google-gemma-4-31b-it-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "documented"
+      },
+      "inferred_task_weight": "heavy",
+      "development_evidence": {
+        "first_verdict": "timeout_or_network",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": null,
+            "latency_ms": 26001,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "google/recurrentgemma-2b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 371,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "ibm/granite-3.0-3b-a800m-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 156,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "ibm/granite-3.0-8b-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 153,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "ibm/granite-34b-code-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 157,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "ibm/granite-8b-code-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 164,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "meta/codellama-70b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 155,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "meta/llama-3.2-11b-vision-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "vision_chat",
+        "supported_inputs": "text_image_candidate",
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": "light",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 200,
+            "latency_ms": 1458,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          },
+          {
+            "mode": "vision",
+            "http": 200,
+            "latency_ms": 998,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "meta/llama-3.2-90b-vision-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "vision_chat",
+        "supported_inputs": "text_image_candidate",
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "timeout_or_network",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": null,
+            "latency_ms": 26001,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "meta/llama-guard-4-12b",
+      "official_index_family": "vision",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "content_safety",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "timeout_or_network",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "safety",
+            "http": null,
+            "latency_ms": 26001,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "meta/llama2-70b",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 153,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "meta/muse-glimmer-30b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/meta-muse-glimmer-30b-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "vision_chat",
+        "supported_inputs": "text_image_candidate",
+        "confidence": "documented"
+      },
+      "inferred_task_weight": "heavy",
+      "development_evidence": {
+        "first_verdict": "timeout_or_network",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": null,
+            "latency_ms": 26002,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": {
+          "endpoint": "/v1/chat/completions",
+          "documentation": "https://docs.api.nvidia.com/nim/reference/meta-muse-glimmer-30b-infer",
+          "http": 200,
+          "latency_ms": 48825,
+          "text_output": true,
+          "embedding_dimensions": null,
+          "finish": "stop"
+        }
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "microsoft/kosmos-2",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 158,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "microsoft/phi-3-vision-128k-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "vision_chat",
+        "supported_inputs": "text_image_candidate",
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 153,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "microsoft/phi-3.5-moe-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 155,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "mistralai/codestral-22b-instruct-v0.1",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 153,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "mistralai/mistral-7b-instruct-v0.3",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 155,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "mistralai/mistral-large",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 155,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "mistralai/mistral-large-2-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 152,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "mistralai/mixtral-8x22b-v0.1",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 152,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "moonshotai/kimi-k2.6",
+      "official_index_family": "vision",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 153,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nv-mistralai/mistral-nemo-12b-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 153,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/ai-synthetic-video-detector",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "video_detection",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "other_http_failure",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 500,
+            "latency_ms": 301,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/cosmos-reason2-8b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 161,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/embed-qa-4",
+      "official_index_family": "retrieval",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "embedding_text",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "embedding",
+            "http": 404,
+            "latency_ms": 156,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/ising-calibration-1.5-31b",
+      "official_index_family": "vision",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/nvidia-ising-calibration-1-5-31b-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "vision_chat",
+        "supported_inputs": "text_image_candidate",
+        "confidence": "documented"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "timeout_or_network",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": null,
+            "latency_ms": 26000,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": {
+          "endpoint": "/v1/chat/completions",
+          "documentation": "https://docs.api.nvidia.com/nim/reference/nvidia-ising-calibration-1-5-31b-infer",
+          "http": 200,
+          "latency_ms": 22192,
+          "text_output": true,
+          "embedding_dimensions": null,
+          "finish": "stop"
+        }
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/llama-3.1-nemoguard-8b-content-safety",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/nvidia-llama-3_1-nemoguard-8b-content-safety",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "content_safety",
+        "supported_inputs": null,
+        "confidence": "documented"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "timeout_or_network",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "safety",
+            "http": null,
+            "latency_ms": 26001,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/llama-3.1-nemoguard-8b-topic-control",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/nvidia-llama-3_1-nemoguard-8b-topic-control",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "content_safety",
+        "supported_inputs": null,
+        "confidence": "documented"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "other_http_failure",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "safety",
+            "http": 500,
+            "latency_ms": 281,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/llama-3.1-nemotron-51b-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 451,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/llama-3.1-nemotron-70b-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 157,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "content_safety",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": "light",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "safety",
+            "http": 200,
+            "latency_ms": 693,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 148,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
+      "official_index_family": "retrieval",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "embedding_multimodal",
+        "supported_inputs": "text_image_embed_candidate",
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "embedding",
+            "http": 404,
+            "latency_ms": 149,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/llama-3.2-nv-embedqa-1b-v1",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "embedding_text",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "embedding",
+            "http": 404,
+            "latency_ms": 161,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/llama-nemotron-embed-vl-1b-v2",
+      "official_index_family": "retrieval",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/nvidia-llama-nemotron-embed-vl-1b-v2-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "embedding_multimodal",
+        "supported_inputs": "text_image_embed_candidate",
+        "confidence": "documented"
+      },
+      "inferred_task_weight": "light",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "embedding",
+            "http": 200,
+            "latency_ms": 553,
+            "valid": true,
+            "finish": null,
+            "embedding_dimensions": 2048
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/llama3-chatqa-1.5-70b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 149,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/mistral-nemo-minitron-8b-8k-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 150,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-3-embed-1b",
+      "official_index_family": "retrieval",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "embedding_text",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": "light",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "embedding",
+            "http": 200,
+            "latency_ms": 433,
+            "valid": true,
+            "finish": null,
+            "embedding_dimensions": 2048
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      "official_index_family": "vision",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "vision_chat",
+        "supported_inputs": "text_image_candidate",
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": "medium",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 200,
+            "latency_ms": 829,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          },
+          {
+            "mode": "vision",
+            "http": 200,
+            "latency_ms": 22253,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-3-super-120b-a12b",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-super-120b-a12b-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "documented"
+      },
+      "inferred_task_weight": "heavy",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 200,
+            "latency_ms": 1010,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-3-ultra-550b-a55b",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": "heavy",
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 128,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-3.5-content-safety",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-5-content-safety",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "content_safety",
+        "supported_inputs": null,
+        "confidence": "documented"
+      },
+      "inferred_task_weight": "light",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "safety",
+            "http": 200,
+            "latency_ms": 440,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-5-lightning-30b-a3b-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "documented"
+      },
+      "inferred_task_weight": "medium",
+      "development_evidence": {
+        "first_verdict": "timeout_or_network",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": null,
+            "latency_ms": 26001,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "official_index_family": "vision",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "vision_chat",
+        "supported_inputs": "text_image_candidate",
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": "heavy",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 200,
+            "latency_ms": 653,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          },
+          {
+            "mode": "vision",
+            "http": 200,
+            "latency_ms": 11447,
+            "valid": true,
+            "finish": "length",
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-4-340b-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 359,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-4-340b-reward",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "model_reward",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 153,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-nano-3-30b-a3b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 158,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-parse",
+      "official_index_family": "vision",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-parse-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "document_ocr",
+        "supported_inputs": null,
+        "confidence": "documented"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "payload_or_adapter_rejected",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 400,
+            "latency_ms": 284,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": {
+          "endpoint": "/v1/chat/completions",
+          "documentation": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-parse-infer",
+          "http": 200,
+          "latency_ms": 711,
+          "text_output": false,
+          "embedding_dimensions": null,
+          "finish": "stop"
+        }
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nemotron-parse-2.0",
+      "official_index_family": "vision",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-parse-2_0-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "document_ocr",
+        "supported_inputs": null,
+        "confidence": "documented"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 200,
+            "latency_ms": 575,
+            "valid": true,
+            "finish": "length",
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": {
+          "endpoint": "/v1/chat/completions",
+          "documentation": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-parse-2_0",
+          "http": 400,
+          "latency_ms": 287,
+          "text_output": false,
+          "embedding_dimensions": null,
+          "finish": null
+        }
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/neva-22b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 154,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": {
+          "endpoint": "/v1/vlm/nvidia/neva-22b",
+          "documentation": "https://docs.api.nvidia.com/nim/reference/nvidia-neva-22b-infer",
+          "http": 404,
+          "latency_ms": 405,
+          "text_output": false,
+          "embedding_dimensions": null,
+          "finish": null
+        }
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nv-embedqa-mistral-7b-v2",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "embedding_text",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "embedding",
+            "http": 404,
+            "latency_ms": 152,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/nvclip",
+      "official_index_family": "retrieval",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/nvidia-nvclip-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "embedding_multimodal",
+        "supported_inputs": "text_image_embed_candidate",
+        "confidence": "documented"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 134,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": {
+          "endpoint": "/v1/embeddings",
+          "documentation": "https://docs.api.nvidia.com/nim/reference/nvidia-nvclip-infer",
+          "http": 404,
+          "latency_ms": 380,
+          "text_output": false,
+          "embedding_dimensions": null,
+          "finish": null
+        }
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/riva-translate-4b-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "translation",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 154,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/riva-translate-4b-instruct-v2",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/nvidia-riva-translate-4b-instruct-v2-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "translation",
+        "supported_inputs": null,
+        "confidence": "documented"
+      },
+      "inferred_task_weight": "light",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 200,
+            "latency_ms": 429,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "nvidia/vila",
+      "official_index_family": "vision",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 157,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/openai-gpt-oss-20b-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "documented"
+      },
+      "inferred_task_weight": "light",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 200,
+            "latency_ms": 1499,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "poolside/laguna-xs-2.1",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "coding",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": "medium",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 200,
+            "latency_ms": 3753,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "snowflake/arctic-embed-l",
+      "official_index_family": "retrieval",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "embedding_text",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "embedding",
+            "http": 404,
+            "latency_ms": 158,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "stepfun-ai/step-5-preview",
+      "official_index_family": "vision",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/stepfun-ai-step-5-preview-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "documented"
+      },
+      "inferred_task_weight": "heavy",
+      "development_evidence": {
+        "first_verdict": "verified_response",
+        "has_200_response": true,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 200,
+            "latency_ms": 1848,
+            "valid": true,
+            "finish": "stop",
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "writer/palmyra-creative-122b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 144,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "writer/palmyra-fin-70b-32k",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 153,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "writer/palmyra-med-70b",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 143,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "writer/palmyra-med-70b-32k",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 151,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "z-ai/glm-5.3",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": null,
+      "reference_status": "current_family_index_exact_match",
+      "capability": {
+        "primary": "text_generation",
+        "supported_inputs": null,
+        "confidence": "official_category"
+      },
+      "inferred_task_weight": "heavy",
+      "development_evidence": {
+        "first_verdict": "timeout_or_network",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": null,
+            "latency_ms": 26001,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "z-ai/glm-5.3-flash",
+      "official_index_family": "llm",
+      "official_index_exact_id_match": true,
+      "model_specific_reference_checked": "https://docs.api.nvidia.com/nim/reference/z-ai-glm-5-3-flash-infer",
+      "reference_status": "model_page_checked",
+      "capability": {
+        "primary": "vision_chat",
+        "supported_inputs": "text_image_candidate",
+        "confidence": "documented"
+      },
+      "inferred_task_weight": "medium",
+      "development_evidence": {
+        "first_verdict": "timeout_or_network",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": null,
+            "latency_ms": 26001,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    },
+    {
+      "id": "zyphra/zamba2-7b-instruct",
+      "official_index_family": null,
+      "official_index_exact_id_match": false,
+      "model_specific_reference_checked": null,
+      "reference_status": "no_exact_match_in_three_current_indexes",
+      "capability": {
+        "primary": "other",
+        "supported_inputs": null,
+        "confidence": "needs_model_card_review"
+      },
+      "inferred_task_weight": null,
+      "development_evidence": {
+        "first_verdict": "endpoint_404",
+        "has_200_response": false,
+        "first_probes": [
+          {
+            "mode": "text",
+            "http": 404,
+            "latency_ms": 147,
+            "valid": false,
+            "finish": null,
+            "embedding_dimensions": null
+          }
+        ],
+        "documentation_recheck": null
+      },
+      "production_route_admitted": false
+    }
+  ]
+}
