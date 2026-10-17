@@ -9,6 +9,7 @@ import { listAudit } from "@aihot/backend/audit";
 import { importSelectBenchRun, listSelectBenchRuns, selectBenchRun } from "@aihot/backend/admin/selectbench";
 import { modelsOverview, switchModel } from "@aihot/backend/admin/models";
 import {listProviders,createProvider,updateProvider,deleteProvider} from "@aihot/backend/providers/registry/repository";
+import {isVerifiedFreeTrialProvider} from "@aihot/backend/providers/registry/types";
 import {probeConfiguredProvider} from "@aihot/backend/providers/registry/probe";
 import {startBulkRun,latestBulkRun} from "@aihot/backend/providers/registry/bulk";
 import { contentChain, overrideFields, rerun, searchContent, setSeoIndexed, setVisibility } from "@aihot/backend/admin/content";
