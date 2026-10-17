@@ -3,7 +3,8 @@ import {assertAccepted,paidRequest} from "../receipts.ts";
 import type {ProviderProfile} from "./types.ts";
 
 export abstract class IndependentProvider {
- constructor(public readonly profile:ProviderProfile){}
+ readonly profile:ProviderProfile;
+ constructor(profile:ProviderProfile){this.profile=profile}
  supports(capability:string):boolean{return this.profile.capabilities.includes(capability as never);}
  protected assertReady(capability:string):void{
   const p=this.profile;
