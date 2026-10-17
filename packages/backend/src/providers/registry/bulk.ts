@@ -4,14 +4,10 @@
 import {randomUUID} from "node:crypto";
 import {sql} from "../../db.ts";
 import {audit} from "../../audit.ts";
-import {enqueue,ensureQueue,getBoss,QUEUES} from "../../jobs/queue.ts";
+import {enqueue,QUEUES} from "../../jobs/queue.ts";
 import {listProviders} from "./repository.ts";
 import {probeConfiguredProvider} from "./probe.ts";
 import {isVerifiedFreeTrialProvider} from "./types.ts";
-/** The shared NVIDIA free-trial pool permits bounded overlapping requests.
- * Each model retains its own independent request, receipt and latency.
- */
-export const PROVIDER_PROBE_CONCURRENCY=8;
 export type BulkStatus="queued"|"running"|"verified"|"failed"|"unknown"|"unsupported";
 export interface BulkRow{vendor:string;modelId:string;capability:string;status:BulkStatus;latencyMs:number|null;detail:string|null;updatedAt:string}
 interface Row{vendor:string;model_id:string;capability:string;status:BulkStatus;latency_ms:number|null;detail:string|null;updated_at:Date;run_id:string}
@@ -78,8 +74,8 @@ export async function runBulkProviderJob(data:{runId:string;vendor:string;modelI
   WHERE run_id=${runId}::uuid AND vendor=${vendor} AND model_id=${modelId} AND capability=${capability}`;
 }
 
-/** Worker enqueues all verified models atomically, then separate workers execute requests concurrently.
- * Idempotent claim in runBulkProviderJob protects results from repeated dispatch jobs.
+/** Worker starts every independently configured free-trial model in parallel.
+ * Each task writes its own durable result, independently of other models.
  */
 export async function dispatchBulkProviderJobs({runId}:{runId:string}){
  const rows=await sql<{vendor:string;model_id:string;capability:string}[]>`
@@ -87,14 +83,12 @@ export async function dispatchBulkProviderJobs({runId}:{runId:string}){
   WHERE run_id=${runId}::uuid AND status='queued'
   ORDER BY vendor,model_id`;
  const eligible=rows.filter(p=>isVerifiedFreeTrialProvider(p.model_id));
- if(!eligible.length)return {dispatched:0};
- // One atomic INSERT for the entire batch. The old loop awaited each send
- // sequentially, making the first wave of probes slow and fragile.
- await ensureQueue(QUEUES.providerVerify);
- const boss=await getBoss();
- const queued=await boss.insert(QUEUES.providerVerify,eligible.map(p=>({
-  data:{runId,vendor:p.vendor,modelId:p.model_id,capability:p.capability}
- })),{returnId:true});
- return {dispatched:queued?.length??0};
-
+ // Kick off every model immediately. There is no fixed concurrency cap or
+ // per-model dispatch wait: each call claims its own row and sends its own request.
+ // Promise.allSettled lets completed models persist results while others are pending.
+ const outcomes=await Promise.allSettled(eligible.map(p=>runBulkProviderJob({
+  runId,vendor:p.vendor,modelId:p.model_id,capability:p.capability
+ })));
+ return {dispatched:eligible.length,settled:outcomes.length,
+  rejected:outcomes.filter(p=>p.status==="rejected").length};
 }
