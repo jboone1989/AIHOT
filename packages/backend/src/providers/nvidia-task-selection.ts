@@ -6,7 +6,7 @@
 export type Workload = "news_filter" | "entity_extraction" | "short_summary" |
  "event_linking" | "deep_synthesis" | "translation" | "code_agent" |
  "image_understanding" | "document_extraction" | "text_embedding" |
- "multimodal_embedding" | "safety_classification";
+ "multimodal_embedding" | "safety_classification" | "numerical_reasoning";
 export type Capability = "text" | "reasoning" | "vision" | "document" |
  "embedding" | "embedding_vision" | "safety" | "translation" | "coding";
 export type Level = "light" | "medium" | "heavy";
@@ -37,6 +37,7 @@ const tasks:Record<Workload,{requires:Capability;level:Level;maxAgeMs:number}> =
  short_summary:{requires:"text",level:"light",maxAgeMs:86400000},
  event_linking:{requires:"reasoning",level:"medium",maxAgeMs:86400000},
  deep_synthesis:{requires:"reasoning",level:"heavy",maxAgeMs:86400000},
+ numerical_reasoning:{requires:"reasoning",level:"heavy",maxAgeMs:86400000},
  translation:{requires:"translation",level:"light",maxAgeMs:86400000},
  code_agent:{requires:"coding",level:"medium",maxAgeMs:86400000},
  image_understanding:{requires:"vision",level:"medium",maxAgeMs:86400000},
