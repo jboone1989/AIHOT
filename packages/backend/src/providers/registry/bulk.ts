@@ -78,9 +78,8 @@ export async function runBulkProviderJob(data:{runId:string;vendor:string;modelI
   WHERE run_id=${runId}::uuid AND vendor=${vendor} AND model_id=${modelId} AND capability=${capability}`;
 }
 
-/** Worker dispatches one queued model at a time, outside the HTTP lifecycle.
- * Idempotent recovery uses each result row as the execution claim.
- * A second dispatch after restart is safe: the individual worker accepts only queued rows.
+/** Worker enqueues all verified models atomically, then separate workers execute requests concurrently.
+ * Idempotent claim in runBulkProviderJob protects results from repeated dispatch jobs.
  */
 export async function dispatchBulkProviderJobs({runId}:{runId:string}){
  const rows=await sql<{vendor:string;model_id:string;capability:string}[]>`
