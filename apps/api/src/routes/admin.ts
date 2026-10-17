@@ -10,6 +10,7 @@ import { importSelectBenchRun, listSelectBenchRuns, selectBenchRun } from "@aiho
 import { modelsOverview, switchModel } from "@aihot/backend/admin/models";
 import {listProviders,createProvider,updateProvider,deleteProvider} from "@aihot/backend/providers/registry/repository";
 import {probeConfiguredProvider} from "@aihot/backend/providers/registry/probe";
+import {startBulkRun,latestBulkRun} from "@aihot/backend/providers/registry/bulk";
 import { contentChain, overrideFields, rerun, searchContent, setSeoIndexed, setVisibility } from "@aihot/backend/admin/content";
 import { detachFromFact, mergeStories } from "@aihot/backend/events/corrections";
 import { banSource, eraseFeedback, feedbackScreenshot, listFeedback, unbanSource, updateFeedback } from "@aihot/backend/admin/feedback";
@@ -134,6 +135,13 @@ export function registerAdmin(app: FastifyInstance) {
     return deleteProvider(data.vendor,data.modelId,data.version,data.reason,actorOf(admin));
   }));
 
+  app.get("/api/admin/model-providers/bulk-checks",adminHandler(async(req)=>{
+    const requested=q(req).runId;
+    return {run:await latestBulkRun(requested)};
+  }));
+  app.post("/api/admin/model-providers/bulk-checks",adminHandler(async(_req,_reply,admin)=>{
+    return {run:await startBulkRun(actorOf(admin))};
+  }));
   app.post("/api/admin/model-providers/probe",adminHandler(async(req,_reply,admin)=>{
     const data=body<{vendor:string;modelId:string;capability:string}>(req);
     return probeConfiguredProvider(data.vendor,data.modelId,data.capability,actorOf(admin));
