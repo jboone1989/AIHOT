@@ -3,6 +3,7 @@ import {readFileSync} from "node:fs";
 import {test} from "node:test";
 import {providerSampleBody} from "@aihot/backend/providers/registry/probe";
 import type {ProviderProfile} from "@aihot/backend/providers/registry/types";
+import {isVerifiedFreeTrialProvider,VERIFIED_FREE_TRIAL_ENDPOINTS} from "@aihot/backend/providers/registry/types";
 
 const base:ProviderProfile={
  vendor:"nvidia",modelId:"example/base",adapter:"chat",
@@ -33,4 +34,16 @@ test("request body belongs to that Provider and uses its own sample parameters",
 test("bulk runner waits for fetch without artificial AbortSignal timeout",()=>{
  const code=readFileSync(new URL("../packages/backend/src/providers/registry/probe.ts",import.meta.url),"utf8");
  assert.doesNotMatch(code,/AbortSignal\.timeout\(/);
+});
+
+test("only source-verified NVIDIA free trial endpoints can be selected or bulk tested",()=>{
+ const ids=Object.keys(VERIFIED_FREE_TRIAL_ENDPOINTS);
+ assert.ok(ids.length>0&&ids.length<81);
+ assert.ok(ids.every(id=>VERIFIED_FREE_TRIAL_ENDPOINTS[id]?.startsWith("https://build.nvidia.com/")));
+ assert.ok(isVerifiedFreeTrialProvider("openai/gpt-oss-20b"));
+ assert.ok(isVerifiedFreeTrialProvider("nvidia/nemotron-3-ultra-550b-a55b"));
+ assert.equal(isVerifiedFreeTrialProvider("nvidia/nemotron-nano-3-30b-a3b"),false);
+ assert.equal(isVerifiedFreeTrialProvider("nvidia/llama-nemotron-embed-vl-1b-v2"),false);
+ assert.equal(isVerifiedFreeTrialProvider("meta/llama2-70b"),false);
+ assert.equal(isVerifiedFreeTrialProvider("made-up/model"),false);
 });
