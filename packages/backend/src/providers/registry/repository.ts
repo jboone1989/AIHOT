@@ -68,7 +68,7 @@ export async function deleteProvider(vendor:string,id:string,version:number,reas
  if(!reason?.trim())fail("a reason is required");
  if(!Number.isInteger(version))fail("provider version required");
  const current=await getProvider(vendor,id);
- if(current===null)fail("provider not found",404);
+ if(current===null)throw Object.assign(new Error("provider not found"),{statusCode:404});
  if(current.enabled||current.routeEnabled)fail("disable the provider and its route before deletion",409);
  const removed=await sql<{model_id:string}[]>`DELETE FROM model_providers
   WHERE vendor=${vendor} AND model_id=${id} AND version=${version}
