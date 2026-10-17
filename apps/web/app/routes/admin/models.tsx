@@ -8,6 +8,7 @@ import { useAdminAction } from "../../features/admin/action";
 import { bj, money, num } from "../../features/admin/format";
 import { AdminPage, Badge, Button, Card, DataTable, Empty, Field, FilterChips, ReasonDialog, Select } from "../../features/admin/ui";
 import { webModules } from "../../site-modules";
+import {ModelProvidersAdmin} from "../../features/admin/ModelProvidersAdmin";
 
 
 
@@ -69,6 +70,7 @@ export default function ModelsAdmin({ loaderData: m }: Route.ComponentProps) {
           </details>
         </div>
       </Card>
+      <ModelProvidersAdmin providers={m.providers}/>
       <div className="grid grid-cols-1 gap-5">
         {m.capabilities.map((c) => {
           const total = c.usage.reduce((a, u) => a + u.calls, 0);
