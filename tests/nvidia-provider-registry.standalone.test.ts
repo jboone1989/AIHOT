@@ -8,7 +8,7 @@ import type {ProviderProfile} from "@aihot/backend/providers/registry/types";
 const now=Date.parse("2026-10-17T01:00:00Z");
 const profile=(id:string,level:ProviderProfile["complexity"]):ProviderProfile=>({
  vendor:"nvidia",modelId:id,adapter:"chat",endpoint:"https://integrate.api.nvidia.com/v1/chat/completions",
- credentialEnv:"NVIDIA_API_KEY",capabilities:["text"],requestDefaults:{},timeoutMs:60000,stream:false,
+ credentialEnv:"NVIDIA_API_KEY",capabilities:["text"],requestDefaults:{},probeSpec:null,timeoutMs:60000,stream:false,
  complexity:level,documentationUrl:null,notes:null,enabled:true,routeEnabled:true,
  version:1,updatedAt:new Date(now).toISOString(),checks:[{capability:"text",status:"verified",
  verifiedAt:new Date(now-1000).toISOString(),latencyMs:1000}],
