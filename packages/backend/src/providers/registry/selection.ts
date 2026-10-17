@@ -1,6 +1,7 @@
 import {BudgetExceededError} from "../receipts.ts";
 import {listProviders} from "./repository.ts";
 import type {ProviderProfile} from "./types.ts";
+import {isVerifiedFreeTrialProvider} from "./types.ts";
 type Stage="prefilter"|"score"|"understand"|"summarize"|"wording"|"structure"|"group"|"groupReview"|"digest"|"report"|"translate"|"english"|string;
 const weights:Record<string,"light"|"medium"|"heavy">={
  prefilter:"light",score:"medium",understand:"medium",summarize:"light",wording:"light",
@@ -12,7 +13,7 @@ const levels={light:0,medium:1,heavy:2};
 export function rankStageProviders(rows:ProviderProfile[],stage:Stage,now=Date.now(),needsVision=false):ProviderProfile[]{
  const intended=levels[weights[stage]??"medium"];
  const wanted=needsVision?"vision":"text";
- const eligible=rows.filter(p=>p.enabled&&p.routeEnabled&&p.endpoint&&p.adapter==="chat"&&
+ const eligible=rows.filter(p=>p.vendor==="nvidia"&&isVerifiedFreeTrialProvider(p.modelId)&&p.enabled&&p.routeEnabled&&p.endpoint&&p.adapter==="chat"&&
    p.capabilities.includes(wanted)&&p.checks.some(c=>c.capability===wanted&&
      c.status==="verified"&&c.verifiedAt&&now-Date.parse(c.verifiedAt)<86400000));
  return eligible.sort((a,b)=>{
