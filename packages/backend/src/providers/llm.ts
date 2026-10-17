@@ -139,31 +139,35 @@ export const isNvidiaChatModel=(id:string)=>["text","vision"].includes(nvidiaCap
 export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): Promise<ChatJsonResult<z.infer<S>>> {
   // A healthy model chosen by the NVIDIA monitor can be addressed directly by ID.
   // Dynamic routing only accepts compatible text model IDs on our NVIDIA endpoint.
-  const dynamicId = opts.model.startsWith("nvidia:") ? opts.model.slice(7) : "";
+  const registryEnabled=process.env.MODEL_PROVIDER_REGISTRY_ENABLED==="true";
+  const dynamicId = opts.model.startsWith("nvidia:") ? opts.model.slice(7) :
+    registryEnabled&&MODELS[opts.model]?.service==="nvidia" ? MODELS[opts.model]!.model : "";
   const knownNvidia = Object.values(MODELS).find(m=>m.service==="nvidia"&&m.model===dynamicId);
   // Each NVIDIA model is now resolved from its own database provider profile when opted in.
   // The old presets remain a compatibility path until development validates every adapter.
-  const registered=dynamicId&&process.env.MODEL_PROVIDER_REGISTRY_ENABLED==="true"
+  const registered=dynamicId&&registryEnabled
     ? await getProvider("nvidia",dynamicId):null;
   const provider=registered&&registered.enabled&&registered.routeEnabled&&
      ["chat","document","safety"].includes(registered.adapter) && registered.endpoint
      ? instantiateProvider(registered):null;
-  if(dynamicId&&process.env.MODEL_PROVIDER_REGISTRY_ENABLED==="true"&&!(provider instanceof ChatProvider))
-    throw new Error("NVIDIA provider is unconfigured or not admitted: "+dynamicId);
-  const spec: ModelSpec | undefined = MODELS[opts.model] ?? (provider instanceof ChatProvider ? {
+  if(dynamicId&&registryEnabled&&(!(provider instanceof ChatProvider)||
+     !registered?.checks.some(c=>c.status==="verified"&&c.capability==="text"&&c.verifiedAt&&
+        Date.now()-Date.parse(c.verifiedAt)<86400000)))
+    throw new Error("NVIDIA provider needs a recent successful text check: "+dynamicId);
+  const spec: ModelSpec | undefined = (provider instanceof ChatProvider ? {
     key:opts.model,service:"nvidia",model:dynamicId,baseUrlEnv:"NVIDIA_BASE_URL",
     apiKeyEnv:"NVIDIA_API_KEY",jsonMode:false,
     vision:registered?.capabilities.includes("vision"),extra:registered?.requestDefaults,
     endpoint:registered?.endpoint??undefined,stream:registered?.stream,
     timeoutMs:registered?.timeoutMs,
-  } : isNvidiaChatModel(dynamicId)&&process.env.MODEL_PROVIDER_REGISTRY_ENABLED!=="true" ? {
+  } : isNvidiaChatModel(dynamicId)&&!registryEnabled ? {
     key: opts.model, service: "nvidia", model: dynamicId, baseUrlEnv: "NVIDIA_BASE_URL",
     apiKeyEnv: "NVIDIA_API_KEY", jsonMode: false,
     vision: nvidiaCapability(dynamicId)==="vision",
     extra: knownNvidia?.extra ?? (dynamicId.startsWith("nvidia/nemotron-3.5-lightning")
       ? { chat_template_kwargs: { enable_thinking: false } }
       : dynamicId.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : undefined),
-  } : undefined);
+  } : MODELS[opts.model]);
   if (!spec) throw new Error(`Unknown model ${opts.model}`);
   if (!config.modelCallsEnabled) throw new Error("Model calls are disabled (MODEL_CALLS_ENABLED=false)");
   const baseUrl = credential("models", spec.baseUrlEnv);
