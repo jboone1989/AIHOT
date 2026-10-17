@@ -114,9 +114,9 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
     <span>本次测试：{bulk.summary.total} 个</span>
     <span>已成功 {bulk.summary.verified}</span><span>失败 {bulk.summary.failed}</span>
     <span>未知 {bulk.summary.unknown}</span><span>待配置 {bulk.summary.unsupported}</span>
-    <span>进行中 {bulk.summary.queued+bulk.summary.running}</span>
+    <span>同时执行 {bulk.summary.running} / {bulk.summary.total-bulk.summary.unsupported}</span><span>排队 {bulk.summary.queued}</span>
     <span>{bulk.finished?"已完成":"后台执行中，结果自动更新"}</span>
-   </div>:"仅测试 NVIDIA 官方已确认 Free Endpoint 可用的模型；不尝试仅供下载或付费端点。"}
+   </div>:"所有具备测试请求的免费试用 API 模型同时发起测试，各自独立记录响应耗时。"}
   </div>
   <div className="flex flex-wrap items-center gap-2 border-b border-line p-3">
    <div className="min-w-[180px] flex-1"><Input aria-label="搜索模型" placeholder="搜索免费试用 API 模型" value={search} onChange={e=>setSearch(e.target.value)}/></div>

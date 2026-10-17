@@ -74,22 +74,21 @@ export async function runBulkProviderJob(data:{runId:string;vendor:string;modelI
   WHERE run_id=${runId}::uuid AND vendor=${vendor} AND model_id=${modelId} AND capability=${capability}`;
 }
 
-/** Worker dispatches one queued model at a time, outside the HTTP lifecycle.
- * Idempotent recovery uses each result row as the execution claim.
- * A second dispatch after restart is safe: the individual worker accepts only queued rows.
+/** Worker starts every independently configured free-trial model in parallel.
+ * Each task writes its own durable result, independently of other models.
  */
 export async function dispatchBulkProviderJobs({runId}:{runId:string}){
  const rows=await sql<{vendor:string;model_id:string;capability:string}[]>`
   SELECT vendor,model_id,capability FROM model_provider_bulk_checks
   WHERE run_id=${runId}::uuid AND status='queued'
   ORDER BY vendor,model_id`;
- let dispatched=0;
- for(const p of rows){
-  if(!isVerifiedFreeTrialProvider(p.model_id))continue;
-  await enqueue(QUEUES.providerVerify,{
-   runId,vendor:p.vendor,modelId:p.model_id,capability:p.capability
-  });
-  dispatched++;
- }
- return {dispatched};
+ const eligible=rows.filter(p=>isVerifiedFreeTrialProvider(p.model_id));
+ // Kick off every model immediately. There is no fixed concurrency cap or
+ // per-model dispatch wait: each call claims its own row and sends its own request.
+ // Promise.allSettled lets completed models persist results while others are pending.
+ const outcomes=await Promise.allSettled(eligible.map(p=>runBulkProviderJob({
+  runId,vendor:p.vendor,modelId:p.model_id,capability:p.capability
+ })));
+ return {dispatched:eligible.length,settled:outcomes.length,
+  rejected:outcomes.filter(p=>p.status==="rejected").length};
 }

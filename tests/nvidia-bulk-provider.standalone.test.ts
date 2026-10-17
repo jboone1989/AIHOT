@@ -47,3 +47,12 @@ test("only source-verified NVIDIA free trial endpoints can be selected or bulk t
  assert.equal(isVerifiedFreeTrialProvider("meta/llama2-70b"),false);
  assert.equal(isVerifiedFreeTrialProvider("made-up/model"),false);
 });
+
+test("bulk dispatch starts all free API model probes concurrently without a fixed cap",()=>{
+ const source=readFileSync(new URL("../packages/backend/src/providers/registry/bulk.ts",import.meta.url),"utf8");
+ const worker=readFileSync(new URL("../apps/worker/src/main.ts",import.meta.url),"utf8");
+ assert.match(source,/Promise\.allSettled\(eligible\.map\(p=>runBulkProviderJob\(/);
+ assert.doesNotMatch(source,/PROVIDER_PROBE_CONCURRENCY|Promise\.all\(eligible\.slice\(/);
+ assert.doesNotMatch(source,/for\(const p of rows\)\s*\{\s*await enqueue\(QUEUES\.providerVerify/);
+ assert.match(worker,/work\(boss,QUEUES\.providerDispatch/);
+});
