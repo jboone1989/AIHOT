@@ -7,6 +7,7 @@ import {audit} from "../../audit.ts";
 import {enqueue,QUEUES} from "../../jobs/queue.ts";
 import {listProviders} from "./repository.ts";
 import {probeConfiguredProvider} from "./probe.ts";
+import {isVerifiedFreeTrialProvider} from "./types.ts";
 export type BulkStatus="queued"|"running"|"verified"|"failed"|"unknown"|"unsupported";
 export interface BulkRow{vendor:string;modelId:string;capability:string;status:BulkStatus;latencyMs:number|null;detail:string|null;updatedAt:string}
 interface Row{vendor:string;model_id:string;capability:string;status:BulkStatus;latency_ms:number|null;detail:string|null;updated_at:Date;run_id:string}
@@ -19,14 +20,19 @@ export async function latestBulkRun(runId?:string){
   GROUP BY run_id ORDER BY created_at DESC LIMIT 1`;
  if(!recent)return null;
  const rows=await sql<Row[]>`SELECT * FROM model_provider_bulk_checks WHERE run_id=${recent.run_id}::uuid ORDER BY vendor,model_id`;
+ if(!runId&&rows.some(r=>!isVerifiedFreeTrialProvider(r.model_id)))return null;
  const summary={total:rows.length,queued:0,running:0,verified:0,failed:0,unknown:0,unsupported:0};
  for(const r of rows)summary[r.status]++;
  return {runId:recent.run_id,startedAt:recent.created_at.toISOString(),requestedBy:recent.requested_by,summary,finished:summary.queued+summary.running===0,rows:rows.map(present)};
 }
 export async function startBulkRun(actor:string){
  const active=await latestBulkRun();
- if(active&&!active.finished)return active;
- const providers=await listProviders();
+ if(active&&!active.finished){
+  // Recovery is explicit and cheap; never make the HTTP request enqueue dozens of models.
+  await enqueue(QUEUES.providerDispatch,{runId:active.runId});
+  return latestBulkRun(active.runId);
+ }
+ const providers=(await listProviders()).filter(p=>p.vendor==="nvidia"&&isVerifiedFreeTrialProvider(p.modelId));
  const runId=randomUUID();
  for(const p of providers){
   const capability=p.probeSpec?.capability??"unconfigured";
@@ -37,20 +43,20 @@ export async function startBulkRun(actor:string){
     ${testable?"queued":"unsupported"},${testable?null:"Provider test request not configured"},${actor})`;
  }
  await audit(actor,"model.provider.bulk.start","model-providers", "test each provider with its own DB request",null,{runId,count:providers.length});
- // Enqueue independent jobs; never await the LLM calls in the web request.
- for(const p of providers){
-  if(!p.probeSpec||!p.endpoint||p.adapter==="unconfigured")continue;
-  try{await enqueue(QUEUES.providerVerify,{runId,vendor:p.vendor,modelId:p.modelId,capability:p.probeSpec.capability});}
-  catch{
-   await sql`UPDATE model_provider_bulk_checks SET status='unknown',detail='queue unavailable',updated_at=now()
-    WHERE run_id=${runId}::uuid AND vendor=${p.vendor} AND model_id=${p.modelId}`;
-  }
- }
+ // One scheduler event only; no model requests run in the HTTP lifecycle.
+ await enqueue(QUEUES.providerDispatch,{runId});
  return latestBulkRun(runId);
 }
 /** Worker: unique job claims one DB row; retries can only advance previously queued/unknown rows. */
 export async function runBulkProviderJob(data:{runId:string;vendor:string;modelId:string;capability:string}){
  const {runId,vendor,modelId,capability}=data;
+ if(vendor!=="nvidia"||!isVerifiedFreeTrialProvider(modelId)){
+  await sql`UPDATE model_provider_bulk_checks SET status='unsupported',
+    detail='Not confirmed as a NVIDIA free trial API',updated_at=now()
+    WHERE run_id=${runId}::uuid AND vendor=${vendor} AND model_id=${modelId}
+    AND status='queued'`;
+  return;
+ }
  const claimed=await sql<{status:BulkStatus}[]>`UPDATE model_provider_bulk_checks
  SET status='running',updated_at=now(),detail=NULL
  WHERE run_id=${runId}::uuid AND vendor=${vendor} AND model_id=${modelId}
@@ -66,4 +72,24 @@ export async function runBulkProviderJob(data:{runId:string;vendor:string;modelI
  await sql`UPDATE model_provider_bulk_checks SET status=${result.status},
   latency_ms=${result.elapsedMs},detail=${result.detail},updated_at=now()
   WHERE run_id=${runId}::uuid AND vendor=${vendor} AND model_id=${modelId} AND capability=${capability}`;
+}
+
+/** Worker dispatches one queued model at a time, outside the HTTP lifecycle.
+ * Idempotent recovery uses each result row as the execution claim.
+ * A second dispatch after restart is safe: the individual worker accepts only queued rows.
+ */
+export async function dispatchBulkProviderJobs({runId}:{runId:string}){
+ const rows=await sql<{vendor:string;model_id:string;capability:string}[]>`
+  SELECT vendor,model_id,capability FROM model_provider_bulk_checks
+  WHERE run_id=${runId}::uuid AND status='queued'
+  ORDER BY vendor,model_id`;
+ let dispatched=0;
+ for(const p of rows){
+  if(!isVerifiedFreeTrialProvider(p.model_id))continue;
+  await enqueue(QUEUES.providerVerify,{
+   runId,vendor:p.vendor,modelId:p.model_id,capability:p.capability
+  });
+  dispatched++;
+ }
+ return {dispatched};
 }

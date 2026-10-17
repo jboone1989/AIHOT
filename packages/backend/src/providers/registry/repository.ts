@@ -2,6 +2,7 @@ import {sql} from "../../db.ts";
 import {audit} from "../../audit.ts";
 import {checkProviderChanges} from "./validation.ts";
 import type {ProviderChanges,ProviderProfile} from "./types.ts";
+import {isVerifiedFreeTrialProvider} from "./types.ts";
 interface Row{vendor:string;model_id:string;adapter:ProviderProfile["adapter"];endpoint:string|null;credential_env:string;capabilities:ProviderProfile["capabilities"];request_defaults:Record<string,unknown>;probe_spec:ProviderProfile["probeSpec"];timeout_ms:number;stream:boolean;complexity:ProviderProfile["complexity"];documentation_url:string|null;notes:string|null;enabled:boolean;route_enabled:boolean;version:number;updated_at:Date}
 function fromRow(r:Row):ProviderProfile{
  return {vendor:r.vendor,modelId:r.model_id,adapter:r.adapter,endpoint:r.endpoint,credentialEnv:r.credential_env,
@@ -33,6 +34,7 @@ export async function updateProvider(vendor:string,id:string,changes:ProviderCha
  const current=await getProvider(vendor,id);
  if(current===null)throw Object.assign(new Error("provider not found"),{statusCode:404});
  checkProviderChanges(changes,current);
+ if((changes.enabled===true||changes.routeEnabled===true)&&!isVerifiedFreeTrialProvider(id))fail("Only officially confirmed NVIDIA free trial API models can be enabled");
  const next:ProviderProfile={...current,...changes};
  if(next.routeEnabled){
   if(!next.enabled||!next.endpoint||next.adapter==="special"||next.adapter==="unconfigured")fail("provider is not configured for routing");
@@ -53,6 +55,7 @@ export async function updateProvider(vendor:string,id:string,changes:ProviderCha
 }
 export async function createProvider(vendor:string,id:string,actor:string):Promise<ProviderProfile>{
  if(vendor!=="nvidia"||!/^[-\w.]+\/[-\w.]+$/i.test(id))fail("invalid NVIDIA model ID");
+ if(!isVerifiedFreeTrialProvider(id))fail("Only NVIDIA officially verified free trial API models may be added");
  await sql`INSERT INTO model_providers(vendor,model_id,adapter,credential_env,capabilities,enabled,route_enabled,updated_by)
  VALUES (${vendor},${id},'unconfigured','NVIDIA_API_KEY','[]'::jsonb,false,false,${actor}) ON CONFLICT DO NOTHING`;
  const result=await getProvider(vendor,id);

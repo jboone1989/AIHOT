@@ -9,6 +9,7 @@ import { listAudit } from "@aihot/backend/audit";
 import { importSelectBenchRun, listSelectBenchRuns, selectBenchRun } from "@aihot/backend/admin/selectbench";
 import { modelsOverview, switchModel } from "@aihot/backend/admin/models";
 import {listProviders,createProvider,updateProvider,deleteProvider} from "@aihot/backend/providers/registry/repository";
+import {isVerifiedFreeTrialProvider} from "@aihot/backend/providers/registry/types";
 import {probeConfiguredProvider} from "@aihot/backend/providers/registry/probe";
 import {startBulkRun,latestBulkRun} from "@aihot/backend/providers/registry/bulk";
 import { contentChain, overrideFields, rerun, searchContent, setSeoIndexed, setVisibility } from "@aihot/backend/admin/content";
@@ -120,7 +121,7 @@ export function registerAdmin(app: FastifyInstance) {
   }));
 
   // Individual model-provider configurations (same CSRF/auth/audit path as all other admin changes).
-  app.get("/api/admin/model-providers",adminHandler(async ()=>({providers:await listProviders()})));
+  app.get("/api/admin/model-providers",adminHandler(async ()=>({providers:(await listProviders()).filter(p=>p.vendor==="nvidia"&&isVerifiedFreeTrialProvider(p.modelId))})));
   app.post("/api/admin/model-providers",adminHandler(async (req,_reply,admin)=>{
     const data=body<{vendor:string;modelId:string}>(req);
     return createProvider(data.vendor,data.modelId,actorOf(admin));
