@@ -19,6 +19,7 @@ test("ordinary news keeps full material only for a bounded 7–30 day period", (
 
 test("daily compaction retains searchable identity, citations and selected research evidence", () => {
   const sql = readFileSync(new URL("../packages/backend/src/operations/news-compaction.ts", import.meta.url), "utf8");
+  const publications = readFileSync(new URL("../packages/backend/src/publication/publish.ts", import.meta.url), "utf8");
   const migration = readFileSync(new URL("../database/migrations/0086_article_compaction.sql", import.meta.url), "utf8");
   // Scope and preservation are expressed directly in the single DB query, not only in documentation.
   for (const clause of ["a.compacted_at IS NULL", "a.discovered_at <", "a.processing_state IN",
@@ -30,12 +31,14 @@ test("daily compaction retains searchable identity, citations and selected resea
   assert.ok(sql.includes("body_text = NULL, body_html = NULL"));
   assert.ok(sql.includes("article_revisions SET body_text = NULL"));
   assert.ok(sql.includes("translations SET body_html = NULL, body_text = NULL"));
-  assert.ok(sql.includes("pool_search SET body = ''"));
+  // The public copy is changed by its owner, publication/publish.ts, in the same transaction.
+  assert.ok(sql.includes("await compactPublications(tx, ids)"));
+  assert.ok(publications.includes("pool_search SET body = ''"));
   assert.ok(!sql.includes("DELETE FROM articles"));
   assert.ok(!sql.includes("DELETE FROM publications"));
   assert.ok(!sql.includes("DELETE FROM facts"));
   assert.ok(sql.includes("p.channel = 'news'"));
-  assert.ok(sql.includes("syndicate = false"));
+  assert.ok(publications.includes("body_mode = 'summary', syndicate = false"));
   const material = readFileSync(new URL("../packages/backend/src/content/materials.ts", import.meta.url), "utf8");
   assert.match(material, /if \(existing!\.compacted_at\) return unchanged/);
 });
