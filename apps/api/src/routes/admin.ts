@@ -144,7 +144,7 @@ export function registerAdmin(app: FastifyInstance) {
   }));
   app.post("/api/admin/model-providers/probe",adminHandler(async(req,_reply,admin)=>{
     const data=body<{vendor:string;modelId:string;capability:string}>(req);
-    return probeConfiguredProvider(data.vendor,data.modelId,data.capability,actorOf(admin));
+    return probeConfiguredProvider(data.vendor,data.modelId,data.capability,actorOf(admin),{allowInactive:true});
   }));
 
   // SelectBench
