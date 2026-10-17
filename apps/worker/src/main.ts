@@ -11,6 +11,8 @@ import { registerEventJobs } from "@aihot/backend/jobs/events";
 import { registerNotifyJobs } from "@aihot/backend/jobs/notify";
 import { registerPublicationJobs } from "@aihot/backend/jobs/publication";
 import { registerSchedules } from "./schedules.ts";
+import {runBulkProviderJob} from "@aihot/backend/providers/registry/bulk";
+import {work,QUEUES} from "@aihot/backend/jobs/queue";
 import { ensureContentTargets } from "@aihot/backend/notify/deliver";
 import { startHeartbeat } from "@aihot/backend/operations/heartbeat";
 
@@ -26,6 +28,7 @@ await registerEventJobs(boss);
 await registerNotifyJobs(boss);
 await registerPublicationJobs(boss);
 await workModuleQueues(boss);
+await work(boss,QUEUES.providerVerify,{localConcurrency:2,pollingIntervalSeconds:3},runBulkProviderJob);
 await registerSchedules(boss);
 const heartbeat = startHeartbeat("worker");
 console.log(JSON.stringify({ level: "info", msg: "worker started", pid: process.pid }));

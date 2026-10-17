@@ -10,13 +10,14 @@ import {checkProviderChanges} from "@aihot/backend/providers/registry/validation
 import type {ProviderChanges} from "@aihot/backend/providers/registry/types";
 export async function seedModelProviders(){
  const data=JSON.parse(readFileSync(path.join(REPO_ROOT,"config/model-provider-seed.json"),"utf8")) as
-   {providers:Array<{vendor:string;modelId:string;credentialEnv:string}&ProviderChanges>};
+   {providers:Array<{vendor:string;modelId:string;credentialEnv:string;timeoutMs?:number}&ProviderChanges>};
  const ids=new Set(data.providers.map(p=>p.vendor+":"+p.modelId));
  if(ids.size!==data.providers.length)throw Error("duplicate seed profile");
  let imported=0;
  for(const p of data.providers){
   const {vendor,modelId,credentialEnv,...config}=p;
-  checkProviderChanges(config);
+  const {timeoutMs:trustedRuntimeDefault,...changes}=config;
+  checkProviderChanges(changes);
   if(vendor!=="nvidia"||credentialEnv!=="NVIDIA_API_KEY")throw Error("unapproved bootstrap profile");
   const rows=await sql<{vendor:string}[]>`INSERT INTO model_providers (
     vendor,model_id,adapter,endpoint,credential_env,capabilities,request_defaults,

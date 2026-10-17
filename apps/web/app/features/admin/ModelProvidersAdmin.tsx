@@ -4,6 +4,11 @@ import {useAdminAction} from "./action";
 import {Badge,Button,Card,DataTable,Input,ReasonDialog,Select} from "./ui";
 import {ProviderEditorDialog,type ProviderEditValues} from "./ProviderEditorDialog";
 
+type BulkRow={vendor:string;modelId:string;capability:string;status:"queued"|"running"|"verified"|"failed"|"unknown"|"unsupported";latencyMs:number|null;detail:string|null};
+type BulkRun={runId:string;startedAt:string;finished:boolean;summary:{total:number;queued:number;running:number;verified:number;failed:number;unknown:number;unsupported:number};rows:BulkRow[]};
+const bulkLabel=(r:BulkRow)=>({
+ queued:"待执行",running:"执行中",verified:"响应正常",failed:"请求失败",unknown:"结果未知",unsupported:"待配置请求"
+})[r.status];
 const PAGE_SIZE=15;
 type Filter="all"|"active"|"routed"|"inactive";
 const key=(p:AdminProviderProfile)=>p.vendor+":"+p.modelId;
@@ -29,6 +34,30 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
  const [createError,setCreateError]=useState("");
  const [probe,setProbe]=useState<AdminProviderProfile|null>(null);
  const [probeCapability,setProbeCapability]=useState("");
+ const [bulk,setBulk]=useState<BulkRun|null>(null);
+ const [bulkPending,setBulkPending]=useState(false);
+ useEffect(()=>{
+  let alive=true;
+  const refresh=async()=>{
+   try{
+    const res=await fetch("/api/admin/model-providers/bulk-checks",{credentials:"same-origin"});
+    if(res.ok){const json=await res.json() as {run:BulkRun|null};if(alive)setBulk(json.run);}
+   }catch{ /* keep the last durable snapshot */ }
+  };
+  void refresh();
+  const timer=setInterval(()=>{if(alive)void refresh()},3000);
+  return ()=>{alive=false;clearInterval(timer)};
+ },[]);
+ async function startBulk(){
+  setBulkPending(true);
+  try{
+   const result=await run<{run:BulkRun|null}>("POST","/api/admin/model-providers/bulk-checks",{},
+    {label:"provider-bulk-run",revalidate:false});
+   if(result?.run)setBulk(result.run);
+  }finally{setBulkPending(false)}
+ }
+ const measured=useMemo(()=>new Map(bulk?.rows.map(r=>[r.vendor+":"+r.modelId,r])??[]),[bulk]);
+
  useEffect(()=>setPage(1),[search,status,adapter]);
  const rows=useMemo(()=>providers.filter(p=>{
   const q=search.trim().toLowerCase();
@@ -73,10 +102,22 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
  }
  const openProbe=(p:AdminProviderProfile)=>{
   setProbe(p);
-  setProbeCapability(p.capabilities.includes("text")?"text":p.capabilities[0]??"");
+  setProbeCapability(p.probeSpec?.capability??"");
  };
  return <Card title={"Provider 管理（"+providers.length+"）"}
-  right={<Button tone="primary" size="sm" onClick={()=>{setCreating(true);setCreateError("")}}>+ 添加 Provider</Button>} pad={false}>
+  right={<div className="flex flex-wrap gap-2">
+   <Button tone="secondary" size="sm" busy={bulkPending} disabled={bulkPending||!!(bulk&&!bulk.finished)} onClick={startBulk}>一键测试全部</Button>
+   <Button tone="primary" size="sm" onClick={()=>{setCreating(true);setCreateError("")}}>+ 添加 Provider</Button>
+  </div>} pad={false}>
+  <div className="border-b border-line px-3 py-2 text-xs text-ink-3">
+   {bulk?<div className="flex flex-wrap gap-3">
+    <span>本次测试：{bulk.summary.total} 个</span>
+    <span>已成功 {bulk.summary.verified}</span><span>失败 {bulk.summary.failed}</span>
+    <span>未知 {bulk.summary.unknown}</span><span>待配置 {bulk.summary.unsupported}</span>
+    <span>进行中 {bulk.summary.queued+bulk.summary.running}</span>
+    <span>{bulk.finished?"已完成":"后台执行中，结果自动更新"}</span>
+   </div>:"每个 Provider 使用自己保存的请求样例测试；不设置测试超时，显示实际返回耗时。"}
+  </div>
   <div className="flex flex-wrap items-center gap-2 border-b border-line p-3">
    <div className="min-w-[180px] flex-1"><Input aria-label="搜索模型" placeholder="搜索模型名称、能力、供应商" value={search} onChange={e=>setSearch(e.target.value)}/></div>
    <Select aria-label="适配器筛选" className="!w-auto min-w-[125px]" value={adapter} onChange={e=>setAdapter(e.target.value)}>
@@ -92,13 +133,19 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
    {key:"adapter",label:"适配器",render:p=><span className="text-xs">{p.adapter}</span>},
    {key:"caps",label:"能力",render:p=><span className="text-xs">{p.capabilities.join(", ")||"—"}</span>},
    {key:"tier",label:"复杂度",render:p=>p.complexity},
-   {key:"timeout",label:"超时",render:p=><span className="num whitespace-nowrap">{p.timeoutMs/1000}s</span>},
+   {key:"duration",label:"返回耗时",render:p=>{
+    const result=measured.get(key(p));const ms=result?.latencyMs??p.checks.find(c=>c.status==="verified")?.latencyMs;
+    return <span className="num whitespace-nowrap">{ms==null?"—":ms>=1000?(ms/1000).toFixed(2)+" s":ms+" ms"}</span>;
+   }},
    {key:"enabled",label:"状态",render:p=><Badge tone={p.routeEnabled?"ok":p.enabled?"warn":"muted"}>{rowStatus(p)}</Badge>},
-   {key:"health",label:"验证",render:p=><span className="max-w-[160px] text-xs text-ink-3" title={verifyLabel(p)}>{verifyLabel(p)}</span>},
+   {key:"health",label:"验证",render:p=>{
+    const r=measured.get(key(p));
+    return <span className="max-w-[180px] text-xs text-ink-3" title={r?.detail??verifyLabel(p)}>{r?bulkLabel(r):verifyLabel(p)}</span>;
+   }},
    {key:"actions",label:"操作",render:p=><div className="flex flex-wrap items-center gap-1 whitespace-nowrap">
     <Button size="sm" tone="ghost" onClick={()=>setViewing(p)}>查看</Button>
     <Button size="sm" tone="secondary" onClick={()=>setEditing(p)}>编辑</Button>
-    <Button size="sm" tone="ghost" disabled={!p.enabled||p.capabilities.length===0} onClick={()=>openProbe(p)}>测试</Button>
+    <Button size="sm" tone="ghost" disabled={!p.probeSpec||!p.endpoint} onClick={()=>openProbe(p)}>测试</Button>
     <Button size="sm" tone="ghost" disabled={p.enabled||p.routeEnabled} title={p.enabled?"请先停用后删除":"删除 Provider"} onClick={()=>setDeleting(p)}>删除</Button>
    </div>},
   ]}/>
@@ -134,7 +181,7 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
     <h3 className="text-base font-semibold">测试 Provider</h3>
     <p className="break-all font-mono text-xs text-ink-3">{probe.modelId}</p>
     <Select value={probeCapability} onChange={e=>setProbeCapability(e.target.value)}>
-     {probe.capabilities.map(c=><option key={c} value={c}>{c}</option>)}
+     {probe.probeSpec&&<option value={probe.probeSpec.capability}>{probe.probeSpec.capability}</option>}
     </Select>
     <p className="text-xs text-ink-3">测试会真实调用模型并消耗 API 配额。</p>
     <div className="flex justify-end gap-2"><Button disabled={busy} onClick={()=>setProbe(null)}>取消</Button>

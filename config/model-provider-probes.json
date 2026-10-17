@@ -1,0 +1,1206 @@
+{
+  "schema": "aihot.provider-probes.v1",
+  "note": "Every model owns its request definition in its own database row. Probes do not define a timeout. Missing official special samples are null and displayed as pending.",
+  "providers": [
+    {
+      "vendor": "nvidia",
+      "modelId": "01-ai/yi-large",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "adept/fuyu-8b",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "ai21labs/jamba-1.5-large-instruct",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "aisingapore/sea-lion-7b-instruct",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "bigcode/starcoder2-15b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "databricks/dbrx-instruct",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "deepseek-ai/deepseek-coder-6.7b-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "deepseek-ai/deepseek-v4.1-flash",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/codegemma-1.1-7b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/codegemma-7b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/deplot",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/diffusiongemma-26b-a4b-it",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/diffusiongemma-26b-a4b-it-infer"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/gemma-2b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/gemma-3-12b-it",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/gemma-3-4b-it",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/gemma-4-31b-it",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/google-gemma-4-31b-it-infer"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/recurrentgemma-2b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "ibm/granite-3.0-3b-a800m-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "ibm/granite-3.0-8b-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "ibm/granite-34b-code-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "ibm/granite-8b-code-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/codellama-70b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/llama-3.2-11b-vision-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/llama-3.2-90b-vision-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/llama-guard-4-12b",
+      "probeSpec": {
+        "capability": "safety",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Classify the safety of the harmless phrase: Hello world."
+            }
+          ],
+          "max_tokens": 512
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/llama2-70b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/muse-glimmer-30b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/meta-muse-glimmer-30b-infer"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "microsoft/kosmos-2",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "microsoft/phi-3-vision-128k-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "microsoft/phi-3.5-moe-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "mistralai/codestral-22b-instruct-v0.1",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "mistralai/mistral-7b-instruct-v0.3",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "mistralai/mistral-large",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "mistralai/mistral-large-2-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "mistralai/mixtral-8x22b-v0.1",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "moonshotai/kimi-k2.6",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nv-mistralai/mistral-nemo-12b-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/ai-synthetic-video-detector",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/cosmos-reason2-8b",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/embed-qa-4",
+      "probeSpec": {
+        "capability": "embedding",
+        "body": {
+          "input": [
+            "AIHOT independent Provider connectivity test"
+          ],
+          "input_type": "passage"
+        },
+        "response": "embedding",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/ising-calibration-1.5-31b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/nvidia-ising-calibration-1-5-31b-infer"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemoguard-8b-content-safety",
+      "probeSpec": {
+        "capability": "safety",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Classify the safety of the harmless phrase: Hello world."
+            }
+          ],
+          "max_tokens": 512
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/nvidia-llama-3_1-nemoguard-8b-content-safety"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemoguard-8b-topic-control",
+      "probeSpec": {
+        "capability": "safety",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Classify the safety of the harmless phrase: Hello world."
+            }
+          ],
+          "max_tokens": 512
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/nvidia-llama-3_1-nemoguard-8b-topic-control"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemotron-51b-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemotron-70b-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+      "probeSpec": {
+        "capability": "safety",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Classify the safety of the harmless phrase: Hello world."
+            }
+          ],
+          "max_tokens": 512
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
+      "probeSpec": {
+        "capability": "embedding",
+        "body": {
+          "input": [
+            "AIHOT independent Provider connectivity test"
+          ],
+          "input_type": "passage"
+        },
+        "response": "embedding",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.2-nv-embedqa-1b-v1",
+      "probeSpec": {
+        "capability": "embedding",
+        "body": {
+          "input": [
+            "AIHOT independent Provider connectivity test"
+          ],
+          "input_type": "passage"
+        },
+        "response": "embedding",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-nemotron-embed-vl-1b-v2",
+      "probeSpec": {
+        "capability": "embedding",
+        "body": {
+          "input": [
+            "AIHOT independent Provider connectivity test"
+          ],
+          "input_type": "passage"
+        },
+        "response": "embedding",
+        "source": "https://docs.api.nvidia.com/nim/reference/nvidia-llama-nemotron-embed-vl-1b-v2-infer"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama3-chatqa-1.5-70b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/mistral-nemo-minitron-8b-8k-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3-embed-1b",
+      "probeSpec": {
+        "capability": "embedding",
+        "body": {
+          "input": [
+            "AIHOT independent Provider connectivity test"
+          ],
+          "input_type": "passage"
+        },
+        "response": "embedding",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3-super-120b-a12b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-super-120b-a12b-infer"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3-ultra-550b-a55b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3.5-content-safety",
+      "probeSpec": {
+        "capability": "safety",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Classify the safety of the harmless phrase: Hello world."
+            }
+          ],
+          "max_tokens": 512
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-5-content-safety"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-5-lightning-30b-a3b-infer"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-4-340b-instruct",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-4-340b-reward",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-nano-3-30b-a3b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-parse",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-parse-2.0",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/neva-22b",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nv-embedqa-mistral-7b-v2",
+      "probeSpec": {
+        "capability": "embedding",
+        "body": {
+          "input": [
+            "AIHOT independent Provider connectivity test"
+          ],
+          "input_type": "passage"
+        },
+        "response": "embedding",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nvclip",
+      "probeSpec": {
+        "capability": "embedding",
+        "body": {
+          "input": [
+            "AIHOT independent Provider connectivity test"
+          ],
+          "input_type": "passage"
+        },
+        "response": "embedding",
+        "source": "https://docs.api.nvidia.com/nim/reference/nvidia-nvclip-infer"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/riva-translate-4b-instruct",
+      "probeSpec": {
+        "capability": "translation",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Translate 'Good morning' to Chinese."
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/riva-translate-4b-instruct-v2",
+      "probeSpec": {
+        "capability": "translation",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Translate 'Good morning' to Chinese."
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/nvidia-riva-translate-4b-instruct-v2-infer"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/vila",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "openai/gpt-oss-20b",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/openai-gpt-oss-20b-infer"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "poolside/laguna-xs-2.1",
+      "probeSpec": {
+        "capability": "coding",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Write a one-line JavaScript function add(a,b) returning the sum."
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "snowflake/arctic-embed-l",
+      "probeSpec": {
+        "capability": "embedding",
+        "body": {
+          "input": [
+            "AIHOT independent Provider connectivity test"
+          ],
+          "input_type": "passage"
+        },
+        "response": "embedding",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "stepfun-ai/step-5-preview",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "writer/palmyra-creative-122b",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "writer/palmyra-fin-70b-32k",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "writer/palmyra-med-70b",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "writer/palmyra-med-70b-32k",
+      "probeSpec": null
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "z-ai/glm-5.3",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "catalog-family-sample; official model-specific example pending"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "z-ai/glm-5.3-flash",
+      "probeSpec": {
+        "capability": "text",
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Answer in one short sentence: What is AIHOT?"
+            }
+          ],
+          "max_tokens": 384
+        },
+        "response": "chat",
+        "source": "https://docs.api.nvidia.com/nim/reference/z-ai-glm-5-3-flash-infer"
+      }
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "zyphra/zamba2-7b-instruct",
+      "probeSpec": null
+    }
+  ]
+}

@@ -8,7 +8,7 @@ import type {ProviderProfile} from "@aihot/backend/providers/registry/types";
 const now=Date.parse("2026-10-17T01:00:00Z");
 const profile=(id:string,level:ProviderProfile["complexity"]):ProviderProfile=>({
  vendor:"nvidia",modelId:id,adapter:"chat",endpoint:"https://integrate.api.nvidia.com/v1/chat/completions",
- credentialEnv:"NVIDIA_API_KEY",capabilities:["text"],requestDefaults:{},timeoutMs:60000,stream:false,
+ credentialEnv:"NVIDIA_API_KEY",capabilities:["text"],requestDefaults:{},probeSpec:null,timeoutMs:60000,stream:false,
  complexity:level,documentationUrl:null,notes:null,enabled:true,routeEnabled:true,
  version:1,updatedAt:new Date(now).toISOString(),checks:[{capability:"text",status:"verified",
  verifiedAt:new Date(now-1000).toISOString(),latencyMs:1000}],
@@ -23,12 +23,12 @@ test("each of the 81 model IDs has a separate database configuration, disabled b
  assert.match(sql,/route_enabled boolean NOT NULL DEFAULT false/);
  assert.match(readFileSync(new URL("../database/migrations/0102_model_provider_checks.sql",import.meta.url),"utf8"),/CREATE TABLE model_provider_checks/);
 });
-test("independent provider-specific config allows official timeouts and safe params",()=>{
+test("independent provider parameters reject manually entered test timeouts",()=>{
  const p=profile("nvidia/nemotron-3-super-120b-a12b","heavy");
- assert.doesNotThrow(()=>checkProviderChanges({timeoutMs:180000,requestDefaults:{reasoning_budget:1024,temperature:1},stream:true},p));
+ assert.doesNotThrow(()=>checkProviderChanges({requestDefaults:{reasoning_budget:1024,temperature:1},stream:true},p));
  assert.throws(()=>checkProviderChanges({endpoint:"https://evil.example/v1/chat/completions"},p),/approved NVIDIA/);
  assert.throws(()=>checkProviderChanges({requestDefaults:{authorization:"leaked"}},p),/unsafe/);
- assert.throws(()=>checkProviderChanges({timeoutMs:0},p),/timeout/);
+ assert.throws(()=>checkProviderChanges({timeoutMs:0} as never,p),/unknown provider configuration property/);
 });
 test("each instance uses its independent profile and adapter",()=>{
  const a=instantiateProvider(profile("openai/gpt-oss-20b","light"));
