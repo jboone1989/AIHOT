@@ -6,6 +6,7 @@ import {paidRequest,assertAccepted,ProviderRejectedError} from "../receipts.ts";
 import {parseSseCompletion} from "./adapter.ts";
 import {getProvider} from "./repository.ts";
 import type {ProviderProfile} from "./types.ts";
+import {isVerifiedFreeTrialProvider} from "./types.ts";
 
 export type ProbeResult={vendor:string;modelId:string;capability:string;status:"verified"|"failed"|"unknown"|"unsupported";elapsedMs:number|null;detail:string};
 export function providerSampleBody(p:ProviderProfile):Record<string,unknown>{
@@ -32,6 +33,7 @@ function failure(error:unknown){
  return {status:"unknown" as const,detail:"network or parse failure"};
 }
 export async function probeConfiguredProvider(vendor:string,id:string,capability:string,actor:string,opts:{allowInactive?:boolean;attemptTag?:string}={}):Promise<ProbeResult>{
+ if(vendor!=="nvidia"||!isVerifiedFreeTrialProvider(id))return {vendor,modelId:id,capability,status:"unsupported",elapsedMs:null,detail:"Not officially verified as free trial endpoint"};
  const p=await getProvider(vendor,id);
  if(!p)throw Object.assign(new Error("provider not found"),{statusCode:404});
  if(!p.probeSpec||!p.endpoint||p.adapter==="unconfigured"||p.probeSpec.capability!==capability)
