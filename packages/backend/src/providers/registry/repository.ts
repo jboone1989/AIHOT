@@ -60,3 +60,20 @@ export async function createProvider(vendor:string,id:string,actor:string):Promi
  await audit(actor,"model.provider.create",vendor+":"+id,"new provider",null,result);
  return result;
 }
+
+/** Hard delete is explicit, version-checked, audited and allowed only for inactive providers.
+ * Capability checks cascade; neither credential values nor inference receipts are deleted.
+ */
+export async function deleteProvider(vendor:string,id:string,version:number,reason:string,actor:string):Promise<{deleted:boolean}>{
+ if(!reason?.trim())fail("a reason is required");
+ if(!Number.isInteger(version))fail("provider version required");
+ const current=await getProvider(vendor,id);
+ if(current===null)fail("provider not found",404);
+ if(current.enabled||current.routeEnabled)fail("disable the provider and its route before deletion",409);
+ const removed=await sql<{model_id:string}[]>`DELETE FROM model_providers
+  WHERE vendor=${vendor} AND model_id=${id} AND version=${version}
+   AND enabled=false AND route_enabled=false RETURNING model_id`;
+ if(!removed.length)fail("provider changed or is still enabled; refresh and retry",409);
+ await audit(actor,"model.provider.delete",vendor+":"+id,reason,current,null);
+ return {deleted:true};
+}
