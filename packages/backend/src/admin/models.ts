@@ -7,6 +7,7 @@ import { sql } from "../db.ts";
 import { capabilities, capabilityAcceptsModel, invalidateModelCache, modelSources } from "../editorial/models.ts";
 import { MODELS } from "../providers/llm.ts";
 import { poolOverview } from "../providers/nvidia-pool.ts";
+import {listProviders} from "../providers/registry/repository.ts";
 import { audit } from "../audit.ts";
 
 interface UsageRow {
@@ -32,7 +33,7 @@ interface UsageRow {
 
 export async function modelsOverview(days = 7): Promise<BeforeJson<AdminModels>> {
   const since = new Date(Date.now() - days * 86400_000);
-  const [sources, usage, prices, history, benches, nvidiaPool] = await Promise.all([
+  const [sources, usage, prices, history, benches, nvidiaPool, providers] = await Promise.all([
     modelSources(),
     sql<UsageRow[]>`
       SELECT r.purpose, a.model, r.request->>'promptVersion' AS prompt_version, count(*)::int AS calls,
@@ -58,6 +59,7 @@ export async function modelsOverview(days = 7): Promise<BeforeJson<AdminModels>>
              (SELECT coalesce(jsonb_object_agg(key, value - 'sweep'), '{}'::jsonb) FROM jsonb_each(r.summary)) AS summary,
              created_at FROM selectbench_runs r ORDER BY created_at DESC LIMIT 8`,
     poolOverview(),
+    listProviders(),
   ]);
   const serviceOf = (model: string) => Object.values(MODELS).find((m) => m.model === model || m.key === model)?.service ?? null;
   // Cached prompt tokens at the cache price, the rest at the input price; calls that carry their own cost
@@ -98,7 +100,7 @@ export async function modelsOverview(days = 7): Promise<BeforeJson<AdminModels>>
       })),
   }));
   const choices = Object.values(MODELS).map((m) => ({ key: m.key, service: m.service, vision: !!m.vision }));
-  return { days, capabilities: steps, choices, history, benches, nvidiaPool };
+  return { days, capabilities: steps, choices, history, benches, nvidiaPool, providers };
 }
 
 /** Switches a capability to another registered model (or back to the environment/default when null). */
