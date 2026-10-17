@@ -1,0 +1,1303 @@
+{
+  "schema": "aihot.provider-seed.v1",
+  "notes": "Initial defaults only. Runtime reads PostgreSQL. This file is never re-applied over administrator edits.",
+  "providers": [
+    {
+      "vendor": "nvidia",
+      "modelId": "01-ai/yi-large",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "adept/fuyu-8b",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "ai21labs/jamba-1.5-large-instruct",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "aisingapore/sea-lion-7b-instruct",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 180000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "bigcode/starcoder2-15b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "databricks/dbrx-instruct",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "deepseek-ai/deepseek-coder-6.7b-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "deepseek-ai/deepseek-v4.1-flash",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 180000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/codegemma-1.1-7b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/codegemma-7b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/deplot",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/diffusiongemma-26b-a4b-it",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text",
+        "vision"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/diffusiongemma-26b-a4b-it-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/gemma-2b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/gemma-3-12b-it",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/gemma-3-4b-it",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/gemma-4-31b-it",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {
+        "chat_template_kwargs": {
+          "enable_thinking": false
+        }
+      },
+      "timeoutMs": 180000,
+      "stream": false,
+      "complexity": "heavy",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/google-gemma-4-31b-it-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "google/recurrentgemma-2b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "ibm/granite-3.0-3b-a800m-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "ibm/granite-3.0-8b-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "ibm/granite-34b-code-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "ibm/granite-8b-code-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/codellama-70b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/llama-3.2-11b-vision-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text",
+        "vision"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "light",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/llama-3.2-90b-vision-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text",
+        "vision"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/llama-guard-4-12b",
+      "adapter": "safety",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "safety"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/llama2-70b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "meta/muse-glimmer-30b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text",
+        "vision"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 180000,
+      "stream": false,
+      "complexity": "heavy",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/meta-muse-glimmer-30b-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "microsoft/kosmos-2",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "microsoft/phi-3-vision-128k-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text",
+        "vision"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "microsoft/phi-3.5-moe-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "mistralai/codestral-22b-instruct-v0.1",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "mistralai/mistral-7b-instruct-v0.3",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "mistralai/mistral-large",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "mistralai/mistral-large-2-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "mistralai/mixtral-8x22b-v0.1",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "moonshotai/kimi-k2.6",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 180000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nv-mistralai/mistral-nemo-12b-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/ai-synthetic-video-detector",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "video"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/cosmos-reason2-8b",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/embed-qa-4",
+      "adapter": "embedding",
+      "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "embedding"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/ising-calibration-1.5-31b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text",
+        "vision"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 180000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/nvidia-ising-calibration-1-5-31b-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemoguard-8b-content-safety",
+      "adapter": "safety",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "safety"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/nvidia-llama-3_1-nemoguard-8b-content-safety",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemoguard-8b-topic-control",
+      "adapter": "safety",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "safety"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/nvidia-llama-3_1-nemoguard-8b-topic-control",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemotron-51b-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemotron-70b-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+      "adapter": "safety",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "safety"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "light",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 180000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
+      "adapter": "embedding",
+      "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "embedding",
+        "embedding_vision"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-3.2-nv-embedqa-1b-v1",
+      "adapter": "embedding",
+      "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "embedding"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama-nemotron-embed-vl-1b-v2",
+      "adapter": "embedding",
+      "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "embedding",
+        "embedding_vision"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "light",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/nvidia-llama-nemotron-embed-vl-1b-v2-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/llama3-chatqa-1.5-70b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/mistral-nemo-minitron-8b-8k-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3-embed-1b",
+      "adapter": "embedding",
+      "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "embedding"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "light",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text",
+        "vision"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": true,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3-super-120b-a12b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {
+        "reasoning_budget": 1024,
+        "temperature": 1,
+        "top_p": 0.95
+      },
+      "timeoutMs": 180000,
+      "stream": true,
+      "complexity": "heavy",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-super-120b-a12b-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3-ultra-550b-a55b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 180000,
+      "stream": false,
+      "complexity": "heavy",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3.5-content-safety",
+      "adapter": "safety",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "safety"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "light",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-5-content-safety",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {
+        "reasoning_budget": 1024,
+        "temperature": 1,
+        "top_p": 0.95
+      },
+      "timeoutMs": 180000,
+      "stream": true,
+      "complexity": "medium",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-5-lightning-30b-a3b-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text",
+        "vision"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 180000,
+      "stream": true,
+      "complexity": "heavy",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-4-340b-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-4-340b-reward",
+      "adapter": "special",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "reward"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-nano-3-30b-a3b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-parse",
+      "adapter": "document",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "document"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-parse-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nemotron-parse-2.0",
+      "adapter": "document",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "document"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-parse-2_0-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/neva-22b",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nv-embedqa-mistral-7b-v2",
+      "adapter": "embedding",
+      "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "embedding"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/nvclip",
+      "adapter": "embedding",
+      "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "embedding",
+        "embedding_vision"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/nvidia-nvclip-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/riva-translate-4b-instruct",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "translation",
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/riva-translate-4b-instruct-v2",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "translation",
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "light",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/nvidia-riva-translate-4b-instruct-v2-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "nvidia/vila",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "openai/gpt-oss-20b",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {
+        "reasoning_effort": "low"
+      },
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "light",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/openai-gpt-oss-20b-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "poolside/laguna-xs-2.1",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "coding",
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "snowflake/arctic-embed-l",
+      "adapter": "embedding",
+      "endpoint": "https://integrate.api.nvidia.com/v1/embeddings",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "embedding"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "stepfun-ai/step-5-preview",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "heavy",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/stepfun-ai-step-5-preview-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "writer/palmyra-creative-122b",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "writer/palmyra-fin-70b-32k",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "writer/palmyra-med-70b",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "writer/palmyra-med-70b-32k",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "z-ai/glm-5.3",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text"
+      ],
+      "requestDefaults": {},
+      "timeoutMs": 180000,
+      "stream": false,
+      "complexity": "heavy",
+      "documentationUrl": null,
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "z-ai/glm-5.3-flash",
+      "adapter": "chat",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [
+        "text",
+        "vision"
+      ],
+      "requestDefaults": {
+        "reasoning_effort": "low"
+      },
+      "timeoutMs": 180000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": "https://docs.api.nvidia.com/nim/reference/z-ai-glm-5-3-flash-infer",
+      "notes": "Indexed by NVIDIA; hosted access must be independently verified"
+    },
+    {
+      "vendor": "nvidia",
+      "modelId": "zyphra/zamba2-7b-instruct",
+      "adapter": "unconfigured",
+      "endpoint": null,
+      "credentialEnv": "NVIDIA_API_KEY",
+      "capabilities": [],
+      "requestDefaults": {},
+      "timeoutMs": 60000,
+      "stream": false,
+      "complexity": "medium",
+      "documentationUrl": null,
+      "notes": "No exact current official model page in three API indexes"
+    }
+  ]
+}
