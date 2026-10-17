@@ -7,20 +7,20 @@ import {parseSseCompletion} from "./adapter.ts";
 import {paidRequest,assertAccepted} from "../receipts.ts";
 
 const image="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jcWQAAAAASUVORK5CYII=";
-export async function probeConfiguredProvider(vendor:string,id:string,capability:string,actor:string){
+export async function probeConfiguredProvider(vendor:string,id:string,capability:string,actor:string,opts:{allowInactive?:boolean;attemptTag?:string}={}){
  const item=await getProvider(vendor,id);
  if(!item)throw Object.assign(new Error("provider not found"),{statusCode:404});
- if(!item.enabled||!item.endpoint)throw Object.assign(new Error("configure and enable this provider first"),{statusCode:400});
+ if((!opts.allowInactive&&!item.enabled)||!item.endpoint)throw Object.assign(new Error("provider endpoint is not configured"),{statusCode:400});
  if(!item.capabilities.includes(capability as never))throw Object.assign(new Error("capability is not configured"),{statusCode:400});
- if(!["text","vision","embedding","safety"].includes(capability))throw Object.assign(new Error("this specialized capability needs its official model-specific test adapter"),{statusCode:400});
+ if(!["text","vision","embedding","safety","translation","coding","reasoning"].includes(capability))throw Object.assign(new Error("this specialized capability needs its official model-specific test adapter"),{statusCode:400});
  if(!["chat","safety","embedding"].includes(item.adapter))throw Object.assign(new Error("unsupported probe adapter"),{statusCode:400});
  const [prev]=await sql<{updated_at:Date}[]>`SELECT updated_at FROM model_provider_checks WHERE vendor=${vendor} AND model_id=${id} AND capability=${capability}`;
- if(prev&&Date.now()-prev.updated_at.getTime()<60000)throw Object.assign(new Error("probe cooldown: 60 seconds"),{statusCode:429});
+ if(!opts.attemptTag&&prev&&Date.now()-prev.updated_at.getTime()<60000)throw Object.assign(new Error("probe cooldown: 60 seconds"),{statusCode:429});
  const key=credential("models",item.credentialEnv);if(!key)throw Error("model credential unavailable");
  const isEmbedding=capability==="embedding";
  const message=capability==="vision"
    ?[{role:"user",content:[{type:"text",text:"Describe the image."},{type:"image_url",image_url:{url:image}}]}]
-   :[{role:"user",content:capability==="safety"?"Classify this harmless greeting: hello.":"Reply with the word OK."}];
+   :[{role:"user",content:capability==="safety"?"Classify this harmless greeting: hello.":capability==="translation"?"Translate 'Hello' to Chinese. Return only the translation.":capability==="coding"?"Return a JavaScript function add(a,b) that returns a+b.":capability==="reasoning"?"What is 17 plus 25? Return the answer as a numeral.":"Reply with the word OK."}];
  const body:Record<string,unknown>=isEmbedding
   ?{...item.requestDefaults,model:id,input:["Development model health check"],input_type:"passage"}
   :{...item.requestDefaults,model:id,messages:message,max_tokens:768,stream:item.stream};
@@ -29,7 +29,7 @@ export async function probeConfiguredProvider(vendor:string,id:string,capability
   const receipt=await paidRequest({
    service:vendor,model:id,purpose:"model_provider_probe",subject:capability+":"+id,
    identity:{capability,version:item.version,prompt:"model-provider-probe.v1"},
-   attemptTag:new Date().toISOString().slice(0,13),
+   attemptTag:opts.attemptTag??new Date().toISOString().slice(0,13),
    requestSummary:{capability,version:item.version},
   },async()=>{
    const response=await fetch(item.endpoint!,{method:"POST",headers:{"authorization":"Bearer "+key,"content-type":"application/json","accept":item.stream?"text/event-stream":"application/json"},
