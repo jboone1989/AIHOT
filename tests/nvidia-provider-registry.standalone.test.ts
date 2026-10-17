@@ -15,8 +15,10 @@ const profile=(id:string,level:ProviderProfile["complexity"]):ProviderProfile=>(
 });
 test("each of the 81 model IDs has a separate database configuration, disabled by default",()=>{
  const sql=readFileSync(new URL("../database/migrations/0101_model_providers.sql",import.meta.url),"utf8");
- const ids=[...sql.matchAll(/\('nvidia','([^']+)','(?:chat|embedding|document|safety|special|unconfigured)'/g)].map(m=>m[1]);
+ const seed=JSON.parse(readFileSync(new URL("../config/model-provider-seed.json",import.meta.url),"utf8"));
+ const ids=seed.providers.map((p:{modelId:string})=>p.modelId);
  assert.equal(ids.length,81);assert.equal(new Set(ids).size,81);
+ assert.ok(seed.providers.every((p:{vendor:string})=>p.vendor==="nvidia"));
  assert.match(sql,/enabled boolean NOT NULL DEFAULT false/);
  assert.match(sql,/route_enabled boolean NOT NULL DEFAULT false/);
  assert.match(sql,/CREATE TABLE model_provider_checks/);
