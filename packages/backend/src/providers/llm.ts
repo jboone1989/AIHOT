@@ -5,6 +5,8 @@
 import type { z } from "zod";
 import { PRESETS } from "@aihot/site/models";
 import { nvidiaCapability } from "./nvidia-catalog.ts";
+import {getProvider} from "./registry/repository.ts";
+import {ChatProvider,instantiateProvider,parseSseCompletion as parseProviderStream} from "./registry/adapter.ts";
 import { config, credential } from "../config.ts";
 import { sha256 } from "../lib/ids.ts";
 import { assertAccepted, paidRequest, ProviderRejectedError, rejectReceivedResponse } from "./receipts.ts";
@@ -21,6 +23,9 @@ export interface ModelSpec {
   reasoningTokens?: number;
   jsonMode: boolean;
   vision?: boolean;
+  endpoint?: string;
+  stream?: boolean;
+  timeoutMs?: number;
 }
 
 function extraFromEnv(value: string | undefined): Record<string, unknown> | undefined {
@@ -136,7 +141,22 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
   // Dynamic routing only accepts compatible text model IDs on our NVIDIA endpoint.
   const dynamicId = opts.model.startsWith("nvidia:") ? opts.model.slice(7) : "";
   const knownNvidia = Object.values(MODELS).find(m=>m.service==="nvidia"&&m.model===dynamicId);
-  const spec: ModelSpec | undefined = MODELS[opts.model] ?? (isNvidiaChatModel(dynamicId) ? {
+  // Each NVIDIA model is now resolved from its own database provider profile when opted in.
+  // The old presets remain a compatibility path until development validates every adapter.
+  const registered=dynamicId&&process.env.MODEL_PROVIDER_REGISTRY_ENABLED==="true"
+    ? await getProvider("nvidia",dynamicId):null;
+  const provider=registered&&registered.enabled&&registered.routeEnabled&&
+     ["chat","document","safety"].includes(registered.adapter) && registered.endpoint
+     ? instantiateProvider(registered):null;
+  if(dynamicId&&process.env.MODEL_PROVIDER_REGISTRY_ENABLED==="true"&&!(provider instanceof ChatProvider))
+    throw new Error("NVIDIA provider is unconfigured or not admitted: "+dynamicId);
+  const spec: ModelSpec | undefined = MODELS[opts.model] ?? (provider instanceof ChatProvider ? {
+    key:opts.model,service:"nvidia",model:dynamicId,baseUrlEnv:"NVIDIA_BASE_URL",
+    apiKeyEnv:"NVIDIA_API_KEY",jsonMode:false,
+    vision:registered?.capabilities.includes("vision"),extra:registered?.requestDefaults,
+    endpoint:registered?.endpoint??undefined,stream:registered?.stream,
+    timeoutMs:registered?.timeoutMs,
+  } : isNvidiaChatModel(dynamicId)&&process.env.MODEL_PROVIDER_REGISTRY_ENABLED!=="true" ? {
     key: opts.model, service: "nvidia", model: dynamicId, baseUrlEnv: "NVIDIA_BASE_URL",
     apiKeyEnv: "NVIDIA_API_KEY", jsonMode: false,
     vision: nvidiaCapability(dynamicId)==="vision",
@@ -165,6 +185,7 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
     max_tokens: maxTokens,
     ...(spec.jsonMode && opts.json !== false ? { response_format: { type: "json_object" } } : {}),
     ...(spec.extra ?? {}),
+    ...(spec.stream ? {stream:true} : {}),
   };
 
   const receipt = await paidRequest(
@@ -181,11 +202,11 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
       const started = Date.now();
       let res: Response;
       try {
-        res = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
+        res = await fetch(spec.endpoint ?? `${baseUrl.replace(/\/$/, "")}/chat/completions`, {
           method: "POST",
           headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
           body: JSON.stringify(body),
-          signal: AbortSignal.timeout(opts.timeoutMs ?? 120_000),
+          signal: AbortSignal.timeout(opts.timeoutMs ?? spec.timeoutMs ?? 120_000),
         });
       } catch (error) {
         if (isConnectFailure(error)) throw new ProviderRejectedError(`connect failed: ${String(error)}`, null, true);
@@ -195,7 +216,7 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
       assertAccepted(spec.service, res.status, text);
       let json: Record<string, unknown>;
       try {
-        json = JSON.parse(text);
+        json = spec.stream ? parseProviderStream(text) : JSON.parse(text);
         if (!json || typeof json !== "object" || Array.isArray(json)) throw new Error("Expected a response object");
       } catch {
         json = { unparsable: text.slice(0, 20000) };
