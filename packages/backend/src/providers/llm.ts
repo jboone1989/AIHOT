@@ -204,6 +204,13 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
     },
     async () => {
       const started = Date.now();
+      if(provider instanceof ChatProvider){
+        const output=await provider.request(body,"text");
+        const json=output.data;
+        return {response:{...json,_latencyMs:Date.now()-started},
+          requestId:(json.id as string|undefined)??output.requestId,
+          usage:(json.usage as Record<string,unknown>|undefined)??null,cost:null};
+      }
       let res: Response;
       try {
         res = await fetch(spec.endpoint ?? `${baseUrl.replace(/\/$/, "")}/chat/completions`, {
