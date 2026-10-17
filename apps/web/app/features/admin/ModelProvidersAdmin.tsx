@@ -106,7 +106,7 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
  };
  return <Card title={"Provider 管理（"+providers.length+"）"}
   right={<div className="flex flex-wrap gap-2">
-   <Button tone="secondary" size="sm" busy={bulkPending} disabled={bulkPending||!!(bulk&&!bulk.finished)} onClick={startBulk}>一键测试全部</Button>
+   <Button tone="secondary" size="sm" busy={bulkPending} disabled={bulkPending} onClick={startBulk}>{bulk&&!bulk.finished?"恢复批量测试":"一键测试全部"}</Button>
    <Button tone="primary" size="sm" onClick={()=>{setCreating(true);setCreateError("")}}>+ 添加 Provider</Button>
   </div>} pad={false}>
   <div className="border-b border-line px-3 py-2 text-xs text-ink-3">
