@@ -26,7 +26,7 @@ export async function getProvider(vendor:string,id:string):Promise<ProviderProfi
  item.checks=checks.map(c=>({capability:c.capability,status:c.status,verifiedAt:c.verified_at?.toISOString()??null,latencyMs:c.latency_ms}));
  return item;
 }
-const fail=(message:string,code=400)=>{throw Object.assign(new Error(message),{statusCode:code});};
+const fail=(message:string,code=400):never=>{throw Object.assign(new Error(message),{statusCode:code});};
 export async function updateProvider(vendor:string,id:string,changes:ProviderChanges,version:number,reason:string,actor:string):Promise<ProviderProfile>{
  if(!reason?.trim())fail("a reason is required");
  if(!Number.isInteger(version))fail("provider version required");
