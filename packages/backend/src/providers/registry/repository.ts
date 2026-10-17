@@ -2,10 +2,10 @@ import {sql} from "../../db.ts";
 import {audit} from "../../audit.ts";
 import {checkProviderChanges} from "./validation.ts";
 import type {ProviderChanges,ProviderProfile} from "./types.ts";
-interface Row{vendor:string;model_id:string;adapter:ProviderProfile["adapter"];endpoint:string|null;credential_env:string;capabilities:ProviderProfile["capabilities"];request_defaults:Record<string,unknown>;timeout_ms:number;stream:boolean;complexity:ProviderProfile["complexity"];documentation_url:string|null;notes:string|null;enabled:boolean;route_enabled:boolean;version:number;updated_at:Date}
+interface Row{vendor:string;model_id:string;adapter:ProviderProfile["adapter"];endpoint:string|null;credential_env:string;capabilities:ProviderProfile["capabilities"];request_defaults:Record<string,unknown>;probe_spec:ProviderProfile["probeSpec"];timeout_ms:number;stream:boolean;complexity:ProviderProfile["complexity"];documentation_url:string|null;notes:string|null;enabled:boolean;route_enabled:boolean;version:number;updated_at:Date}
 function fromRow(r:Row):ProviderProfile{
  return {vendor:r.vendor,modelId:r.model_id,adapter:r.adapter,endpoint:r.endpoint,credentialEnv:r.credential_env,
-  capabilities:r.capabilities,requestDefaults:r.request_defaults,timeoutMs:r.timeout_ms,stream:r.stream,
+  capabilities:r.capabilities,requestDefaults:r.request_defaults,probeSpec:r.probe_spec,timeoutMs:r.timeout_ms,stream:r.stream,
   complexity:r.complexity,documentationUrl:r.documentation_url,notes:r.notes,enabled:r.enabled,
   routeEnabled:r.route_enabled,version:r.version,updatedAt:r.updated_at.toISOString(),checks:[]};
 }
@@ -42,7 +42,7 @@ export async function updateProvider(vendor:string,id:string,changes:ProviderCha
  }
  const rows=await sql<Row[]>`UPDATE model_providers SET
   adapter=${next.adapter},endpoint=${next.endpoint},capabilities=${sql.json(next.capabilities)},
-  request_defaults=${sql.json(next.requestDefaults as never)},timeout_ms=${next.timeoutMs},stream=${next.stream},
+  request_defaults=${sql.json(next.requestDefaults as never)},probe_spec=${next.probeSpec===null?null:sql.json(next.probeSpec as never)},timeout_ms=${next.timeoutMs},stream=${next.stream},
   complexity=${next.complexity},documentation_url=${next.documentationUrl},notes=${next.notes},
   enabled=${next.enabled},route_enabled=${next.routeEnabled},version=version+1,updated_at=now(),updated_by=${actor}
   WHERE vendor=${vendor} AND model_id=${id} AND version=${version} RETURNING *`;
