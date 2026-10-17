@@ -75,24 +75,3 @@ export function selectNvidiaForWorkload(models:VerifiedModel[],r:RouteRequest):V
    return score(a)-score(b) || a.id.localeCompare(b.id);
  })[0]??null;
 }
-/** These are provisional *task-fit* hypotheses for dev evaluation, not performance claims.
- * Model may be placed in a production pool only after capability and task verification.
- */
-export const NVIDIA_DEV_CANDIDATES:Readonly<Record<string,{capabilities:Capability[];modelLevel:Level}>>={
- "openai/gpt-oss-20b":{capabilities:["text","reasoning"],modelLevel:"light"},
- "nvidia/nemotron-3.5-lightning-30b-a3b":{capabilities:["text","reasoning"],modelLevel:"medium"},
- "nvidia/nemotron-3-super-120b-a12b":{capabilities:["text","reasoning"],modelLevel:"heavy"},
- "z-ai/glm-5.3-flash":{capabilities:["text","reasoning","vision"],modelLevel:"medium"},
- "google/gemma-4-31b-it":{capabilities:["text","reasoning","vision"],modelLevel:"heavy"},
- "stepfun-ai/step-5-preview":{capabilities:["text","reasoning","vision"],modelLevel:"heavy"},
- "meta/llama-3.2-11b-vision-instruct":{capabilities:["text","vision"],modelLevel:"light"},
- "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning":{capabilities:["text","reasoning","vision"],modelLevel:"medium"},
- "nvidia/nemotron-3.5-super-vl-120b-a12b":{capabilities:["text","reasoning","vision"],modelLevel:"heavy"},
- "nvidia/nemotron-3-embed-1b":{capabilities:["embedding"],modelLevel:"light"},
- "nvidia/llama-nemotron-embed-vl-1b-v2":{capabilities:["embedding","embedding_vision"],modelLevel:"light"},
- "nvidia/nemotron-3.5-content-safety":{capabilities:["safety"],modelLevel:"light"},
- "nvidia/llama-3.1-nemotron-safety-guard-8b-v3":{capabilities:["safety"],modelLevel:"light"},
- "nvidia/riva-translate-4b-instruct-v2":{capabilities:["translation"],modelLevel:"light"},
- "poolside/laguna-xs-2.1":{capabilities:["coding"],modelLevel:"medium"},
- "nvidia/nemotron-parse-2.0":{capabilities:["document"],modelLevel:"medium"}
-};
