@@ -94,7 +94,7 @@ export async function modelFor(capability: CapabilityKey | (string & {})): Promi
     const nvidiaChosen=MODELS[chosen]?.service==="nvidia" ||
       (chosen==="default"&&process.env.NVIDIA_POOL_ROUTE_DEFAULT==="true");
     if(nvidiaChosen&&process.env.MODEL_PROVIDER_REGISTRY_ENABLED==="true")
-      return selectConfiguredProviderForStage(capability);
+      return selectConfiguredProviderForStage(capability,!!c.vision);
     if (MODELS[chosen]?.service === "nvidia") return availableModel(chosen);
     if (chosen === "default" && process.env.NVIDIA_POOL_ROUTE_DEFAULT === "true")
       return availableModel(c.vision ? "nvidia-glm-5.3-flash" : "nvidia-gpt-oss-20b");
