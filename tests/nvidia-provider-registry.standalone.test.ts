@@ -40,9 +40,9 @@ test("each instance uses its independent profile and adapter",()=>{
  assert.ok(instantiateProvider(e) instanceof EmbeddingProvider);
 });
 test("text route requires independent recent text evidence and disabled providers never route",()=>{
- const tiny=profile("small","light"),large=profile("large","heavy"),other=profile("other","medium");
- assert.deepEqual(rankStageProviders([large,tiny,other],"prefilter",now).map(x=>x.modelId),["small","other","large"]);
- assert.equal(rankStageProviders([large,tiny,other],"groupReview",now)[0]?.modelId,"large");
+ const tiny=profile("openai/gpt-oss-20b","light"),large=profile("nvidia/nemotron-3-super-120b-a12b","heavy"),other=profile("meta/muse-glimmer-30b","medium");
+ assert.deepEqual(rankStageProviders([large,tiny,other],"prefilter",now).map(x=>x.modelId),["openai/gpt-oss-20b","meta/muse-glimmer-30b","nvidia/nemotron-3-super-120b-a12b"]);
+ assert.equal(rankStageProviders([large,tiny,other],"groupReview",now)[0]?.modelId,"nvidia/nemotron-3-super-120b-a12b");
  tiny.routeEnabled=false;large.checks[0]!.status="failed";other.checks=[];
  assert.equal(rankStageProviders([tiny,large,other],"prefilter",now).length,0);
 });
