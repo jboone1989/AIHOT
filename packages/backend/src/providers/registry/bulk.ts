@@ -1,0 +1,69 @@
+/** One persisted queue job per Provider. Each worker sends that Provider's own sample.
+ * Disabled models are tested independently of production routing.
+ */
+import {randomUUID} from "node:crypto";
+import {sql} from "../../db.ts";
+import {audit} from "../../audit.ts";
+import {enqueue,QUEUES} from "../../jobs/queue.ts";
+import {listProviders} from "./repository.ts";
+import {probeConfiguredProvider} from "./probe.ts";
+export type BulkStatus="queued"|"running"|"verified"|"failed"|"unknown"|"unsupported";
+export interface BulkRow{vendor:string;modelId:string;capability:string;status:BulkStatus;latencyMs:number|null;detail:string|null;updatedAt:string}
+interface Row{vendor:string;model_id:string;capability:string;status:BulkStatus;latency_ms:number|null;detail:string|null;updated_at:Date;run_id:string}
+const present=(x:Row):BulkRow=>({vendor:x.vendor,modelId:x.model_id,capability:x.capability,status:x.status,latencyMs:x.latency_ms,detail:x.detail,updatedAt:x.updated_at.toISOString()});
+export async function latestBulkRun(runId?:string){
+ const [recent]=await sql<{run_id:string;created_at:Date;requested_by:string}[]>`
+  SELECT run_id, min(created_at) AS created_at, max(requested_by) AS requested_by
+  FROM model_provider_bulk_checks
+  WHERE (${runId??null}::uuid IS NULL OR run_id=${runId??null}::uuid)
+  GROUP BY run_id ORDER BY created_at DESC LIMIT 1`;
+ if(!recent)return null;
+ const rows=await sql<Row[]>`SELECT * FROM model_provider_bulk_checks WHERE run_id=${recent.run_id}::uuid ORDER BY vendor,model_id`;
+ const summary={total:rows.length,queued:0,running:0,verified:0,failed:0,unknown:0,unsupported:0};
+ for(const r of rows)summary[r.status]++;
+ return {runId:recent.run_id,startedAt:recent.created_at.toISOString(),requestedBy:recent.requested_by,summary,finished:summary.queued+summary.running===0,rows:rows.map(present)};
+}
+export async function startBulkRun(actor:string){
+ const active=await latestBulkRun();
+ if(active&&!active.finished)return active;
+ const providers=await listProviders();
+ const runId=randomUUID();
+ for(const p of providers){
+  const capability=p.probeSpec?.capability??"unconfigured";
+  const testable=!!(p.probeSpec&&p.endpoint&&p.adapter!=="unconfigured");
+  await sql`INSERT INTO model_provider_bulk_checks
+   (run_id,vendor,model_id,capability,status,detail,requested_by)
+   VALUES (${runId}::uuid,${p.vendor},${p.modelId},${capability},
+    ${testable?"queued":"unsupported"},${testable?null:"Provider test request not configured"},${actor})`;
+ }
+ await audit(actor,"model.provider.bulk.start","model-providers", "test each provider with its own DB request",null,{runId,count:providers.length});
+ // Enqueue independent jobs; never await the LLM calls in the web request.
+ for(const p of providers){
+  if(!p.probeSpec||!p.endpoint||p.adapter==="unconfigured")continue;
+  try{await enqueue(QUEUES.providerVerify,{runId,vendor:p.vendor,modelId:p.modelId,capability:p.probeSpec.capability});}
+  catch{
+   await sql`UPDATE model_provider_bulk_checks SET status='unknown',detail='queue unavailable',updated_at=now()
+    WHERE run_id=${runId}::uuid AND vendor=${p.vendor} AND model_id=${p.modelId}`;
+  }
+ }
+ return latestBulkRun(runId);
+}
+/** Worker: unique job claims one DB row; retries can only advance previously queued/unknown rows. */
+export async function runBulkProviderJob(data:{runId:string;vendor:string;modelId:string;capability:string}){
+ const {runId,vendor,modelId,capability}=data;
+ const claimed=await sql<{status:BulkStatus}[]>`UPDATE model_provider_bulk_checks
+ SET status='running',updated_at=now(),detail=NULL
+ WHERE run_id=${runId}::uuid AND vendor=${vendor} AND model_id=${modelId}
+ AND capability=${capability} AND status IN ('queued','unknown') RETURNING status`;
+ if(!claimed.length)return;
+ let result:{status:BulkStatus;elapsedMs:number|null;detail:string};
+ try{
+  const r=await probeConfiguredProvider(vendor,modelId,capability,"provider-bulk:"+runId,{allowInactive:true,attemptTag:runId});
+  result={status:r.status,elapsedMs:r.elapsedMs,detail:r.detail};
+ }catch{
+  result={status:"unknown",elapsedMs:null,detail:"provider execution interrupted"};
+ }
+ await sql`UPDATE model_provider_bulk_checks SET status=${result.status},
+  latency_ms=${result.elapsedMs},detail=${result.detail},updated_at=now()
+  WHERE run_id=${runId}::uuid AND vendor=${vendor} AND model_id=${modelId} AND capability=${capability}`;
+}
