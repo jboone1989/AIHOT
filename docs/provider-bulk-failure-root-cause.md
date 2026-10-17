@@ -1,0 +1,1 @@
+The batch API enqueued one model per awaited request, leaving a partial run (62 pending). Dispatch must run in the worker, not HTTP. The NVIDIA catalog distinguishes free hosted endpoints from downloadable/self-hosted NIMs; assume unknown unless a model-specific source is verified.
