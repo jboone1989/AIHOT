@@ -104,7 +104,7 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
   setProbe(p);
   setProbeCapability(p.probeSpec?.capability??"");
  };
- return <Card title={"Provider 管理（"+providers.length+"）"}
+ return <Card title={"免费试用 API Provider（"+providers.length+"）"}
   right={<div className="flex flex-wrap gap-2">
    <Button tone="secondary" size="sm" busy={bulkPending} disabled={bulkPending} onClick={startBulk}>{bulk&&!bulk.finished?"恢复批量测试":"一键测试全部"}</Button>
    <Button tone="primary" size="sm" onClick={()=>{setCreating(true);setCreateError("")}}>+ 添加 Provider</Button>
@@ -116,10 +116,10 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
     <span>未知 {bulk.summary.unknown}</span><span>待配置 {bulk.summary.unsupported}</span>
     <span>进行中 {bulk.summary.queued+bulk.summary.running}</span>
     <span>{bulk.finished?"已完成":"后台执行中，结果自动更新"}</span>
-   </div>:"每个 Provider 使用自己保存的请求样例测试；不设置测试超时，显示实际返回耗时。"}
+   </div>:"仅测试 NVIDIA 官方已确认 Free Endpoint 可用的模型；不尝试仅供下载或付费端点。"}
   </div>
   <div className="flex flex-wrap items-center gap-2 border-b border-line p-3">
-   <div className="min-w-[180px] flex-1"><Input aria-label="搜索模型" placeholder="搜索模型名称、能力、供应商" value={search} onChange={e=>setSearch(e.target.value)}/></div>
+   <div className="min-w-[180px] flex-1"><Input aria-label="搜索模型" placeholder="搜索免费试用 API 模型" value={search} onChange={e=>setSearch(e.target.value)}/></div>
    <Select aria-label="适配器筛选" className="!w-auto min-w-[125px]" value={adapter} onChange={e=>setAdapter(e.target.value)}>
     <option value="all">全部适配器</option>{adapters.map(x=><option key={x} value={x}>{x}</option>)}
    </Select>
@@ -163,7 +163,7 @@ export function ModelProvidersAdmin({providers}:{providers:AdminProviderProfile[
   {creating&&<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
    <div role="dialog" aria-modal="true" aria-label="添加 Provider" className="w-full max-w-md space-y-4 rounded-panel bg-surface p-5 shadow-xl">
     <h3 className="text-base font-semibold">添加 Provider</h3>
-    <p className="text-xs text-ink-3">新建后默认停用，可在编辑中独立配置参数。</p>
+    <p className="text-xs text-ink-3">仅允许添加官方确认 Free Endpoint 可用的模型，新增后默认停用。</p>
     <label className="block space-y-1 text-xs">模型 ID
      <Input autoFocus value={newId} onChange={e=>setNewId(e.target.value)} placeholder="vendor/model-name"/>
     </label>
