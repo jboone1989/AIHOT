@@ -66,6 +66,9 @@ jobs:
       - name: Release script validation
         run: |
           bash -n scripts/deploy-prod.sh
+          bash -n scripts/rollback-prod.sh
+          # VM09 runs these directly; a lost executable bit broke a release once (#35).
+          test -x scripts/deploy-prod.sh && test -x scripts/rollback-prod.sh
           python3 -m py_compile scripts/production-env-check.py
           python3 - <<'PY'
           import importlib.util
@@ -83,6 +86,8 @@ jobs:
           PY
       - name: NVIDIA pool regression tests
         run: node --import ./tests/standalone.ts --test tests/nvidia*.standalone.test.ts
+      - name: Review risk classifier tests
+        run: node --import ./tests/standalone.ts --test tests/pr-risk.standalone.test.ts
       - name: Typecheck
         run: npm run typecheck
       - name: Build web

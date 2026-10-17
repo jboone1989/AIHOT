@@ -24,6 +24,8 @@ APP_TAG="$(read_tag LRSITE_APP_RELEASE)"
 KNOWLEDGE_TAG="$(read_tag LRSITE_KNOWLEDGE_RELEASE)"
 APP_TAG="${APP_TAG:-$OLD_TAG}"
 KNOWLEDGE_TAG="${KNOWLEDGE_TAG:-$OLD_TAG}"
+# What is running now becomes the rollback target (scripts/rollback-prod.sh) if this release changes it.
+PREV_APP_TAG="$APP_TAG"; PREV_KNOWLEDGE_TAG="$KNOWLEDGE_TAG"
 VALID='^[0-9a-f]{12}$'
 APP_CHANGED=0; KNOWLEDGE_CHANGED=0; SCHEMA_CHANGED=0
 # Compare from the image's source commit, not checkout HEAD; source may already
@@ -43,7 +45,7 @@ while IFS= read -r path; do
  case "$path" in
   knowledge_service/*) KNOWLEDGE_CHANGED=1 ;;
   database/migrations/*) APP_CHANGED=1; SCHEMA_CHANGED=1 ;;
-  docs/*|.github/*|tests/*|apps/web/tests/*|README*|AGENTS.md|CLAUDE.md|CONTRIBUTING.md|SECURITY.md|NOTICE|LICENSE|.env.example|scripts/deploy-prod.sh|scripts/production-env-check.py|scripts/production-smoke.py) ;;
+  docs/*|.github/*|tests/*|apps/web/tests/*|README*|AGENTS.md|CLAUDE.md|REVIEW.md|CONTRIBUTING.md|SECURITY.md|NOTICE|LICENSE|.env.example|scripts/deploy-prod.sh|scripts/rollback-prod.sh|scripts/pr-risk.ts|scripts/production-env-check.py|scripts/production-smoke.py) ;;
   docker-compose.*.yml|docker-compose.yml) ;; # Compose applies its own configuration hash
   *) APP_CHANGED=1 ;;
  esac
@@ -85,14 +87,19 @@ fi
 echo "[3/5] Advance checkout and pin per-service release image"
 git merge --ff-only "$NEW_SHA"
 [[ "$(git rev-parse HEAD)" == "$NEW_SHA" ]] || exit 1
-python3 - "$APP_TAG" "$KNOWLEDGE_TAG" <<'WRITE_RELEASE'
+python3 - "$APP_TAG" "$KNOWLEDGE_TAG" "$PREV_APP_TAG" "$PREV_KNOWLEDGE_TAG" <<'WRITE_RELEASE'
 from pathlib import Path
 import os,re,sys
-app,knowledge=sys.argv[1:]
+app,knowledge,prev_app,prev_knowledge=sys.argv[1:]
 assert all(re.fullmatch(r"[0-9a-f]{12}", tag) for tag in (app,knowledge))
 p=Path(".env")
 data=p.read_text()
-for key,tag in {"LRSITE_APP_RELEASE":app,"LRSITE_KNOWLEDGE_RELEASE":knowledge,"LRSITE_RELEASE":app}.items():
+tags={"LRSITE_APP_RELEASE":app,"LRSITE_KNOWLEDGE_RELEASE":knowledge,"LRSITE_RELEASE":app}
+# Only a release that changes an image moves the rollback target, and it records both services together.
+if (prev_app,prev_knowledge)!=(app,knowledge):
+ for key,prev in (("LRSITE_PREVIOUS_APP_RELEASE",prev_app),("LRSITE_PREVIOUS_KNOWLEDGE_RELEASE",prev_knowledge)):
+  if re.fullmatch(r"[0-9a-f]{12}",prev): tags[key]=prev
+for key,tag in tags.items():
  if re.search(r"^"+key+r"=",data,re.M):
   data=re.sub(r"^"+key+r"=.*$",key+"="+tag,data,flags=re.M)
  else:data+="\n"+key+"="+tag+"\n"
@@ -117,3 +124,4 @@ for n in 1 2 3 4 5 6 7 8 9 10; do
 done
 [[ "$OK" == 1 ]] || { echo "Smoke failed; persisted volumes were not altered" >&2; exit 1; }
 echo "SUCCESS: $NEW_SHA app=$APP_TAG knowledge=$KNOWLEDGE_TAG elapsed=${SECONDS}s"
+echo "To undo: bash scripts/rollback-prod.sh   (returns to the images that were running before)"

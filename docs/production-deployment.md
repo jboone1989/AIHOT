@@ -15,6 +15,16 @@ bash scripts/deploy-prod.sh
 
 That one command fetches the exact `main` commit, builds **only changed** application/Graphiti images on cn-dev using a clean `git archive`, streams only the changed images to VM09, advances VM09's Git checkout, sets `LRSITE_RELEASE`, reconciles application service image/config hashes **without any build or database/Neo4j restart on VM09**, and runs a substantive production smoke check. The PostgreSQL and Neo4j named volumes are **not replaced or re-imported**. AdSense and model inference retain their configured flags.
 
+To undo a release, from the same directory on VM09:
+
+```bash
+bash scripts/rollback-prod.sh          # back to the images that ran before the last release
+bash scripts/rollback-prod.sh --list   # loaded image tags, current and previous release
+bash scripts/rollback-prod.sh <tag>    # a specific livingruntime-app:<tag> already on this host
+```
+
+Rollback only re-pins the application images in `.env` and recreates web, API, worker and knowledge; it does not move the Git checkout, run or reverse migrations, or touch the PostgreSQL and Neo4j volumes. Migrations are additive and online by convention, so older code keeps working on the newer schema; if a migration since the target release drops or renames something, the script stops and lists it, and `--force` overrides after you have checked. Running it again with no argument returns to the release you rolled back from. After a rollback, revert the bad change on `main`; otherwise the next `deploy-prod.sh` releases it again. Keep older `livingruntime-app` images on VM09 (do not `docker image prune -a`), since rollback can only use images that are already loaded.
+
 For a safe environment check before deploying:
 
 ```bash
