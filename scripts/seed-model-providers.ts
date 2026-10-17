@@ -15,8 +15,9 @@ export async function seedModelProviders(){
  if(ids.size!==data.providers.length)throw Error("duplicate seed profile");
  let imported=0;
  for(const p of data.providers){
-  checkProviderChanges(p);
-  if(p.vendor!=="nvidia"||p.credentialEnv!=="NVIDIA_API_KEY")throw Error("unapproved bootstrap profile");
+  const {vendor,modelId,credentialEnv,...config}=p;
+  checkProviderChanges(config);
+  if(vendor!=="nvidia"||credentialEnv!=="NVIDIA_API_KEY")throw Error("unapproved bootstrap profile");
   const rows=await sql<{vendor:string}[]>`INSERT INTO model_providers (
     vendor,model_id,adapter,endpoint,credential_env,capabilities,request_defaults,
     timeout_ms,stream,complexity,documentation_url,notes,enabled,route_enabled,updated_by)
