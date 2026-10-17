@@ -1,0 +1,151 @@
+{
+  "date": "2026-10-17T01:16:26.634Z",
+  "environment": "cn-dev",
+  "method": "Four minimal synthetic site-task smoke tests, one call per model/task. Not a statistically reliable accuracy benchmark.",
+  "results": [
+    {
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "tier": "heavy",
+      "task": "entity_extraction",
+      "difficulty": "light",
+      "http": 200,
+      "elapsed_ms": 2520,
+      "answer_chars": 73,
+      "pass": true,
+      "finish": "stop",
+      "reason": ""
+    },
+    {
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "tier": "heavy",
+      "task": "event_linking",
+      "difficulty": "medium",
+      "http": 200,
+      "elapsed_ms": 2251,
+      "answer_chars": 16,
+      "pass": true,
+      "finish": "stop",
+      "reason": ""
+    },
+    {
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "tier": "heavy",
+      "task": "news_filter",
+      "difficulty": "light",
+      "http": 200,
+      "elapsed_ms": 3139,
+      "answer_chars": 6,
+      "pass": true,
+      "finish": "stop",
+      "reason": ""
+    },
+    {
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "tier": "heavy",
+      "task": "numerical_reasoning",
+      "difficulty": "heavy",
+      "http": 200,
+      "elapsed_ms": 2410,
+      "answer_chars": 5,
+      "pass": true,
+      "finish": "stop",
+      "reason": ""
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "tier": "light",
+      "task": "entity_extraction",
+      "difficulty": "light",
+      "http": 200,
+      "elapsed_ms": 1771,
+      "answer_chars": 73,
+      "pass": true,
+      "finish": "stop",
+      "reason": ""
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "tier": "light",
+      "task": "event_linking",
+      "difficulty": "medium",
+      "http": 200,
+      "elapsed_ms": 1278,
+      "answer_chars": 16,
+      "pass": true,
+      "finish": "stop",
+      "reason": ""
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "tier": "light",
+      "task": "news_filter",
+      "difficulty": "light",
+      "http": 200,
+      "elapsed_ms": 1778,
+      "answer_chars": 6,
+      "pass": true,
+      "finish": "stop",
+      "reason": ""
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "tier": "light",
+      "task": "numerical_reasoning",
+      "difficulty": "heavy",
+      "http": 200,
+      "elapsed_ms": 1851,
+      "answer_chars": 5,
+      "pass": false,
+      "finish": "stop",
+      "reason": ""
+    },
+    {
+      "model": "stepfun-ai/step-5-preview",
+      "tier": "heavy",
+      "task": "entity_extraction",
+      "difficulty": "light",
+      "http": 200,
+      "elapsed_ms": 3919,
+      "answer_chars": 73,
+      "pass": true,
+      "finish": "stop",
+      "reason": ""
+    },
+    {
+      "model": "stepfun-ai/step-5-preview",
+      "tier": "heavy",
+      "task": "event_linking",
+      "difficulty": "medium",
+      "http": 200,
+      "elapsed_ms": 1872,
+      "answer_chars": 16,
+      "pass": true,
+      "finish": "stop",
+      "reason": ""
+    },
+    {
+      "model": "stepfun-ai/step-5-preview",
+      "tier": "heavy",
+      "task": "news_filter",
+      "difficulty": "light",
+      "http": 200,
+      "elapsed_ms": 1112,
+      "answer_chars": 6,
+      "pass": true,
+      "finish": "stop",
+      "reason": ""
+    },
+    {
+      "model": "stepfun-ai/step-5-preview",
+      "tier": "heavy",
+      "task": "numerical_reasoning",
+      "difficulty": "heavy",
+      "http": 200,
+      "elapsed_ms": 15665,
+      "answer_chars": 5,
+      "pass": true,
+      "finish": "stop",
+      "reason": ""
+    }
+  ]
+}
