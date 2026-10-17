@@ -4,10 +4,14 @@
 import {randomUUID} from "node:crypto";
 import {sql} from "../../db.ts";
 import {audit} from "../../audit.ts";
-import {enqueue,QUEUES} from "../../jobs/queue.ts";
+import {enqueue,ensureQueue,getBoss,QUEUES} from "../../jobs/queue.ts";
 import {listProviders} from "./repository.ts";
 import {probeConfiguredProvider} from "./probe.ts";
 import {isVerifiedFreeTrialProvider} from "./types.ts";
+/** The shared NVIDIA free-trial pool permits bounded overlapping requests.
+ * Each model retains its own independent request, receipt and latency.
+ */
+export const PROVIDER_PROBE_CONCURRENCY=8;
 export type BulkStatus="queued"|"running"|"verified"|"failed"|"unknown"|"unsupported";
 export interface BulkRow{vendor:string;modelId:string;capability:string;status:BulkStatus;latencyMs:number|null;detail:string|null;updatedAt:string}
 interface Row{vendor:string;model_id:string;capability:string;status:BulkStatus;latency_ms:number|null;detail:string|null;updated_at:Date;run_id:string}
@@ -83,13 +87,15 @@ export async function dispatchBulkProviderJobs({runId}:{runId:string}){
   SELECT vendor,model_id,capability FROM model_provider_bulk_checks
   WHERE run_id=${runId}::uuid AND status='queued'
   ORDER BY vendor,model_id`;
- let dispatched=0;
- for(const p of rows){
-  if(!isVerifiedFreeTrialProvider(p.model_id))continue;
-  await enqueue(QUEUES.providerVerify,{
-   runId,vendor:p.vendor,modelId:p.model_id,capability:p.capability
-  });
-  dispatched++;
- }
- return {dispatched};
+ const eligible=rows.filter(p=>isVerifiedFreeTrialProvider(p.model_id));
+ if(!eligible.length)return {dispatched:0};
+ // One atomic INSERT for the entire batch. The old loop awaited each send
+ // sequentially, making the first wave of probes slow and fragile.
+ await ensureQueue(QUEUES.providerVerify);
+ const boss=await getBoss();
+ const queued=await boss.insert(QUEUES.providerVerify,eligible.map(p=>({
+  data:{runId,vendor:p.vendor,modelId:p.model_id,capability:p.capability}
+ })),{returnId:true});
+ return {dispatched:queued?.length??0};
+
 }
